@@ -1,5 +1,6 @@
 import { fetchWithCreds } from '../../actions';
 import { capitalizeFirstLetter } from '../../utils';
+import { getGQLFilter } from '@pcdc/guppy/dist/components/Utils/queries';
 import './typedef';
 
 const COHORT_URL = '/amanuensis/cohort';
@@ -62,6 +63,21 @@ export function deleteCohort(cohort) {
     method: 'DELETE',
   }).then(({ response, status }) => {
     if (status !== 200) throw response.statusText;
+  });
+}
+
+/**
+ * @param {string} commons
+ * @param {ExplorerFilters} filters
+ */
+export function fetchFindCohortRedirectUrl(commons, filters) {
+  return fetchWithCreds({
+    path: `/analysis/tools/${commons}`,
+    method: 'POST',
+    body: JSON.stringify({ filter: getGQLFilter(filters) }),
+  }).then(({ response, data, status }) => {
+    if (status !== 200) throw response.statusText;
+    return data;
   });
 }
 

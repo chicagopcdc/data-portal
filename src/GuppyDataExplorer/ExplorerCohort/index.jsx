@@ -13,6 +13,7 @@ import {
   saveCohort,
   updateCohort,
   deleteCohort,
+  fetchFindCohortRedirectUrl,
 } from './utils';
 import './ExplorerCohort.css';
 import './typedef';
@@ -84,6 +85,21 @@ function ExplorerCohort({ className, filter, onOpenCohort, onDeleteCohort }) {
       setCohort(createEmptyCohort());
       setCohorts(await fetchCohorts());
       onDeleteCohort(createEmptyCohort());
+    } catch (e) {
+      setIsError(true);
+    } finally {
+      closeActionForm();
+    }
+  }
+
+  /**
+   * @param {string} common
+   * @param {ExplorerFilters} filters
+   */
+  async function handleFind(common, filters) {
+    try {
+      const { link } = await fetchFindCohortRedirectUrl(common, filters);
+      window.open(link, '_blank');
     } catch (e) {
       setIsError(true);
     } finally {
@@ -176,6 +192,12 @@ function ExplorerCohort({ className, filter, onOpenCohort, onDeleteCohort }) {
               enabled={cohort.name !== ''}
               onClick={() => openActionForm('delete')}
             />
+            <CohortActionButton
+              labelIcon='external-link-alt'
+              labelText='Find Cohort in...'
+              buttonType='secondary'
+              onClick={() => openActionForm('find')}
+            />
           </div>
         </>
       )}
@@ -187,11 +209,15 @@ function ExplorerCohort({ className, filter, onOpenCohort, onDeleteCohort }) {
               currentCohort={cohort}
               currentFilters={filter}
               cohorts={cohorts}
+              externalCommonsOptions={[
+                { label: 'Genomic Data Commons', value: 'gdc' },
+              ]}
               handlers={{
                 handleOpen,
                 handleSave,
                 handleUpdate,
                 handleDelete,
+                handleFind,
                 handleClose: closeActionForm,
               }}
               isFiltersChanged={isFiltersChanged}

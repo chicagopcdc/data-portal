@@ -347,15 +347,85 @@ function CohortDeleteForm({ currentCohort, onAction, onClose }) {
 
 /**
  * @param {Object} prop
+ * @param {ExplorerFilters} prop.currentFilters
+ * @param {{ label: string; value: string }[]} prop.externalCommonsOptions
+ * @param {(commons: string, filters: ExplorerFilters) => void} prop.onAction
+ * @param {() => void} prop.onClose
+ */
+function CohortFindForm({
+  currentFilters,
+  externalCommonsOptions,
+  onAction,
+  onClose,
+}) {
+  const emptyOption = {
+    label: 'Select data commons',
+    value: '',
+  };
+  const [selected, setSelected] = useState(emptyOption);
+  return (
+    <div className='guppy-explorer-cohort__form'>
+      <h4>Find Cohort in An External Data Commons</h4>
+      <form onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}>
+        <SimpleInputField
+          label='Data Commons'
+          input={
+            <Select
+              options={[emptyOption, ...externalCommonsOptions]}
+              value={selected}
+              autoFocus
+              clearable={false}
+              theme={(theme) => ({
+                ...theme,
+                colors: {
+                  ...theme.colors,
+                  primary: 'var(--pcdc-color__primary)',
+                },
+              })}
+              onChange={(e) => setSelected(e)}
+            />
+          }
+        />
+        <SimpleInputField
+          label='Filters'
+          input={
+            <textarea
+              disabled
+              placeholder='No filters'
+              value={stringifyFilters(currentFilters)}
+            />
+          }
+        />
+      </form>
+      <div>
+        <CohortButton
+          buttonType='default'
+          label='Back to page'
+          onClick={onClose}
+        />
+        <CohortButton
+          label='Open in new tab'
+          enabled={selected.value !== ''}
+          onClick={() => onAction(selected.value, currentFilters)}
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * @param {Object} prop
  * @param {ExplorerCohortActionType} prop.actionType
  * @param {ExplorerCohort} prop.currentCohort
  * @param {ExplorerFilters} prop.currentFilters
  * @param {ExplorerCohort[]} prop.cohorts
+ * @param {{ label: string; value: string }[]} prop.externalCommonsOptions
  * @param {object} prop.handlers
  * @param {(opened: ExplorerCohort) => void} prop.handlers.handleOpen
  * @param {(saved: ExplorerCohort) => void} prop.handlers.handleSave
  * @param {(updated: ExplorerCohort) => void} prop.handlers.handleUpdate
  * @param {(deleted: ExplorerCohort) => void} prop.handlers.handleDelete
+ * @param {(commons: string, filter: ExplorerFilters) => void} prop.handlers.handleFind
  * @param {() => void} prop.handlers.handleClose
  * @param {boolean} prop.isFiltersChanged
  */
@@ -364,6 +434,7 @@ export function CohortActionForm({
   currentCohort,
   currentFilters,
   cohorts,
+  externalCommonsOptions,
   handlers,
   isFiltersChanged,
 }) {
@@ -372,6 +443,7 @@ export function CohortActionForm({
     handleSave,
     handleUpdate,
     handleDelete,
+    handleFind,
     handleClose,
   } = handlers;
 
@@ -412,6 +484,15 @@ export function CohortActionForm({
         <CohortDeleteForm
           currentCohort={currentCohort}
           onAction={handleDelete}
+          onClose={handleClose}
+        />
+      );
+    case 'find':
+      return (
+        <CohortFindForm
+          currentFilters={currentFilters}
+          externalCommonsOptions={externalCommonsOptions}
+          onAction={handleFind}
           onClose={handleClose}
         />
       );

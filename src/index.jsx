@@ -13,6 +13,7 @@ import {
   faSave,
   faPen,
   faTrashAlt,
+  faExternalLinkAlt,
 } from '@fortawesome/free-solid-svg-icons';
 import ReactGA from 'react-ga';
 import getReduxStore from './reduxStore';
@@ -36,6 +37,7 @@ library.add(
   faAngleDown,
   faCheckCircle,
   faExclamationTriangle,
+  faExternalLinkAlt,
   faFlask,
   faMicroscope,
   faUser,

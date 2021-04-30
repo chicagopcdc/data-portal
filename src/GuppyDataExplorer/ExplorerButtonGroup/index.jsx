@@ -3,7 +3,7 @@ import FileSaver from 'file-saver';
 import Button from '../../gen3-ui-component/components/Button';
 import Dropdown from '../../gen3-ui-component/components/Dropdown';
 import Toaster from '../../gen3-ui-component/components/Toaster';
-import { getGQLFilter } from '@pcdc/guppy/dist/components/Utils/queries';
+import { getGQLFilter } from '../../GuppyComponents/Utils/queries';
 import PropTypes from 'prop-types';
 import { calculateDropdownButtonConfigs, humanizeNumber } from '../utils';
 import { ButtonConfigType, GuppyConfigType } from '../configTypeDef';
@@ -304,7 +304,7 @@ class ExplorerButtonGroup extends React.Component {
   };
 
   downloadData = (filename) => () => {
-    this.props.downloadRawData().then((res) => {
+    this.props.downloadRawData({}).then((res) => {
       if (res) {
         const blob = new Blob([JSON.stringify(res, null, 2)], {
           type: 'text/json',
@@ -608,7 +608,7 @@ class ExplorerButtonGroup extends React.Component {
     let buttonTitle = buttonConfig.title;
     if (buttonConfig.type === 'data') {
       const buttonCount =
-        this.props.totalCount >= 0 ? this.props.totalCount : 0;
+        this.props.accessibleCount >= 0 ? this.props.accessibleCount : 0;
       buttonTitle = `${buttonConfig.title} (${buttonCount})`;
     } else if (
       buttonConfig.type === 'manifest' &&
@@ -633,7 +633,7 @@ class ExplorerButtonGroup extends React.Component {
         buttonType='primary'
         enabled={this.isButtonEnabled(buttonConfig)}
         tooltipEnabled={
-          buttonConfig.tooltipText ? !this.isButtonEnabled(buttonConfig) : false
+          buttonConfig.tooltipText && !this.isButtonPending(buttonConfig)
         }
         tooltipText={btnTooltipText}
         isPending={this.isButtonPending(buttonConfig)}
@@ -757,6 +757,7 @@ ExplorerButtonGroup.propTypes = {
   downloadRawDataByFields: PropTypes.func.isRequired, // from GuppyWrapper
   getTotalCountsByTypeAndFilter: PropTypes.func.isRequired, // from GuppyWrapper
   downloadRawDataByTypeAndFilter: PropTypes.func.isRequired, // from GuppyWrapper
+  accessibleCount: PropTypes.number.isRequired, // from GuppyWrapper
   totalCount: PropTypes.number.isRequired, // from GuppyWrapper
   filter: PropTypes.object.isRequired, // from GuppyWrapper
   isPending: PropTypes.bool,

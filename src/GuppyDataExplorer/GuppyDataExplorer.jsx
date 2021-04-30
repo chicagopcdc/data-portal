@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import GuppyWrapper from '@pcdc/guppy/dist/components/GuppyWrapper';
+import GuppyWrapper from '../GuppyComponents/GuppyWrapper';
 import ExplorerErrorBoundary from './ExplorerErrorBoundary';
 import ExplorerVisualization from './ExplorerVisualization';
 import ExplorerFilter from './ExplorerFilter';
@@ -13,6 +13,7 @@ import {
   TableConfigType,
   ButtonConfigType,
   ChartConfigType,
+  SurvivalAnalysisConfigType,
 } from './configTypeDef';
 import './GuppyDataExplorer.css';
 
@@ -25,8 +26,6 @@ class GuppyDataExplorer extends React.Component {
         : {};
 
     this.state = {
-      aggsData: {},
-      filter: {},
       initialAppliedFilters: { ...overviewFilter },
     };
     this._isMounted = false;
@@ -40,8 +39,8 @@ class GuppyDataExplorer extends React.Component {
     this._isMounted = false;
   }
 
-  handleReceiveNewAggsData = (newAggsData) => {
-    this._isMounted && this.setState({ aggsData: newAggsData });
+  updateInitialAppliedFilters = ({ filters }) => {
+    if (this._isMounted) this.setState({ initialAppliedFilters: filters });
   };
 
   render() {
@@ -56,7 +55,6 @@ class GuppyDataExplorer extends React.Component {
               type: this.props.guppyConfig.dataType,
               ...this.props.guppyConfig,
             }}
-            onReceiveNewAggsData={this.handleReceiveNewAggsData}
             onFilterChange={this.handleFilterChange}
             rawDataFields={this.props.tableConfig.fields}
             accessibleFieldCheckList={
@@ -65,9 +63,6 @@ class GuppyDataExplorer extends React.Component {
           >
             <ExplorerTopMessageBanner
               className='guppy-data-explorer__top-banner'
-              tierAccessLevel={this.props.tierAccessLevel}
-              tierAccessLimit={this.props.tierAccessLimit}
-              guppyConfig={this.props.guppyConfig}
               getAccessButtonLink={this.props.getAccessButtonLink}
               hideGetAccessButton={this.props.hideGetAccessButton}
             />
@@ -81,7 +76,6 @@ class GuppyDataExplorer extends React.Component {
               guppyConfig={this.props.guppyConfig}
               getAccessButtonLink={this.props.getAccessButtonLink}
               hideGetAccessButton={this.props.hideGetAccessButton}
-              tierAccessLevel={this.props.tierAccessLevel}
               tierAccessLimit={this.props.tierAccessLimit}
               initialAppliedFilters={this.props.initialAppliedFilters}
             />
@@ -89,6 +83,7 @@ class GuppyDataExplorer extends React.Component {
               className='guppy-data-explorer__visualization'
               chartConfig={this.props.chartConfig}
               tableConfig={this.props.tableConfig}
+              survivalAnalysisConfig={this.props.survivalAnalysisConfig}
               buttonConfig={this.props.buttonConfig}
               guppyConfig={this.props.guppyConfig}
               history={this.props.history}
@@ -109,11 +104,11 @@ GuppyDataExplorer.propTypes = {
   guppyConfig: GuppyConfigType.isRequired,
   filterConfig: FilterConfigType.isRequired,
   tableConfig: TableConfigType.isRequired,
+  survivalAnalysisConfig: SurvivalAnalysisConfigType.isRequired,
   chartConfig: ChartConfigType.isRequired,
   buttonConfig: ButtonConfigType.isRequired,
   nodeCountTitle: PropTypes.string,
   history: PropTypes.object.isRequired,
-  tierAccessLevel: PropTypes.string.isRequired,
   tierAccessLimit: PropTypes.number.isRequired,
   getAccessButtonLink: PropTypes.string,
   hideGetAccessButton: PropTypes.bool,

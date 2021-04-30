@@ -4,7 +4,6 @@ import SummaryChartGroup from '../../gen3-ui-component/components/charts/Summary
 import PercentageStackedBarChart from '../../gen3-ui-component/components/charts/PercentageStackedBarChart';
 import Spinner from '../../gen3-ui-component/components/Spinner/Spinner';
 import { components } from '../../params';
-import { tierAccessLevel } from '../../localconf';
 import DataSummaryCardGroup from '../../components/cards/DataSummaryCardGroup';
 import ExplorerTable from '../ExplorerTable';
 import ExplorerSurvivalAnalysis from '../ExplorerSurvivalAnalysis';
@@ -14,8 +13,8 @@ import {
   ButtonConfigType,
   ChartConfigType,
   GuppyConfigType,
+  SurvivalAnalysisConfigType,
 } from '../configTypeDef';
-import { checkForAnySelectedUnaccessibleField } from '../GuppyDataExplorerHelper';
 import './ExplorerVisualization.css';
 
 function ViewContainer({ showIf, children, isLoading }) {
@@ -32,6 +31,14 @@ function ViewContainer({ showIf, children, isLoading }) {
   );
 }
 
+function isSurvivalAnalysisEnabled(survivalAnalysisConfig) {
+  if (survivalAnalysisConfig.hasOwnProperty('result'))
+    for (const resultOption of ['pval', 'risktable', 'survival'])
+      if (survivalAnalysisConfig.result[resultOption]) return true;
+
+  return false;
+}
+
 class ExplorerVisualization extends React.Component {
   constructor(props) {
     super(props);
@@ -39,7 +46,8 @@ class ExplorerVisualization extends React.Component {
 
     const explorerViews = ['summary view'];
     if (props.tableConfig.enabled) explorerViews.push('table view');
-    explorerViews.push('survival analysis');
+    if (isSurvivalAnalysisEnabled(props.survivalAnalysisConfig))
+      explorerViews.push('survival analysis');
 
     this.state = {
       explorerView: explorerViews[0],
@@ -115,15 +123,7 @@ class ExplorerVisualization extends React.Component {
       this.props.tableConfig.fields && this.props.tableConfig.fields.length > 0
         ? this.props.tableConfig.fields
         : this.props.allFields;
-    // don't lock components for libre commons
-    const isComponentLocked =
-      tierAccessLevel !== 'regular'
-        ? false
-        : checkForAnySelectedUnaccessibleField(
-            this.props.aggsData,
-            this.props.accessibleFieldObject,
-            this.props.guppyConfig.accessibleValidationField
-          );
+    const isComponentLocked = this.props.accessibleCount === 0;
     const lockMessage = `The chart is hidden because you are exploring restricted access data and one or more of the values within the chart has a count below the access limit of ${
       this.props.tierAccessLimit
     } ${
@@ -152,6 +152,7 @@ class ExplorerVisualization extends React.Component {
             <ReduxExplorerButtonGroup
               buttonConfig={this.props.buttonConfig}
               guppyConfig={this.props.guppyConfig}
+              accessibleCount={this.props.accessibleCount}
               totalCount={this.props.totalCount}
               downloadRawData={this.props.downloadRawData}
               downloadRawDataByFields={this.props.downloadRawDataByFields}
@@ -164,13 +165,13 @@ class ExplorerVisualization extends React.Component {
               filter={this.props.filter}
               history={this.props.history}
               isLocked={isComponentLocked}
-              isPending={this.props.aggsDataIsLoading}
+              isPending={this.props.isLoadingAggsData}
             />
           </div>
         </div>
         <ViewContainer
           showIf={this.state.explorerView === 'summary view'}
-          isLoading={this.props.aggsDataIsLoading}
+          isLoading={this.props.isLoadingAggsData}
         >
           {chartData.countItems.length > 0 && (
             <div className='guppy-explorer-visualization__summary-cards'>
@@ -219,7 +220,7 @@ class ExplorerVisualization extends React.Component {
         {this.props.tableConfig.enabled && (
           <ViewContainer
             showIf={this.state.explorerView === 'table view'}
-            isLoading={this.props.aggsDataIsLoading}
+            isLoading={this.props.isLoadingRawData}
           >
             <ExplorerTable
               className='guppy-explorer-visualization__table'
@@ -229,41 +230,49 @@ class ExplorerVisualization extends React.Component {
               }}
               fetchAndUpdateRawData={this.props.fetchAndUpdateRawData}
               rawData={this.props.rawData}
+              accessibleCount={this.props.accessibleCount}
               totalCount={this.props.totalCount}
               guppyConfig={this.props.guppyConfig}
               isLocked={isComponentLocked}
             />
           </ViewContainer>
         )}
-        <ViewContainer showIf={this.state.explorerView === 'survival analysis'}>
-          <ExplorerSurvivalAnalysis
-            aggsData={this.props.aggsData}
-            fieldMapping={this.props.guppyConfig.fieldMapping}
-            filter={this.props.filter}
-          />
-        </ViewContainer>
+        {isSurvivalAnalysisEnabled(this.props.survivalAnalysisConfig) && (
+          <ViewContainer
+            showIf={this.state.explorerView === 'survival analysis'}
+          >
+            <ExplorerSurvivalAnalysis
+              aggsData={this.props.aggsData}
+              config={this.props.survivalAnalysisConfig}
+              fieldMapping={this.props.guppyConfig.fieldMapping}
+              filter={this.props.filter}
+            />
+          </ViewContainer>
+        )}
       </div>
     );
   }
 }
 
 ExplorerVisualization.propTypes = {
+  accessibleCount: PropTypes.number, // inherited from GuppyWrapper
   totalCount: PropTypes.number, // inherited from GuppyWrapper
+  isLoadingAggsData: PropTypes.bool, // inherited from GuppyWrapper
   aggsData: PropTypes.object, // inherited from GuppyWrapper
-  aggsDataIsLoading: PropTypes.bool, // inherited from GuppyWrapper
   filter: PropTypes.object, // inherited from GuppyWrapper
   fetchAndUpdateRawData: PropTypes.func, // inherited from GuppyWrapper
   downloadRawDataByFields: PropTypes.func, // inherited from GuppyWrapper
   downloadRawData: PropTypes.func, // inherited from GuppyWrapper
   getTotalCountsByTypeAndFilter: PropTypes.func, // inherited from GuppyWrapper
   downloadRawDataByTypeAndFilter: PropTypes.func, // inherited from GuppyWrapper
+  isLoadingRawData: PropTypes.bool, // inherited from GuppyWrapper
   rawData: PropTypes.array, // inherited from GuppyWrapper
   allFields: PropTypes.array, // inherited from GuppyWrapper
-  accessibleFieldObject: PropTypes.object, // inherited from GuppyWrapper
   history: PropTypes.object.isRequired,
   className: PropTypes.string,
   chartConfig: ChartConfigType,
   tableConfig: TableConfigType,
+  survivalAnalysisConfig: SurvivalAnalysisConfigType,
   buttonConfig: ButtonConfigType,
   guppyConfig: GuppyConfigType,
   nodeCountTitle: PropTypes.string.isRequired,
@@ -271,21 +280,23 @@ ExplorerVisualization.propTypes = {
 };
 
 ExplorerVisualization.defaultProps = {
+  accessibleCount: 0,
   totalCount: 0,
+  isLoadingAggsDat: false,
   aggsData: {},
-  aggsDataIsLoading: false,
   filter: {},
   fetchAndUpdateRawData: () => {},
   downloadRawDataByFields: () => {},
   downloadRawData: () => {},
   getTotalCountsByTypeAndFilter: () => {},
   downloadRawDataByTypeAndFilter: () => {},
+  isLoadingRawData: false,
   rawData: [],
   allFields: [],
-  accessibleFieldObject: {},
   className: '',
   chartConfig: {},
   tableConfig: {},
+  survivalAnalysisConfig: {},
   buttonConfig: {},
   guppyConfig: {},
 };

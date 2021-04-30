@@ -1,12 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import GuppyDataExplorer from './GuppyDataExplorer';
-import {
-  guppyUrl,
-  tierAccessLevel,
-  tierAccessLimit,
-  explorerConfig,
-} from '../localconf';
+import { guppyUrl, tierAccessLimit, explorerConfig } from '../localconf';
 import { capitalizeFirstLetter } from '../utils';
 import './GuppyExplorer.css';
 
@@ -84,6 +79,9 @@ class Explorer extends React.Component {
             chartConfig={explorerConfig[this.state.tab].charts}
             filterConfig={explorerConfig[this.state.tab].filters}
             tableConfig={explorerConfig[this.state.tab].table}
+            survivalAnalysisConfig={
+              explorerConfig[this.state.tab].survivalAnalysis
+            }
             guppyConfig={{
               path: guppyUrl,
               ...explorerConfig[this.state.tab].guppyConfig,
@@ -97,7 +95,6 @@ class Explorer extends React.Component {
                 explorerConfig[this.state.tab].sevenBridgesExportURL,
             }}
             history={this.props.history}
-            tierAccessLevel={tierAccessLevel}
             tierAccessLimit={tierAccessLimit}
             getAccessButtonLink={
               explorerConfig[this.state.tab].getAccessButtonLink

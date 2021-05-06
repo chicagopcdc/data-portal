@@ -99,7 +99,7 @@
     "mock-local-storage": "^1.1.17",
     "node-fetch": "^1.7.3",
     "npm": "^6.14.11",
-    "nunjucks": "^3.2.2",
+    "nunjucks": "^3.2.3",
     "postcss": "^8.2.4",
     "postcss-inline-svg": "^5.0.0",
     "postcss-loader": "^4.2.0",

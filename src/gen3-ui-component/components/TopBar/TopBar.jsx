@@ -13,7 +13,7 @@ function TopBar({ tabItems, user, activeTab, onActiveTab, onLogout }) {
     <div className='top-bar'>
       <header className='top-bar__header'>
         <nav className='top-bar__nav'>
-          {tabItems.map((item) =>
+          {tabItems.map((item, i) =>
             item.link.startsWith('http') ? (
               <a
                 className='top-bar__link'
@@ -26,6 +26,7 @@ function TopBar({ tabItems, user, activeTab, onActiveTab, onLogout }) {
                   item={item}
                   isActive={isActive(item.link)}
                   onActiveTab={() => onActiveTab(item.link)}
+                  tabIndex={i}
                 />
               </a>
             ) : (
@@ -34,6 +35,7 @@ function TopBar({ tabItems, user, activeTab, onActiveTab, onLogout }) {
                   item={item}
                   isActive={isActive(item.link)}
                   onActiveTab={() => onActiveTab(item.link)}
+                  tabIndex={i}
                 />
               </Link>
             )
@@ -45,6 +47,7 @@ function TopBar({ tabItems, user, activeTab, onActiveTab, onLogout }) {
                   name: user.username,
                   iconClassName: 'g3-icon g3-icon--exit',
                 }}
+                tabIndex={tabItems.length}
               />
             </button>
           )}

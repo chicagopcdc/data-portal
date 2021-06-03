@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Switch from '@material-ui/core/Switch';
 import Select from 'react-select';
-import { jsonToString, overrideSelectTheme } from '../utils';
+import { jsonToString } from '../utils';
 import SubmitNodeForm from './SubmitNodeForm';
 import './SubmitForm.less';
 
@@ -122,7 +122,13 @@ class SubmitForm extends Component {
               value={this.state.chosenNode}
               onChange={updateChosenNode}
               className='submit-form__select'
-              theme={overrideSelectTheme}
+              theme={(theme) => ({
+                ...theme,
+                colors: {
+                  ...theme.colors,
+                  primary: 'var(--pcdc-color__primary)',
+                },
+              })}
             />
           )}
         </form>

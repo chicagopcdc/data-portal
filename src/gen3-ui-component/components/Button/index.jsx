@@ -25,7 +25,6 @@ class Button extends Component {
         type='button'
         className={`${this.props.className} g3-button ${buttonTypeClassName}`}
         onClick={(e) => this.handleClick(e)}
-        onKeyPress={(e) => e.stopPropagation()}
         {...otherAttrs}
       >
         {this.props.leftIcon && (

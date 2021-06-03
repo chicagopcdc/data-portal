@@ -6,7 +6,7 @@ import IconComponent from '../Icon';
 class IconicLink extends React.Component {
   renderButton(styles) {
     return this.props.dictIcons !== undefined ? (
-      <>
+      <button className={this.props.buttonClassName} type='button'>
         {this.props.caption}&ensp;
         <IconComponent
           dictIcons={this.props.dictIcons}
@@ -14,9 +14,11 @@ class IconicLink extends React.Component {
           height='14px'
           svgStyles={{ ...styles }}
         />
-      </>
+      </button>
     ) : (
-      this.props.caption
+      <button className={this.props.buttonClassName} type='button'>
+        {this.props.caption}
+      </button>
     );
   }
 
@@ -38,7 +40,7 @@ class IconicLink extends React.Component {
     }
     return (
       <Link
-        className={`button ${this.props.className} ${this.props.buttonClassName}`}
+        className={this.props.className}
         to={this.props.link}
         target={this.props.target}
       >

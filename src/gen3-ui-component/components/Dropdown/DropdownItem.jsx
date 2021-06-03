@@ -6,6 +6,7 @@ function DropdownItem({
   leftIcon,
   rightIcon,
   onClick,
+  tabIndex,
   disabled,
   children,
 }) {
@@ -17,18 +18,13 @@ function DropdownItem({
 
   return (
     <div
+      role='button'
+      tabIndex={tabIndex}
       className={`${className} g3-dropdown__item ${
         disabled ? 'g3-dropdown__item--disabled' : ''
       }`}
       onClick={handleClick}
-      onKeyPress={(e) => {
-        if (e.charCode === 13 || e.charCode === 32) {
-          e.preventDefault();
-          handleClick();
-        }
-      }}
-      role='button'
-      tabIndex={0}
+      onKeyPress={handleClick}
     >
       {leftIcon && (
         <i
@@ -50,6 +46,7 @@ DropdownItem.propTypes = {
   leftIcon: PropTypes.string,
   rightIcon: PropTypes.string,
   onClick: PropTypes.func,
+  tabIndex: PropTypes.number,
   disabled: PropTypes.bool,
   children: PropTypes.oneOfType([
     PropTypes.arrayOf(PropTypes.node),
@@ -63,6 +60,7 @@ DropdownItem.defaultProps = {
   rightIcon: null,
   onClick: () => {},
   disabled: false,
+  tabIndex: 0, // override by Dropdown component
 };
 
 export default DropdownItem;

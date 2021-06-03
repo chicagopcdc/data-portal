@@ -1,6 +1,6 @@
 .g3-chip {
   box-sizing: border-box;
-  font-size: 12px;
+  font-size: 14px;
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
@@ -14,13 +14,14 @@
 }
 
 .g3-chip__text {
-  margin: 0 4px;
+  margin: 4px;
   text-align: center;
 }
 
 .g3-chip__clear-btn {
+  flex: 0 0 18px;
   border-left: 1px solid var(--g3-color__silver);
-  padding: 0 4px;
+  padding: 4px 6px;
   display: flex;
   justify-content: center;
   align-items: center;

@@ -133,42 +133,27 @@ class Canvas extends React.Component {
           <div
             className='canvas__zoom-button canvas__zoom-button--reset'
             onClick={this.handleReset}
-            onKeyPress={(e) => {
-              if (e.charCode === 13 || e.charCode === 32) {
-                e.preventDefault();
-                this.handleReset();
-              }
-            }}
+            onKeyPress={this.handleReset}
             role='button'
-            tabIndex={0}
+            tabIndex={-1}
           >
             <i className='canvas__zoom-icon g3-icon g3-icon--reset' />
           </div>
           <div
             className='canvas__zoom-button canvas__zoom-button--zoom-in'
             onClick={this.handleZoomIn}
-            onKeyPress={(e) => {
-              if (e.charCode === 13 || e.charCode === 32) {
-                e.preventDefault();
-                this.handleZoomIn();
-              }
-            }}
+            onKeyPress={this.handleZoomIn}
             role='button'
-            tabIndex={0}
+            tabIndex={-1}
           >
             <i className='canvas__zoom-icon g3-icon g3-icon--plus' />
           </div>
           <div
             className='canvas__zoom-button canvas__zoom-button--zoom-out'
             onClick={this.handleZoomOut}
-            onKeyPress={(e) => {
-              if (e.charCode === 13 || e.charCode === 32) {
-                e.preventDefault();
-                this.handleZoomOut();
-              }
-            }}
+            onKeyPress={this.handleZoomOut}
             role='button'
-            tabIndex={0}
+            tabIndex={-1}
           >
             <i className='canvas__zoom-icon canvas__zoom-icon--zoom-in g3-icon g3-icon--minus' />
           </div>

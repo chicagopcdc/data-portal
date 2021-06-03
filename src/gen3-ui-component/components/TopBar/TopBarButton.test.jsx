@@ -18,11 +18,16 @@ const activeClassName = '.top-bar-button--active';
 
 describe('<TopBar />', () => {
   const internalButton = mount(
-    <TopBarButton item={internalLink} onActiveTab={onActiveTab} isActive />
+    <TopBarButton
+      item={internalLink}
+      onActiveTab={onActiveTab}
+      tabIndex={0}
+      isActive
+    />
   );
 
   const externalButton = mount(
-    <TopBarButton item={externalLink} onActiveTab={onActiveTab} />
+    <TopBarButton item={externalLink} onActiveTab={onActiveTab} tabIndex={0} />
   );
 
   it('renders', () => {

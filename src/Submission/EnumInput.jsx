@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
-import { overrideSelectTheme } from '../utils';
 import './EnumInput.less';
 
 class EnumInput extends Component {
@@ -52,7 +51,13 @@ class EnumInput extends Component {
           value={this.state.chosenEnum}
           onChange={onChangeEnumWrapper}
           className='enum-input__select'
-          theme={overrideSelectTheme}
+          theme={(theme) => ({
+            ...theme,
+            colors: {
+              ...theme.colors,
+              primary: 'var(--pcdc-color__primary)',
+            },
+          })}
         />
         {this.props.required && (
           <span className='enum-input__required-notification'> {'*'} </span>

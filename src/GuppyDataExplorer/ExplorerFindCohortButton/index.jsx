@@ -4,7 +4,6 @@ import Select from 'react-select';
 import SimplePopup from '../../components/SimplePopup';
 import SimpleInputField from '../../components/SimpleInputField';
 import Button from '../../gen3-ui-component/components/Button';
-import { overrideSelectTheme } from '../../utils';
 import { fetchWithCreds } from '../../actions';
 import { getGQLFilter } from '../../GuppyComponents/Utils/queries';
 import { stringifyFilters } from '../ExplorerCohort/utils';
@@ -76,7 +75,13 @@ function ExplorerFindCohortButton({ filter }) {
                     value={selected}
                     autoFocus
                     clearable={false}
-                    theme={overrideSelectTheme}
+                    theme={(theme) => ({
+                      ...theme,
+                      colors: {
+                        ...theme.colors,
+                        primary: 'var(--pcdc-color__primary)',
+                      },
+                    })}
                     onChange={setSelected}
                   />
                 }

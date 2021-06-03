@@ -25,13 +25,8 @@ class DictionarySearchHistory extends React.Component {
             <span
               className='dictionary-search-history__clear'
               onClick={this.handleClearHistory}
-              onKeyPress={(e) => {
-                if (e.charCode === 13 || e.charCode === 32) {
-                  e.preventDefault();
-                  this.handleClearHistory();
-                }
-              }}
               role='button'
+              onKeyPress={this.handleClearHistory}
               tabIndex={0}
             >
               Clear History
@@ -49,13 +44,8 @@ class DictionarySearchHistory extends React.Component {
                     className='dictionary-search-history__item'
                     key={item.keywordStr}
                     onClick={() => this.handleClick(item.keywordStr)}
-                    onKeyPress={(e) => {
-                      if (e.charCode === 13 || e.charCode === 32) {
-                        e.preventDefault();
-                        this.handleClick(item.keywordStr);
-                      }
-                    }}
                     role='button'
+                    onKeyPress={() => this.handleClick(item.keywordStr)}
                     tabIndex={0}
                   >
                     <span className='dictionary-search-history__item-keyword'>

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import AceEditor from 'react-ace';
 import 'ace-builds/src-noconflict/mode-json';
@@ -21,8 +21,6 @@ const SubmitTSV = ({
   onFileChange,
   onFinish,
 }) => {
-  const fileUploadRef = useRef(null);
-
   //
   // Reads the bytes from the tsv/json file the user submits,
   // then notify onUploadClick listener which might stuff data
@@ -63,9 +61,12 @@ const SubmitTSV = ({
   return (
     <form>
       <div className='submit-tsv'>
-        <label id='cd-submit-tsv__upload-button' htmlFor='file-upload'>
+        <label
+          className='button-primary-white submit-tsv__upload-button'
+          id='cd-submit-tsv__upload-button'
+          htmlFor='file-upload'
+        >
           <input
-            ref={fileUploadRef}
             type='file'
             onClick={resetFileBeforeUpdate}
             onChange={processUpload}
@@ -73,19 +74,7 @@ const SubmitTSV = ({
             className='submit-tsv__file-upload'
             id='file-upload'
           />
-          <span
-            className='button-primary-white submit-tsv__upload-button'
-            onKeyPress={(e) => {
-              if (e.charCode === 13 || e.charCode === 32) {
-                e.preventDefault();
-                fileUploadRef.current?.click();
-              }
-            }}
-            role='button'
-            tabIndex={0}
-          >
-            Upload file
-          </span>
+          Upload file
         </label>
         &emsp;
         {submission.file && (

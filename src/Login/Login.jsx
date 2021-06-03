@@ -3,7 +3,6 @@ import PropTypes from 'prop-types'; // see https://github.com/facebook/prop-type
 import Select, { createFilter } from 'react-select';
 import Button from '../gen3-ui-component/components/Button';
 import { basename, loginPath } from '../localconf';
-import { overrideSelectTheme } from '../utils';
 
 import './Login.less';
 
@@ -126,7 +125,13 @@ class Login extends React.Component {
                           this.state.selectedLoginOption &&
                           this.state.selectedLoginOption[i]
                         }
-                        theme={overrideSelectTheme}
+                        theme={(theme) => ({
+                          ...theme,
+                          colors: {
+                            ...theme.colors,
+                            primary: 'var(--pcdc-color__primary)',
+                          },
+                        })}
                       />
                     )
                   }

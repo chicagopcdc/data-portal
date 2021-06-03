@@ -2,7 +2,12 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './TopBarButton.css';
 
-const TopBarButton = ({ item, onActiveTab = () => {}, isActive = false }) => (
+const TopBarButton = ({
+  item,
+  onActiveTab = () => {},
+  isActive = false,
+  tabIndex,
+}) => (
   <div
     className={
       isActive
@@ -12,7 +17,7 @@ const TopBarButton = ({ item, onActiveTab = () => {}, isActive = false }) => (
     onClick={onActiveTab}
     onKeyDown={onActiveTab}
     role='button'
-    tabIndex={0}
+    tabIndex={tabIndex}
   >
     {item.name}
     {item.iconClassName ? (

@@ -32,6 +32,7 @@ const ErrorWorkspacePlaceholder = React.lazy(() =>
 );
 const GraphQLQuery = React.lazy(() => import('./GraphQLEditor/ReduxGqlEditor'));
 const GuppyDataExplorer = React.lazy(() => import('./GuppyDataExplorer'));
+const GuppySubject = React.lazy(() => import('./GuppySubject'));
 const Indexing = React.lazy(() => import('./Indexing/Indexing'));
 const IndexPage = React.lazy(() => import('./Index/page'));
 const PrivacyPolicy = React.lazy(() => import('./PrivacyPolicy/PrivacyPolicy'));
@@ -245,6 +246,14 @@ function App({ store }) {
                     </ProtectedContent>
                   );
                 }}
+              />
+              <Route
+                path='/subjects/:id'
+                component={(props) => (
+                  <ProtectedContent {...props}>
+                    <GuppySubject />
+                  </ProtectedContent>
+                )}
               />
               <Route
                 path='/explorer'

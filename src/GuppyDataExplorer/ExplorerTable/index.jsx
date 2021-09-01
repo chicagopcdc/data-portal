@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import pluralize from 'pluralize';
+import { Link } from 'react-router-dom';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 import Tooltip from 'rc-tooltip';
@@ -229,6 +230,14 @@ class ExplorerTable extends React.Component {
               </div>
             );
           }
+          case 'subject_submitter_id':
+            return (
+              <div>
+                <Link to={`/subjects/${valueStr}`}>
+                  <span title={valueStr}>{valueStr}</span>
+                </Link>
+              </div>
+            );
           default:
             return (
               <div>

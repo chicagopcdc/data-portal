@@ -18,6 +18,11 @@ export const GuppyConfigType = PropTypes.shape({
 });
 
 export const FilterConfigType = PropTypes.shape({
+  anchor: PropTypes.shape({
+    field: PropTypes.string,
+    options: PropTypes.arrayOf(PropTypes.string),
+    tabs: PropTypes.arrayOf(PropTypes.string),
+  }),
   tabs: PropTypes.arrayOf(
     PropTypes.shape({
       title: PropTypes.string,
@@ -29,6 +34,7 @@ export const FilterConfigType = PropTypes.shape({
 export const TableConfigType = PropTypes.shape({
   enabled: PropTypes.bool,
   fields: PropTypes.arrayOf(PropTypes.string),
+  ordered: PropTypes.bool,
 });
 
 export const ButtonConfigType = PropTypes.shape({
@@ -61,5 +67,6 @@ export const SurvivalAnalysisConfigType = PropTypes.shape({
 });
 
 export const PatientIdsConfigType = PropTypes.shape({
-  enabled: PropTypes.bool,
+  filter: PropTypes.bool,
+  export: PropTypes.bool,
 });

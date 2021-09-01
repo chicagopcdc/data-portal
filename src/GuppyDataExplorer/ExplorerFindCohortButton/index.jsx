@@ -8,12 +8,12 @@ import { overrideSelectTheme } from '../../utils';
 import { fetchWithCreds } from '../../actions';
 import { getGQLFilter } from '../../GuppyComponents/Utils/queries';
 import { stringifyFilters } from '../ExplorerCohort/utils';
-import '../ExplorerCohort/typedef';
+import '../typedef';
 import './ExplorerFindCohortButton.css';
 
 /**
  * @param {Object} props
- * @param {ExplorerFilters} props.filter
+ * @param {FilterState} props.filter
  */
 function ExplorerFindCohortButton({ filter }) {
   const emptyOption = {
@@ -39,7 +39,7 @@ function ExplorerFindCohortButton({ filter }) {
   async function handleFind() {
     try {
       const { data, response, status } = await fetchWithCreds({
-        path: `/analysis/tools/${selected.value}`,
+        path: `/analysis/tools/external/${selected.value}`,
         method: 'POST',
         body: JSON.stringify({ filter: getGQLFilter(filter) }),
       });

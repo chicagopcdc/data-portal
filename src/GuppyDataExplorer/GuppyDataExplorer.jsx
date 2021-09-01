@@ -18,22 +18,26 @@ import {
   PatientIdsConfigType,
 } from './configTypeDef';
 import './GuppyDataExplorer.css';
+import './typedef';
 
 /**
  * @param {URLSearchParams} searchParams
- * @param {{ tabs: { fields: string[] }[] }} filterConfig
- * @param {{ enabled?: boolean }} patientIdsConfig
+ * @param {FilterConfig} filterConfig
+ * @param {boolean} isAnchorFilterEnabled
+ * @param {PatientIdsConfig} [patientIdsConfig]
  */
 function extractExplorerStateFromURL(
   searchParams,
   filterConfig,
+  isAnchorFilterEnabled,
   patientIdsConfig
 ) {
+  /** @type {FilterState} */
   let initialAppliedFilters = {};
   if (searchParams.has('filter'))
     try {
       const filterInUrl = JSON.parse(decodeURI(searchParams.get('filter')));
-      if (validateFilter(filterInUrl, filterConfig))
+      if (validateFilter(filterInUrl, filterConfig, isAnchorFilterEnabled))
         initialAppliedFilters = filterInUrl;
       else throw new Error(undefined);
     } catch (e) {
@@ -42,7 +46,7 @@ function extractExplorerStateFromURL(
     }
 
   // eslint-disable-next-line no-nested-ternary
-  const patientIds = patientIdsConfig?.enabled
+  const patientIds = patientIdsConfig?.filter
     ? searchParams.has('patientIds')
       ? searchParams.get('patientIds').split(',')
       : []
@@ -51,16 +55,42 @@ function extractExplorerStateFromURL(
   return { initialAppliedFilters, patientIds };
 }
 
+/**
+ * @typedef {Object} GuppyDataExplorerProps
+ * @property {GuppyConfig} guppyConfig
+ * @property {FilterConfig} filterConfig
+ * @property {TableConfig} tableConfig
+ * @property {SurvivalAnalysisConfig} survivalAnalysisConfig
+ * @property {PatientIdsConfig} patientIdsConfig
+ * @property {ChartConfig} chartConfig
+ * @property {ButtonConfig} buttonConfig
+ * @property {string} nodeCountTitle
+ * @property {import('history').History} history
+ * @property {number} tierAccessLimit
+ * @property {string} getAccessButtonLink
+ * @property {boolean} hideGetAccessButton
+ * @property {{ [x:string]: OptionFilter }} adminAppliedPreFilters
+ */
+
+/**
+ * @typedef {Object} GuppyDataExplorerState
+ * @property {FilterState} initialAppliedFilters
+ * @property {string[]} patientIds
+ */
+
+/** @augments {React.Component<GuppyDataExplorerProps, GuppyDataExplorerState>} */
 class GuppyDataExplorer extends React.Component {
+  /** @param {GuppyDataExplorerProps} props */
   constructor(props) {
     super(props);
 
     const { initialAppliedFilters, patientIds } = extractExplorerStateFromURL(
       new URLSearchParams(props.history.location.search),
       props.filterConfig,
+      props.filterConfig.anchor !== undefined,
       props.patientIdsConfig
     );
-
+    /** @type {GuppyDataExplorerState} */
     this.state = {
       initialAppliedFilters,
       patientIds,
@@ -77,6 +107,7 @@ class GuppyDataExplorer extends React.Component {
       const { initialAppliedFilters, patientIds } = extractExplorerStateFromURL(
         new URLSearchParams(this.props.history.location.search),
         this.props.filterConfig,
+        this.props.filterConfig.anchor !== undefined,
         this.props.patientIdsConfig
       );
       this._hasAppliedFilters = Object.keys(initialAppliedFilters).length > 0;
@@ -89,6 +120,7 @@ class GuppyDataExplorer extends React.Component {
     this._isMounted = false;
   }
 
+  /** @param {FilterState} filter */
   handleFilterChange = (filter) => {
     const searchParams = new URLSearchParams(
       this.props.history.location.search
@@ -97,6 +129,7 @@ class GuppyDataExplorer extends React.Component {
 
     if (filter && Object.keys(filter).length > 0) {
       this._hasAppliedFilters = true;
+      /** @type {string[]} */
       const allSearchFields = [];
       for (const { searchFields } of this.props.filterConfig.tabs)
         if (searchFields?.length > 0) allSearchFields.push(...searchFields);
@@ -125,8 +158,9 @@ class GuppyDataExplorer extends React.Component {
       });
   };
 
-  handlePatientIdsChange = this.props.patientIdsConfig?.enabled
-    ? (patientIds) => {
+  handlePatientIdsChange = this.props.patientIdsConfig?.filter
+    ? /** @param {string[]} patientIds */
+      (patientIds) => {
         const searchParams = new URLSearchParams(
           this.props.history.location.search
         );
@@ -145,6 +179,7 @@ class GuppyDataExplorer extends React.Component {
       }
     : () => {};
 
+  /** @param {{ filters: FilterState }} args */
   updateInitialAppliedFilters = ({ filters }) => {
     this._hasAppliedFilters = Object.keys(filters).length > 0;
     if (this._isMounted) this.setState({ initialAppliedFilters: filters });
@@ -162,51 +197,79 @@ class GuppyDataExplorer extends React.Component {
           <GuppyWrapper
             adminAppliedPreFilters={this.props.adminAppliedPreFilters}
             initialAppliedFilters={this.state.initialAppliedFilters}
+            chartConfig={this.props.chartConfig}
             filterConfig={this.props.filterConfig}
             guppyConfig={this.props.guppyConfig}
             onFilterChange={this.handleFilterChange}
             rawDataFields={this.props.tableConfig.fields}
             patientIds={this.state.patientIds}
           >
-            <ExplorerTopMessageBanner
-              className='guppy-data-explorer__top-banner'
-              getAccessButtonLink={this.props.getAccessButtonLink}
-              hideGetAccessButton={this.props.hideGetAccessButton}
-            />
-            <ExplorerCohort
-              className='guppy-data-explorer__cohort'
-              onOpenCohort={this.updateInitialAppliedFilters}
-              onDeleteCohort={this.updateInitialAppliedFilters}
-            />
-            <ExplorerFilter
-              className='guppy-data-explorer__filter'
-              filterConfig={this.props.filterConfig}
-              guppyConfig={this.props.guppyConfig}
-              getAccessButtonLink={this.props.getAccessButtonLink}
-              hideGetAccessButton={this.props.hideGetAccessButton}
-              tierAccessLimit={this.props.tierAccessLimit}
-              adminAppliedPreFilters={this.props.adminAppliedPreFilters}
-              initialAppliedFilters={this.state.initialAppliedFilters}
-              patientIds={this.state.patientIds}
-              hasAppliedFilters={this._hasAppliedFilters}
-              onFilterClear={this.clearFilters}
-              onPatientIdsChange={this.handlePatientIdsChange}
-            />
-            <ExplorerVisualization
-              className='guppy-data-explorer__visualization'
-              chartConfig={this.props.chartConfig}
-              tableConfig={this.props.tableConfig}
-              survivalAnalysisConfig={this.props.survivalAnalysisConfig}
-              buttonConfig={this.props.buttonConfig}
-              guppyConfig={this.props.guppyConfig}
-              patientIdsConfig={this.props.patientIdsConfig}
-              history={this.props.history}
-              nodeCountTitle={
-                this.props.guppyConfig.nodeCountTitle ||
-                capitalizeFirstLetter(this.props.guppyConfig.dataType)
-              }
-              tierAccessLimit={this.props.tierAccessLimit}
-            />
+            {(data) => (
+              <>
+                <ExplorerTopMessageBanner
+                  className='guppy-data-explorer__top-banner'
+                  getAccessButtonLink={this.props.getAccessButtonLink}
+                  hideGetAccessButton={this.props.hideGetAccessButton}
+                  accessibleCount={data.accessibleCount}
+                  totalCount={data.totalCount}
+                />
+                <ExplorerCohort
+                  className='guppy-data-explorer__cohort'
+                  onOpenCohort={this.updateInitialAppliedFilters}
+                  onDeleteCohort={this.updateInitialAppliedFilters}
+                  filter={data.filter}
+                />
+                <ExplorerFilter
+                  adminAppliedPreFilters={this.props.adminAppliedPreFilters}
+                  className='guppy-data-explorer__filter'
+                  filterConfig={this.props.filterConfig}
+                  guppyConfig={this.props.guppyConfig}
+                  hasAppliedFilters={this._hasAppliedFilters}
+                  initialAppliedFilters={this.state.initialAppliedFilters}
+                  onFilterClear={this.clearFilters}
+                  onPatientIdsChange={this.handlePatientIdsChange}
+                  patientIds={this.state.patientIds}
+                  tierAccessLimit={this.props.tierAccessLimit}
+                  filter={data.filter}
+                  initialTabsOptions={data.initialTabsOptions}
+                  onAnchorValueChange={data.onAnchorValueChange}
+                  onFilterChange={data.onFilterChange}
+                  tabsOptions={data.tabsOptions}
+                />
+                <ExplorerVisualization
+                  className='guppy-data-explorer__visualization'
+                  chartConfig={this.props.chartConfig}
+                  tableConfig={this.props.tableConfig}
+                  survivalAnalysisConfig={this.props.survivalAnalysisConfig}
+                  buttonConfig={this.props.buttonConfig}
+                  guppyConfig={this.props.guppyConfig}
+                  patientIdsConfig={this.props.patientIdsConfig}
+                  nodeCountTitle={
+                    this.props.guppyConfig.nodeCountTitle ||
+                    capitalizeFirstLetter(this.props.guppyConfig.dataType)
+                  }
+                  tierAccessLimit={this.props.tierAccessLimit}
+                  accessibleCount={data.accessibleCount}
+                  aggsData={data.aggsData}
+                  aggsChartData={data.aggsChartData}
+                  allFields={data.allFields}
+                  filter={data.filter}
+                  isLoadingAggsData={data.isLoadingAggsData}
+                  isLoadingRawData={data.isLoadingRawData}
+                  rawData={data.rawData}
+                  totalCount={data.totalCount}
+                  downloadRawData={data.downloadRawData}
+                  downloadRawDataByFields={data.downloadRawDataByFields}
+                  downloadRawDataByTypeAndFilter={
+                    data.downloadRawDataByTypeAndFilter
+                  }
+                  fetchAndUpdateRawData={data.fetchAndUpdateRawData}
+                  getTotalCountsByTypeAndFilter={
+                    data.getTotalCountsByTypeAndFilter
+                  }
+                />
+              </>
+            )}
           </GuppyWrapper>
         </div>
       </ExplorerErrorBoundary>

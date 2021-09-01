@@ -1,12 +1,25 @@
-/*
+import './typedef';
+
+/**
  * Buttons are grouped by their dropdownId value.
  * This function calculates and groups buttons under the same dropdown,
  * and return a map of dropdown ID and related infos for that dropdown:
  *   cnt: how many buttons under this dropdown
  *   dropdownConfig: infos for this dropdown, e.g. "title"
  *   buttonConfigs: a list of button configs (includes buttion title, button type, etc.)
+ * @param {Object} config
+ * @param {SingleButtonConfig[]} config.buttons
+ * @param {DropdownsConfig} config.dropdowns
  */
 export const calculateDropdownButtonConfigs = (config) => {
+  /**
+   * @typedef {Object} SingleDropdownButtonConfig
+   * @property {number} cnt
+   * @property {{ title: string }} dropdownConfig
+   * @property {SingleButtonConfig[]} buttonConfigs
+   */
+
+  /** @type {false | { [x: string]: SingleDropdownButtonConfig }} */
   const dropdownConfig =
     config &&
     config.dropdowns &&
@@ -34,11 +47,11 @@ export const calculateDropdownButtonConfigs = (config) => {
   return dropdownConfig;
 };
 
-/*
+/**
  * Humanize a number
  * @param {number} number - a integer to convert
  * @param {number} fixedPoint - fixzed point position
- * @returns {string|number} the humanized number
+ * @returns the humanized number
  */
 export const humanizeNumber = (number, fixedPoint = 2) => {
   const largeNumberNames = {
@@ -85,26 +98,37 @@ function isRangeFilter(value) {
   );
 }
 
+function isValid(filterContent) {
+  return (
+    isPlainObject(filterContent) &&
+    (isTextFilter(filterContent) || isRangeFilter(filterContent))
+  );
+}
+
 /**
  * Validates the provide filter value based on configuration.
  * Performs the following checks:
  * - filter value is a plain object
  * - filter keys include only fields specified in the configuration
  * @param {*} value
- * @param {{ tabs: { fields: string[] }[] }} filterConfig
+ * @param {FilterConfig} filterConfig
+ * @param {boolean} isAnchorFilterEnabled
  */
-export function validateFilter(value, filterConfig) {
+export function validateFilter(value, filterConfig, isAnchorFilterEnabled) {
   if (!isPlainObject(value)) return false;
 
   const allFields = filterConfig.tabs.flatMap(({ fields }) => fields);
   const testFieldSet = new Set(allFields);
-  for (const [field, filterContent] of Object.entries(value))
-    if (
-      isPlainObject(filterContent) &&
-      (isTextFilter(filterContent) || isRangeFilter(filterContent))
-    )
-      testFieldSet.add(field);
+  for (const [field, filterContent] of Object.entries(value)) {
+    if (isAnchorFilterEnabled && 'filter' in filterContent)
+      for (const [anchoredField, anchoredfilterContent] of Object.entries(
+        filterContent.filter
+      ))
+        if (isValid(anchoredfilterContent)) testFieldSet.add(anchoredField);
+        else return false;
+    else if (isValid(filterContent)) testFieldSet.add(field);
     else return false;
+  }
 
   return allFields.length === testFieldSet.size;
 }

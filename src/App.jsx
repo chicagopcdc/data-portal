@@ -16,8 +16,8 @@ import {
   dev,
   enableResourceBrowser,
   gaDebug,
-  // workspaceUrl,
-  // workspaceErrorUrl,
+  workspaceUrl,
+  workspaceErrorUrl,
 } from './localconf';
 import { gaTracking } from './params';
 import GA, { RouteTracker } from './components/GoogleAnalytics';
@@ -40,11 +40,11 @@ const SubmissionPage = React.lazy(() => import('./Submission/page'));
 const ResourceBrowser = React.lazy(() => import('./ResourceBrowser'));
 const UserProfile = React.lazy(() => import('./UserProfile/ReduxUserProfile'));
 // const CoreMetadataPage = React.lazy(() => import('./CoreMetadata/page'));
-// const ErrorWorkspacePlaceholder = React.lazy(() =>
-//   import('./Workspace/ErrorWorkspacePlaceholder')
-// );
+const ErrorWorkspacePlaceholder = React.lazy(() =>
+  import('./Workspace/ErrorWorkspacePlaceholder')
+);
 // const Indexing = React.lazy(() => import('./Indexing/Indexing'));
-// const Workspace = React.lazy(() => import('./Workspace'));
+const Workspace = React.lazy(() => import('./Workspace'));
 
 function App({ store }) {
   return (
@@ -157,6 +157,19 @@ function App({ store }) {
                   </ProtectedContent>
                 </Route>
               )}
+              <Route path='/workspace'>
+                <ProtectedContent>
+                  <Workspace />
+                </ProtectedContent>
+              </Route>
+              <Route
+                path={workspaceUrl}
+                component={ErrorWorkspacePlaceholder}
+              />
+              <Route
+                path={workspaceErrorUrl}
+                component={ErrorWorkspacePlaceholder}
+              />
               <Route path='/:project'>
                 <ProtectedContent>
                   <ProjectSubmission />
@@ -184,20 +197,7 @@ function App({ store }) {
                 <ProtectedContent>
                   <GuppyDataExplorer />
                 </ProtectedContent>
-              </Route>
-              <Route path='/workspace'>
-                <ProtectedContent>
-                  <Workspace />
-                </ProtectedContent>
-              </Route>
-              <Route
-                path={workspaceUrl}
-                component={ErrorWorkspacePlaceholder}
-              />
-              <Route
-                path={workspaceErrorUrl}
-                component={ErrorWorkspacePlaceholder}
-              /> */}
+              </Route> */}
             </Switch>
           </Suspense>
         </Layout>

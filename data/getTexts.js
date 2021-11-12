@@ -1,3 +1,4 @@
+const pluralize = require('pluralize');
 const { params } = require('./parameters');
 const { paramByApp, getGraphQL } = require('./dictionaryHelper');
 
@@ -157,10 +158,15 @@ function getEnumFilterList(config, dict) {
       for (const field of fields) filterSet.add(field);
 
   const enumPropSet = new Set();
-  for (const value of Object.values(dict))
-    if (value.properties !== undefined)
+  for (const [name, value] of Object.entries(dict))
+    if (name !== 'survival_characteristic' && value.properties !== undefined)
       for (const [propName, propValue] of Object.entries(value.properties))
-        if (propValue.enum !== undefined) enumPropSet.add(propName);
+        if (propValue.enum !== undefined)
+          enumPropSet.add(
+            ['subject', 'person'].includes(name)
+              ? propName
+              : `${name.endsWith('s') ? name : pluralize(name)}.${propName}`
+          );
 
   const filterList = Array.from(filterSet);
   const enumFilterSet = new Set();

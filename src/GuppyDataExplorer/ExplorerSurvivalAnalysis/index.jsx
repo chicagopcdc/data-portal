@@ -45,6 +45,25 @@ function ExplorerSurvivalAnalysis() {
     );
   };
 
+  function errorMessage(error) {
+    return (
+      <div className='explorer-survival-analysis__error'>
+        <h1>Error obtaining survival analysis result...</h1>
+        {error?.message ? (
+          <pre className='explorer-survival-analysis__error-message'>
+            <strong>Error message:</strong> {error.message}
+          </pre>
+        ) : null}
+        <p>
+          Please retry by clicking {'"Apply"'} button or refreshing the page. If
+          the problem persists, please contact the administrator (
+          <a href={`mailto:${contactEmail}`}>{contactEmail}</a>) for more
+          information.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className='explorer-survival-analysis'>
       {isUserCompliant ? (
@@ -59,43 +78,29 @@ function ExplorerSurvivalAnalysis() {
             {result.isPending ? (
               <Spinner />
             ) : (
-              <ErrorBoundary
-                fallback={
-                  <div className='explorer-survival-analysis__error'>
-                    <h1>Error obtaining survival analysis result...</h1>
-                    {result.error?.message ? (
-                      <p className='explorer-survival-analysis__error-message'>
-                        <pre>
-                          <strong>Error message:</strong> {result.error.message}
-                        </pre>
-                      </p>
-                    ) : null}
-                    <p>
-                      Please retry by clicking {'"Apply"'} button or refreshing
-                      the page. If the problem persists, please contact the
-                      administrator (
-                      <a href={`mailto:${contactEmail}`}>{contactEmail}</a>) for
-                      more information.
-                    </p>
-                  </div>
-                }
-              >
-                {'survival' in result.parsed && (
-                  <SurvivalPlot
-                    data={result.parsed.survival}
-                    endTime={endTime}
-                    efsFlag={efsFlag}
-                    startTime={startTime}
-                    timeInterval={timeInterval}
-                  />
-                )}
-                {'risktable' in result.parsed && (
-                  <RiskTable
-                    data={result.parsed.risktable}
-                    endTime={endTime}
-                    startTime={startTime}
-                    timeInterval={timeInterval}
-                  />
+              <ErrorBoundary fallback={errorMessage()}>
+                {result.error ? (
+                  errorMessage(Error(result.error))
+                ) : (
+                  <>
+                    {'survival' in result.parsed && (
+                      <SurvivalPlot
+                        data={result.parsed.survival}
+                        endTime={endTime}
+                        efsFlag={efsFlag}
+                        startTime={startTime}
+                        timeInterval={timeInterval}
+                      />
+                    )}
+                    {'risktable' in result.parsed && (
+                      <RiskTable
+                        data={result.parsed.risktable}
+                        endTime={endTime}
+                        startTime={startTime}
+                        timeInterval={timeInterval}
+                      />
+                    )}
+                  </>
                 )}
               </ErrorBoundary>
             )}

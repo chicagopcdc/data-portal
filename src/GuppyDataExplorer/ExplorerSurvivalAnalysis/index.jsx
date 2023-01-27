@@ -48,18 +48,22 @@ function ExplorerSurvivalAnalysis() {
   function errorMessage(error) {
     return (
       <div className='explorer-survival-analysis__error'>
-        <h1>Error obtaining survival analysis result...</h1>
-        {error?.message ? (
-          <pre className='explorer-survival-analysis__error-message'>
-            <strong>Error message:</strong> {error.message}
-          </pre>
-        ) : null}
-        <p>
-          Please retry by clicking {'"Apply"'} button or refreshing the page. If
-          the problem persists, please contact the administrator (
-          <a href={`mailto:${contactEmail}`}>{contactEmail}</a>) for more
-          information.
-        </p>
+        <h1>Unable to generate survival curve</h1>
+        {error?.message && error.message === 'NOT FOUND' ? (
+          <p>
+            The Data Portal was unable to generate a survival curve due to
+            insufficient data. Please check your filter(s) and try again. You
+            may contact <a href={`mailto:${contactEmail}`}>{contactEmail}</a>)
+            if you need further assistance.
+          </p>
+        ) : (
+          <p>
+            Please retry by clicking {'"Apply"'} button or refreshing the page.
+            If the problem persists, please contact the administrator (
+            <a href={`mailto:${contactEmail}`}>{contactEmail}</a>) for more
+            information.
+          </p>
+        )}
       </div>
     );
   }

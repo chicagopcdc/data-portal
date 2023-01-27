@@ -27,9 +27,7 @@ export function fetchResult(body) {
     body: JSON.stringify(body),
   }).then(({ response, data, status }) => {
     if (status !== 200) {
-      throw status === 404
-        ? 'Not able to find enough data to generate a survival curve'
-        : response.statusText;
+      throw response.statusText;
     }
     return data;
   });

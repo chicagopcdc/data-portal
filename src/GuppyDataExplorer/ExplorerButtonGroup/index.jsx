@@ -642,9 +642,11 @@ class ExplorerButtonGroup extends Component {
     }
     if (buttonConfig.type === 'export-to-pfb') {
       // disable the pfb export button if any other pfb export jobs are running
-      return !(
-        this.state.exportingToTerra || this.state.exportingToSevenBridges
-      );
+      if this.state.exportingToTerra || this.state.exportingToSevenBridges:
+        return false
+ 
+      // TODO remove this to restore to normal after performance issue is solved
+      return '/services/amanuensis' in this.props.user.authz ?? {};
     }
     if (buttonConfig.type === 'export') {
       if (!this.props.buttonConfig.terraExportURL) {

@@ -634,6 +634,13 @@ class ExplorerButtonGroup extends Component {
 
   /** @param {SingleButtonConfig} buttonConfig */
   isButtonEnabled = (buttonConfig) => {
+    // TODO REMOVE when arborist resource performance issue is fixed
+    if (buttonConfig.type === 'export-to-pfb' && ('/services/amanuensis' in this.props.user.authz ?? {})) {
+        return true;
+    }
+    // END TODO
+
+
     if (this.props.isLocked) {
       return !this.props.isLocked;
     }
@@ -642,15 +649,9 @@ class ExplorerButtonGroup extends Component {
     }
     if (buttonConfig.type === 'export-to-pfb') {
       // disable the pfb export button if any other pfb export jobs are running
-      if (this.state.exportingToTerra || this.state.exportingToSevenBridges) {
-        return false;
-      }        
- 
-      // TODO remove this to restore to normal after performance issue is solved
-      if ('/services/amanuensis' in this.props.user.authz ?? {}) {
-        return true;
-      }
-      return false;
+      return !(
+        this.state.exportingToTerra || this.state.exportingToSevenBridges
+      );
     }
     if (buttonConfig.type === 'export') {
       if (!this.props.buttonConfig.terraExportURL) {

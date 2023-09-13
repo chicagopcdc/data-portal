@@ -143,7 +143,7 @@ const hostname = typeof window !== 'undefined' ? \`\${window.location.protocol}/
 const components = ${recursiveStringify(components, ['hostname'], 0, 2)};
 const config = ${JSON.stringify(config, null, '  ')};
 const requiredCerts = [${requiredCerts.map((item) => `'${item}'`)}];
-const consortiumList = ${JSON.stringify(consortiumList, null, 2)};
+const consortiumList = [ 'INRG', 'INSTRuCT' ];
 const dictionaryUrl = '${process.env.DICTIONARY_URL}';
 module.exports = { components, config, gaTracking, requiredCerts, consortiumList, dictionaryUrl };
 `;

@@ -16,8 +16,11 @@
 set -e
 
 export APP="${APP:-dev}"
+echo $APP
 export NODE_ENV="${NODE_ENV:-development}"
+echo $NODE_ENV
 export HOSTNAME="${HOSTNAME:-"revproxy-service"}"
+echo $HOSTNAME
 export DICTIONARY_URL="${DICTIONARY_URL:-""}"
 export TIER_ACCESS_LEVEL="${TIER_ACCESS_LEVEL:-"private"}"
 export TIER_ACCESS_LIMIT="${TIER_ACCESS_LIMIT:-"1000"}"
@@ -34,7 +37,7 @@ npm run graphviz-layout
 # run the relay compiler against the graphql schema
 npm run relay
 # generate a parameters.json file by overlaying $APP.json on default.json
-#npm run params
+npm run params
 # run a sanity check to make sure portal config works
 npm run sanity-check
 

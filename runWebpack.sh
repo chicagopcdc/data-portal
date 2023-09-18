@@ -34,7 +34,7 @@ npm run graphviz-layout
 # run the relay compiler against the graphql schema
 npm run relay
 # generate a parameters.json file by overlaying $APP.json on default.json
-npm run params
+#npm run params
 # run a sanity check to make sure portal config works
 npm run sanity-check
 

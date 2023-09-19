@@ -16,11 +16,8 @@
 set -e
 
 export APP="${APP:-dev}"
-echo $APP
 export NODE_ENV="${NODE_ENV:-development}"
-echo $NODE_ENV
 export HOSTNAME="${HOSTNAME:-"revproxy-service"}"
-echo $HOSTNAME
 export DICTIONARY_URL="${DICTIONARY_URL:-""}"
 export TIER_ACCESS_LEVEL="${TIER_ACCESS_LEVEL:-"private"}"
 export TIER_ACCESS_LIMIT="${TIER_ACCESS_LIMIT:-"1000"}"

@@ -5,7 +5,7 @@
 #
 set -eu
 
-export NODE_ENV=pcdc
+export NODE_ENV=production
 bash runWebpack.sh
 
 /usr/sbin/nginx -g 'daemon off;'

@@ -55,6 +55,8 @@ function findFilterElement(label) {
  * @property {(patientIds: string[]) => void} [onPatientIdsChange]
  * @property {string[]} [patientIds]
  * @property {FilterSectionConfig[][]} tabs
+ * @property {Object} filterUIState
+ * @property {(uiState: object) => void} setFilterUIState
  */
 
 const defaultExplorerFilter = {};
@@ -73,6 +75,8 @@ function FilterGroup({
   onPatientIdsChange,
   patientIds,
   tabs,
+  filterUIState,
+  setFilterUIState,
 }) {
   const filterTabs = filterConfig.tabs.map(
     ({ title, fields, searchFields }) => ({
@@ -81,7 +85,7 @@ function FilterGroup({
       fields: searchFields ? searchFields.concat(fields) : fields,
     })
   );
-  const [tabIndex, setTabIndex] = useState(0);
+  const { expandedStatus, tabIndex } = filterUIState;
   const tabTitle = filterTabs[tabIndex].title;
   const showAnchorFilter =
     filterConfig.anchor !== undefined &&
@@ -93,14 +97,10 @@ function FilterGroup({
     filterConfig.anchor !== undefined && anchorValue !== '' && showAnchorFilter
       ? `${filterConfig.anchor.field}:${anchorValue}`
       : '';
-
   const [expandedStatusControl, setExpandedStatusControl] = useState(false);
   const expandedStatusText = expandedStatusControl
     ? 'Collapse all'
     : 'Open all';
-  const [expandedStatus, setExpandedStatus] = useState(
-    getExpandedStatus(filterTabs, false)
-  );
 
   const [filterResults, setFilterResults] = useState(filter);
 
@@ -146,7 +146,10 @@ function FilterGroup({
   function handleToggleSection(sectionIndex, isExpanded) {
     const newExpandedStatus = cloneDeep(expandedStatus);
     newExpandedStatus[tabIndex][sectionIndex] = isExpanded;
-    setExpandedStatus(newExpandedStatus);
+    setFilterUIState({
+      ...filterUIState,
+      expandedStatus: newExpandedStatus
+    });
   }
 
   /** @param {number} sectionIndex */
@@ -276,7 +279,10 @@ function FilterGroup({
   function toggleSections() {
     const newExpandedStatusControl = !expandedStatusControl;
     setExpandedStatusControl(newExpandedStatusControl);
-    setExpandedStatus(getExpandedStatus(filterTabs, newExpandedStatusControl));
+    setFilterUIState({
+      ...filterUIState,
+      expandedStatus: getExpandedStatus(filterTabs, newExpandedStatusControl)
+    });
   }
 
   const filterFinderOptions = filterTabs.map((tab, index) => ({
@@ -298,7 +304,10 @@ function FilterGroup({
   function handleFindFilter({ value }) {
     if (tabIndex !== value.index) {
       filterToFind.current = value.title;
-      setTabIndex(value.index);
+      setFilterUIState({
+        ...filterUIState,
+        tabIndex: value.index
+      });
     } else {
       findFilterElement(value.title);
     }
@@ -321,11 +330,17 @@ function FilterGroup({
             className={'g3-filter-group__tab'.concat(
               tabIndex === index ? ' g3-filter-group__tab--selected' : ''
             )}
-            onClick={() => setTabIndex(index)}
+            onClick={() => setFilterUIState({
+              ...filterUIState,
+              tabIndex: index
+            })}
             onKeyPress={(e) => {
               if (e.charCode === 13 || e.charCode === 32) {
                 e.preventDefault();
-                setTabIndex(index);
+                setFilterUIState({
+                  ...filterUIState,
+                  tabIndex: index
+                });
               }
             }}
             role='button'
@@ -441,6 +456,8 @@ FilterGroup.propTypes = {
   onPatientIdsChange: PropTypes.func,
   patientIds: PropTypes.arrayOf(PropTypes.string),
   tabs: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.object)).isRequired,
+  filterUIState: PropTypes.object.isRequired,
+  setFilterUIState: PropTypes.func.isRequired,
 };
 
 export default FilterGroup;

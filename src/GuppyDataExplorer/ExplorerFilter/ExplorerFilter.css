@@ -6,28 +6,40 @@
 .explorer-filter__title {
   display: inline;
   margin-bottom: 1rem;
+  max-width: 200px;
+  -webkit-line-clamp: 2;
+  /* autoprefixer: off */
+  -webkit-box-orient: vertical;
+  /* autoprefixer: on */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
 }
 
-.explorer-filter__unselect-button {
-  height: auto;
-  width: auto;
+.explorer-filter__text-button {
+  text-wrap: nowrap;
+  text-decoration: underline;
   background: none;
   border: none;
   padding: none;
-  color: var(--g3-color__gray);
+  color: var(--pcdc-color__primary);
   font-weight: var(--g3-font__semi-bold-weight);
-  margin-left: 10px;
 }
 
-.explorer-filter__unselect-button:hover {
-  color: var(--g3-color__bg-coal);
+.explorer-filter__text-button:hover {
+  color: var(--pcdc-color__primary-light);
 }
 
-.explorer-filter__unselect-button::before {
-  border-left: 1px solid var(--g3-color__lightgray);
-  content: '';
-  height: 1.5rem;
-  margin-right: 10px;
+.explorer-filter__text-button:disabled {
+  color: var(--g3-color__smoke);
+}
+
+.explorer-filter__query-container {
+  overflow: hidden;
+  padding: 1rem;
+  border-radius: 5px;
+  background-color: var(--g3-color__silver);
+  margin-bottom: 1rem;
 }
 
 .explorer-filter__combine-mode {
@@ -57,4 +69,46 @@
 
 .explorer-filter__combine-mode input[type='radio'] {
   display: none;
+}
+
+.explorer-filter__combine-filter-select {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.explorer-filter__combine-filter-select .react-aria-Select {
+  width: 200px;
+  margin-right: 8px;
+}
+
+.explorer__combined-filter ul > li {
+  flex-direction: column;
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.explorer-filter__combine-filter-delete {
+  width: 45px;
+}
+
+.explorer__combined-filter .pill-container {
+  margin-left: calc(-45px - 8px);
+}
+
+.explorer-filter__combined-filter-container {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.explorer-filter__combined-filter-add {
+  margin-left: calc(-45px - 8px);
+}
+
+.explorer-filter__combined-filter-title {
+  margin-left: calc(-45px - 8px);
+  margin-bottom: 16px;
 }

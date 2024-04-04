@@ -34,6 +34,8 @@ export function dereferenceFilter(filter, workspace) {
 
 /** @param {ExplorerWorkspace} workspace */
 export function updateFilterRefs(workspace) {
+  console.log('UPDATE FILTER REFS');
+  console.log(Object.keys(workspace.all));
   const ids = Object.keys(workspace.all);
   const filterSets = Object.values(workspace.all);
 
@@ -182,9 +184,15 @@ export function initializeWorkspaces(explorerId) {
     if (e.message !== 'No stored workspaces') console.error(e);
 
     const activeId = crypto.randomUUID();
-    const filterSet = { filter: {} };
+    /** @type {import('./types').UnsavedExplorerFilterSet} */
+    const filterSet = {
+      filter: {
+        __type: 'STANDARD'
+      },
+      name: `Filter Tab #1`
+    };
     return {
-      [explorerId]: { activeId, all: { [activeId]: filterSet } },
+      [explorerId]: { activeId, all: { [activeId]: filterSet }, sessionTabCount: 1 },
     };
   }
 }

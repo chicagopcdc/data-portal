@@ -70,3 +70,15 @@ export const humanizeNumber = (number, fixedPoint = 2) => {
   // 10^15+, number is too large
   return number.toExponential(fixedPoint);
 };
+
+/** @typedef {import('./types').ExplorerFilterSet} ExplorerFilterSet */
+/** @typedef {import('./types').SavedExplorerFilterSet} SavedExplorerFilterSet */
+
+
+/** 
+ * @param {ExplorerFilterSet} filterSet
+ * @returns {filterSet is SavedExplorerFilterSet}
+*/
+export function isFilterSetSaved(filterSet) {
+  return 'descripton' in filterSet;
+}

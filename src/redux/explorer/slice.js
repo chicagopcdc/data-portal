@@ -37,6 +37,7 @@ const initialPatientIds = initialConfig.patientIdsConfig?.filter
   ? []
   : undefined;
 const initialWorkspaces = initializeWorkspaces(initialExplorerId);
+console.log(initialWorkspaces);
 const initialExplorerFilter = dereferenceFilter(
   initialWorkspaces[initialExplorerId].all[
     initialWorkspaces[initialExplorerId].activeId
@@ -75,8 +76,15 @@ const slice = createSlice({
       /** @param {PayloadAction<string>} action */
       reducer: (state, action) => {
         const newActiveId = action.payload;
-        const filterSet = { filter: {} };
-
+        /** @type {import('./types').UnsavedExplorerFilterSet} */
+        const filterSet = {
+          filter: {
+            __type: 'STANDARD'
+          },
+          name: `Filter Tab #1`
+        };
+        
+        state.workspaces[state.explorerId].sessionTabCount = 1;
         state.workspaces[state.explorerId].activeId = newActiveId;
         state.workspaces[state.explorerId].all = { [newActiveId]: filterSet };
 
@@ -84,22 +92,21 @@ const slice = createSlice({
         state.explorerFilter = filterSet.filter;
       },
     },
-    clearWorkspaceFilterSet(state) {
-      const { activeId } = state.workspaces[state.explorerId];
-      const filterSet = { filter: {} };
-
-      state.workspaces[state.explorerId].all[activeId] = filterSet;
-
-      // sync with exploreFilter
-      state.explorerFilter = filterSet.filter;
-    },
     createWorkspaceFilterSet: {
-      prepare: () => ({ payload: crypto.randomUUID() }),
+      prepare: (workspaceId) => ({ payload: workspaceId ?? crypto.randomUUID() }),
       /** @param {PayloadAction<string>} action */
       reducer: (state, action) => {
+        state.workspaces[state.explorerId].sessionTabCount += 1;
+        const sessionTabCount = state.workspaces[state.explorerId].sessionTabCount;
         const newActiveId = action.payload;
-        const filterSet = { filter: {} };
-
+        /** @type {import('./types').UnsavedExplorerFilterSet} */
+        const filterSet = {
+          filter: {
+            __type: 'STANDARD'
+          },
+          name: `Filter Tab #${sessionTabCount}`
+        };
+        
         state.workspaces[state.explorerId].activeId = newActiveId;
         state.workspaces[state.explorerId].all[newActiveId] = filterSet;
 
@@ -107,21 +114,56 @@ const slice = createSlice({
         state.explorerFilter = filterSet.filter;
       },
     },
-    duplicateWorkspaceFilterSet: {
-      prepare: () => ({ payload: crypto.randomUUID() }),
-      /** @param {PayloadAction<string>} action */
+    createCombinedWorkspaceFilterSet: {
+      prepare: (combineWithId) => ({ payload: { newCreatedId: crypto.randomUUID(), combineWithId }}),
+      /** @param {PayloadAction<{ newCreatedId: string, combineWithId: string }>} action */
       reducer: (state, action) => {
-        const newActiveId = action.payload;
-        const { activeId } = state.workspaces[state.explorerId];
-        const { filter } = state.workspaces[state.explorerId].all[activeId];
-        const filterSet = { filter };
+        state.workspaces[state.explorerId].sessionTabCount += 1;
+        const sessionTabCount = state.workspaces[state.explorerId].sessionTabCount;
+        const { newCreatedId, combineWithId } = action.payload;
+        const workspace = state.workspaces[state.explorerId];
+        const combineWithFilterSet = workspace.all[combineWithId];
+        /** @type {import('./types').ExplorerFilterSet} */
+        const combinedFilterSet = {
+          filter: {
+            __type: FILTER_TYPE.COMPOSED,
+            __combineMode: /** @type {'AND' | 'OR'} */ ('AND'),
+            refIds: combineWithId ? [combineWithId] : [],
+            value: combineWithId ? [{
+              __type: 'REF',
+              value: {
+                id: combineWithId,
+                label: combineWithFilterSet.name
+              }
+            }] : [],
+          },
+          name: `Filter Tab #${sessionTabCount}`
+        };
 
-        state.workspaces[state.explorerId].activeId = newActiveId;
-        state.workspaces[state.explorerId].all[newActiveId] = filterSet;
+        state.workspaces[state.explorerId].activeId = newCreatedId;
+        state.workspaces[state.explorerId].all[newCreatedId] = combinedFilterSet;
 
         // sync with exploreFilter
-        const workspace = state.workspaces[state.explorerId];
-        state.explorerFilter = dereferenceFilter(filterSet.filter, workspace);
+        state.explorerFilter = dereferenceFilter(combinedFilterSet.filter, workspace);
+      },
+    },
+    duplicateWorkspaceFilterSet: {
+      prepare: (id) => ({ payload: { newId: crypto.randomUUID(), sourceId: id }}),
+      /** @param {PayloadAction<{ newId: string, sourceId: string }>} action */
+      reducer: (state, action) => {
+        const newId = action.payload.newId;
+        const { activeId } = state.workspaces[state.explorerId];
+        const sourceId = action.payload.sourceId ?? activeId;
+        const { filter } = state.workspaces[state.explorerId].all[sourceId ?? activeId];
+        const filterSet = { filter };
+
+        state.workspaces[state.explorerId].all[newId] = filterSet;
+        if (sourceId === activeId) {
+          state.workspaces[state.explorerId].activeId = newId;
+          // sync with exploreFilter
+          const workspace = state.workspaces[state.explorerId];
+          state.explorerFilter = dereferenceFilter(filterSet.filter, workspace);
+        }
       },
     },
     loadWorkspaceFilterSet: {
@@ -152,38 +194,37 @@ const slice = createSlice({
       },
     },
     removeWorkspaceFilterSet: {
-      prepare: () => ({ payload: crypto.randomUUID() }),
-      /** @param {PayloadAction<string>} action */
+      prepare: (id, newActiveId) => ({ payload: { deleteId: id, newId: crypto.randomUUID(), newActiveId }  }),
+      /** @param {PayloadAction<{ newId: string, deleteId: string, newActiveId: string }>} action */
       reducer: (state, action) => {
-        const { activeId, all } = state.workspaces[state.explorerId]
+        const { activeId } = state.workspaces[state.explorerId]
+        const { newId, deleteId, newActiveId } = action.payload;
 
-        delete state.workspaces[state.explorerId].all[activeId];
-
-        // if any composed filter set contains a reference to the active filter set
-        // being removed we need to delete the composed filter set as well, since
-        // that reference will no longer exist, which will cause errors
-        let composedWithDeleted = Object.keys(all).filter((id) => {
-          /** @type {import('./types').ExplorerFilterSet} */
-          let filterSet = all[id];
-          if (filterSet.filter.__type === 'COMPOSED') {
-            /** @type {import('./types').UnsavedExplorerFilterSet['filter']} */
-            let filter = filterSet.filter;
-            if (filter.refIds?.some((id) => id === activeId)) {
-              return true;
-            }
-          }
-          return false;
-        });
-
-        for (let composedWithDeletedID of composedWithDeleted) {
-          delete state.workspaces[state.explorerId].all[composedWithDeletedID];
+        if (deleteId) {
+          delete state.workspaces[state.explorerId].all[deleteId];
+        } else {
+          delete state.workspaces[state.explorerId].all[activeId];
         }
 
+        const { all } = state.workspaces[state.explorerId];
+
+        console.log('KEYS ON REMOVE');
+        console.log(Object.entries(state.workspaces[state.explorerId].all));
+        console.log(Object.keys(state.workspaces[state.explorerId].all));
+
         const [firstEntry] = Object.entries(all);
-        const [id, filterSet] = firstEntry ?? [action.payload, { filter: {} }];
+        const [id, filterSet] = 
+            newActiveId && newActiveId !== deleteId ? [newActiveId, all[newActiveId]] 
+          : firstEntry ?? [newId, { filter: {} }];
+
+        console.log('WORKSPACE ON REMOVE');
+        console.log(JSON.parse(JSON.stringify(state.workspaces[state.explorerId].all)));
  
-        state.workspaces[state.explorerId].activeId = id;
-        state.workspaces[state.explorerId].all[id] = filterSet;
+        if (id !== activeId) {
+          state.workspaces[state.explorerId].activeId = id;
+          state.workspaces[state.explorerId].all[id] = filterSet;
+        }
+
         updateFilterRefs(state.workspaces[state.explorerId]);
 
         // sync with exploreFilter
@@ -191,37 +232,58 @@ const slice = createSlice({
         state.explorerFilter = dereferenceFilter(filterSet.filter, workspace);
       },
     },
-    /** @param {PayloadAction<ExplorerState['explorerFilter']>} action */
-    updateExplorerFilter(state, action) {
-      const newFilter = {
-        /** @type {ExplorerFilter['__combineMode']} */
-        __combineMode: 'AND',
-        __type: FILTER_TYPE.STANDARD,
-        ...action.payload,
-      };
-      const fields = Object.keys(newFilter.value ?? {});
-      if (fields.length > 0) {
-        const allSearchFieldSet = new Set();
-        for (const { searchFields } of state.config.filterConfig.tabs)
-          for (const field of searchFields ?? []) allSearchFieldSet.add(field);
+    updateExplorerFilter: {
+      prepare(filter, skipExplorerUpdate = false) {
+        return { payload: { filter, skipExplorerUpdate: skipExplorerUpdate  }};
+      },
+      /** @param {PayloadAction<{ filter: ExplorerState['explorerFilter'], skipExplorerUpdate: boolean }>} action */
+      reducer (state, action) {
+        const filter = action.payload.filter ?? {};
+        const newFilter = {
+          /** @type {ExplorerFilter['__combineMode']} */
+          __combineMode: 'AND',
+          __type: FILTER_TYPE.STANDARD,
+          ...filter,
+        };
 
-        if (allSearchFieldSet.size > 0) {
-          /** @type {ExplorerFilter['value']} */
-          const filterWithoutSearchFields = {};
-          for (const field of fields)
-            if (!allSearchFieldSet.has(field))
-              filterWithoutSearchFields[field] = newFilter.value[field];
-
-          if (Object.keys(filterWithoutSearchFields).length > 0)
-            newFilter.value = filterWithoutSearchFields;
+        if (newFilter.__type === FILTER_TYPE.STANDARD) {
+          const fields = Object.keys(newFilter.value ?? {});
+          if (fields.length > 0) {
+            const allSearchFieldSet = new Set();
+            for (const { searchFields } of state.config.filterConfig.tabs)
+              for (const field of searchFields ?? []) allSearchFieldSet.add(field);
+    
+            if (allSearchFieldSet.size > 0) {
+              /** @type {ExplorerFilter['value']} */
+              const filterWithoutSearchFields = {};
+              for (const field of fields)
+                if (!allSearchFieldSet.has(field))
+                  filterWithoutSearchFields[field] = newFilter.value[field];
+    
+              if (Object.keys(filterWithoutSearchFields).length > 0)
+                newFilter.value = filterWithoutSearchFields;
+            }
+          }
         }
+
+        if (!action.payload.skipExplorerUpdate) {
+          // sync with exploreFilter
+          const workspace = state.workspaces[state.explorerId];
+          state.explorerFilter = dereferenceFilter(newFilter, workspace);
+        }
+
+        // sync with workspaces
+        const { activeId } = state.workspaces[state.explorerId];
+        state.workspaces[state.explorerId].all[activeId].filter = newFilter;
+        console.log('FILTER FROM COMPOSED RESET');
+        console.log(newFilter);
       }
+    },
+    updateActiveFilterSetName(state, action) {
+      const newName = action.payload;
+      const activeId = state.workspaces[state.explorerId].activeId;
 
-      state.explorerFilter = newFilter;
-
-      // sync with workspaces
-      const { activeId } = state.workspaces[state.explorerId];
-      state.workspaces[state.explorerId].all[activeId].filter = newFilter;
+      state.workspaces[state.explorerId].all[activeId].name = newName;
     },
     /** @param {PayloadAction<ExplorerState['patientIds']>} action */
     updatePatientIds(state, action) {
@@ -232,7 +294,11 @@ const slice = createSlice({
       /** @param {ExplorerState['explorerId']} explorerId */
       prepare: (explorerId) => {
         const activeId = crypto.randomUUID();
-        const newWorkspace = { activeId, all: { [activeId]: { filter: {} } } };
+        const newWorkspace = {
+          activeId,
+          all: { [activeId]: { filter: {}, index: 1 }, },
+          sessionTabCount: 1
+        };
         return { payload: { explorerId, newWorkspace } };
       },
       /**
@@ -278,10 +344,12 @@ const slice = createSlice({
     builder
       .addCase(createFilterSet.fulfilled, (state, action) => {
         const filterSet = action.payload;
+        const { activeId } = state.workspaces[state.explorerId];
+
         state.savedFilterSets.data.push(filterSet);
+        filterSet.index = state.workspaces[state.explorerId].all[activeId].index;
 
         // sync with workspaces
-        const { activeId } = state.workspaces[state.explorerId];
         state.workspaces[state.explorerId].all[activeId] = filterSet;
       })
       .addCase(createFilterSet.rejected, (state) => {
@@ -310,10 +378,12 @@ const slice = createSlice({
         const index = state.savedFilterSets.data.findIndex(
           ({ id }) => id === filterSet.id
         );
+        const { activeId } = state.workspaces[state.explorerId];
+
+        filterSet.index = state.workspaces[state.explorerId].all[activeId].index;
         state.savedFilterSets.data[index] = filterSet;
 
         // sync with workspaces
-        const { activeId } = state.workspaces[state.explorerId];
         state.workspaces[state.explorerId].all[activeId] = filterSet;
 
         // sync with survival result
@@ -361,8 +431,8 @@ const slice = createSlice({
 });
 
 export const {
+  createCombinedWorkspaceFilterSet,
   clearWorkspaceAllFilterSets,
-  clearWorkspaceFilterSet,
   createWorkspaceFilterSet,
   duplicateWorkspaceFilterSet,
   loadWorkspaceFilterSet,
@@ -371,6 +441,7 @@ export const {
   updatePatientIds,
   useExplorerById,
   useWorkspaceFilterSet,
+  updateActiveFilterSetName,
 } = slice.actions;
 
 export default slice.reducer;

@@ -27,6 +27,7 @@ import {
 /** @typedef {import('../types').GuppyData} GuppyData */
 /** @typedef {import('../types').OptionFilter} OptionFilter */
 /** @typedef {import('../types').SimpleAggsData} SimpleAggsData */
+/** @typedef {import('../types').FilterChangeHandler} FilterChangeHandler */
 
 /**
  * @typedef {Object} GuppyWrapperProps
@@ -36,7 +37,7 @@ import {
  * @property {FilterState} explorerFilter
  * @property {FilterConfig} filterConfig
  * @property {GuppyConfig} guppyConfig
- * @property {(x: FilterState) => void} onFilterChange
+ * @property {FilterChangeHandler} onFilterChange
  * @property {string[]} patientIds
  * @property {string[]} rawDataFields
  */
@@ -484,9 +485,9 @@ function GuppyWrapper({
     }
   }
 
-  /** @param {FilterState} filter */
-  function handleFilterChange(filter) {
-    onFilterChange?.(mergeFilters(filter, adminAppliedPreFilters));
+  /** @type {FilterChangeHandler} */
+  function handleFilterChange(filter, skipExplorerUpdate) {
+    onFilterChange?.(mergeFilters(filter, adminAppliedPreFilters), skipExplorerUpdate);
   }
 
   return children({

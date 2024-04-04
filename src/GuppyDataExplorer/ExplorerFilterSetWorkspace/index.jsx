@@ -1,21 +1,15 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useState } from 'react';
-import FilterDisplay from '../../components/FilterDisplay';
+import { useState, useRef } from 'react';
 import SimplePopup from '../../components/SimplePopup';
 import Tooltip from 'rc-tooltip';
-import ButtonToggle from '../../gen3-ui-component/components/ButtonToggle';
-import { contactEmail } from '../../localconf';
 import {
   createFilterSet,
   deleteFilterSet,
-  fetchFilterSets,
   updateFilterSet,
 } from '../../redux/explorer/asyncThunks';
 import {
   createToken,
   fetchWithToken,
 } from '../../redux/explorer/filterSetsAPI';
-import { updateExplorerFilter } from '../../redux/explorer/slice';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import FilterSetActionForm from './FilterSetActionForm';
 import FilterSetLabel from './FilterSetLabel';
@@ -24,25 +18,58 @@ import {
   checkIfFilterEmpty,
   dereferenceFilter,
   FILTER_TYPE,
-  pluckFromAnchorFilter,
-  pluckFromFilter,
 } from './utils';
+import { getExpandedStatus } from '../../gen3-ui-component/components/filters/FilterGroup/utils';
 import './ExplorerFilterSetWorkspace.css';
+import ExplorerFilter, { CombinedExplorerFilter } from '../ExplorerFilter';
+import {
+  Tabs,
+  TabList,
+  Tab,
+  TabPanel,
+  Button,
+  Menu,
+  MenuItem,
+  MenuTrigger,
+  Popover,
+  Toolbar,
+  Group
+} from 'react-aria-components';
+
+function hasCombinedWithCurrent(currentId, workspace) {
+  // if any composed filter set contains a reference to the active filter set
+  // being removed we need to delete the composed filter set as well, since
+  // that reference will no longer exist, which will cause errors
+  const composedWithActive = Object.keys(workspace.all).filter((id) => {
+    /** @type {ExplorerFilterSet} */
+    let filterSet = workspace.all[id];
+    if (filterSet.filter.__type === 'COMPOSED') {
+      /** @type {UnsavedExplorerFilterSet['filter']} */
+      let filter = filterSet.filter;
+      if (filter.refIds?.some((refId) => refId === currentId)) {
+        return true;
+      }
+    }
+    return false;
+  });
+  return composedWithActive.length > 0;
+}
 
 /** @typedef {import('../types').SavedExplorerFilterSet} SavedExplorerFilterSet */
 /** @typedef {import('./FilterSetActionForm').ActionFormType} ActionFormType */
 /** @typedef {import('../types').ExplorerFilterSet} ExplorerFilterSet */
 /** @typedef {import('../types').UnsavedExplorerFilterSet} UnsavedExplorerFilterSet */
 
-function ExplorerFilterSetWorkspace() {
+function ExplorerFilterSetWorkspace({
+  anchorValue,
+  initialTabsOptions,
+  onAnchorValueChange,
+  onFilterChange,
+  tabsOptions,
+  dictionaryEntries,
+  isLoadingRawData,
+}) {
   const dispatch = useAppDispatch();
-  /** @param {import('../types').ExplorerFilter} filter */
-  function handleFilterChange(filter) {
-    dispatch(updateExplorerFilter(filter));
-  }
-  const filterInfo = useAppSelector(
-    (state) => state.explorer.config.filterConfig.info
-  );
   const savedFilterSets = useAppSelector(
     (state) => state.explorer.savedFilterSets
   );
@@ -52,23 +79,28 @@ function ExplorerFilterSetWorkspace() {
     ({ id }) => id === activeFilterSet.id
   );
   const all = workspace.all;
+  const workspaceTabIds = Object.keys(all);
 
-  // if any composed filter set contains a reference to the active filter set
-  // being removed we need to delete the composed filter set as well, since
-  // that reference will no longer exist, which will cause errors
-  const composedWithActive = Object.keys(all).filter((id) => {
-    /** @type {ExplorerFilterSet} */
-    let filterSet = all[id];
-    if (filterSet.filter.__type === 'COMPOSED') {
-      /** @type {UnsavedExplorerFilterSet['filter']} */
-      let filter = filterSet.filter;
-      if (filter.refIds?.some((id) => id === workspace.activeId)) {
-        return true;
-      }
+  const [filterPanelVisibile, setFilterPanelVisibile] = useState(true);
+
+  let lastActiveTabId = useRef(workspace.activeId);
+
+  const { config: { filterConfig } } = useAppSelector((state) => state.explorer);
+  const filterTabs = filterConfig.tabs.map(
+    ({ title, fields, searchFields }) => ({
+      title,
+      // If there are any search fields, insert them at the top of each tab's fields.
+      fields: searchFields ? searchFields.concat(fields) : fields,
+    })
+  );
+  const initialWorkspaceUIState = {};
+  for (let workspaceId of Object.keys(all)) {
+    initialWorkspaceUIState[workspaceId] = {
+      expandedStatus: getExpandedStatus(filterTabs, false),
+      tabIndex: 0
     }
-    return false;
-  });
-  const shouldNotRemove = composedWithActive.length > 0;
+  }
+  const [workspaceUIState, setWorkspaceUIState] = useState(initialWorkspaceUIState);
 
   const [actionFormType, setActionFormType] = useState(
     /** @type {ActionFormType} */ (undefined)
@@ -76,29 +108,47 @@ function ExplorerFilterSetWorkspace() {
   function closeActionForm() {
     setActionFormType(undefined);
   }
-
-  function handleClear() {
-    workspace.clear();
-  }
   function handleClearAll() {
-    workspace.clearAll();
+    setFilterPanelVisibile(false);
+    const { payload: resetFilterSetId } = workspace.clearAll();
+    const resetWorkspaceUIState = {
+      [resetFilterSetId]: {
+        expandedStatus: getExpandedStatus(filterTabs, false),
+        tabIndex: 0
+      }
+    };
+    console.log(resetWorkspaceUIState);
+    setWorkspaceUIState(resetWorkspaceUIState);
     closeActionForm();
+    setTimeout(() => {
+      setFilterPanelVisibile(true);
+    }, 200);
   }
   function handleCreate() {
-    workspace.create();
+    setFilterPanelVisibile(false);
+    setTimeout(() => {
+      setFilterPanelVisibile(true);
+    }, 200);
+    const newWorkspaceId = crypto.randomUUID();
+    setWorkspaceUIState({
+      ...workspaceUIState,
+      [newWorkspaceId]: {
+        expandedStatus: getExpandedStatus(filterTabs, false),
+        tabIndex: 0
+      }
+    });
+    workspace.create(newWorkspaceId);
   }
   /** @param {SavedExplorerFilterSet} deleted */
   async function handleDelete(deleted) {
     try {
       await dispatch(deleteFilterSet(deleted));
-      workspace.remove();
+      workspace.remove(deleted.id);
     } finally {
       closeActionForm();
     }
   }
-  function handleDuplicate() {
-    workspace.duplicate();
-  }
+
   /**
    * @param {SavedExplorerFilterSet} loaded
    * @param {boolean} [isShared]
@@ -124,8 +174,12 @@ function ExplorerFilterSetWorkspace() {
   /** @param {SavedExplorerFilterSet} saved */
   async function handleSave(saved) {
     try {
-      if (saved.id === undefined) await dispatch(createFilterSet(saved));
-      else await dispatch(updateFilterSet(saved));
+      if (saved.id === undefined) { 
+        await dispatch(createFilterSet(saved));
+
+      } else {
+        await dispatch(updateFilterSet(saved));
+      }
     } finally {
       closeActionForm();
     }
@@ -133,344 +187,238 @@ function ExplorerFilterSetWorkspace() {
   function handleShare() {
     return createToken(activeSavedFilterSet);
   }
-  function handleReset() {
-    handleFilterChange(activeSavedFilterSet.filter);
+  function handleRemove(id, newActiveId) {
+    setFilterPanelVisibile(false);
+    workspace.remove(id, newActiveId);
+    setTimeout(() => {
+      setFilterPanelVisibile(true);
+    }, 200);
   }
-  function handleRemove() {
-    workspace.remove();
+    /** @param {ExplorerFilterSet} renamedFilterSet */
+  function handleRename(renamedFilterSet) {
+    workspace.rename(renamedFilterSet.name);
+    closeActionForm();
   }
+
   /** @param {string} id */
-  function handleUse(id) {
-    workspace.use(id);
-  }
-
-  /** @type {import('../../components/FilterDisplay').ClickCombineModeHandler} */
-  function handleClickCombineMode(payload) {
-    if (activeFilterSet.filter.__type !== FILTER_TYPE.STANDARD) return;
-
-    handleFilterChange({
-      ...activeFilterSet.filter,
-      __combineMode: payload === 'AND' ? 'OR' : 'AND',
-    });
-  }
-  /** @type {import('../../components/FilterDisplay').ClickFilterHandler} */
-  function handleCloseFilter(payload) {
-    if (activeFilterSet.filter.__type !== FILTER_TYPE.STANDARD) return;
-
-    const { field, anchorField, anchorValue } = payload;
-    const { filter } = activeFilterSet;
-    if (anchorField !== undefined && anchorValue !== undefined) {
-      const anchor = `${anchorField}:${anchorValue}`;
-      handleFilterChange(pluckFromAnchorFilter({ anchor, field, filter }));
-    } else {
-      handleFilterChange(pluckFromFilter({ field, filter }));
-    }
+  function handleCombineWith(id) {
+    setFilterPanelVisibile(false);
+    workspace.createCombine(id);
+    setTimeout(() => {
+      setFilterPanelVisibile(true);
+    }, 200);
   }
 
   const disableNew = Object.values(workspace.all).some(({ filter }) =>
     checkIfFilterEmpty(filter ?? {})
   );
 
-  const defaultComposeState = {
-    isActive: false,
-    combineMode: /** @type {'AND' | 'OR'} */ ('AND'),
-    value: [],
-  };
-  const [composeState, setComposeState] = useState(defaultComposeState);
-  function handleCompose() {
-    workspace.load({
-      filter: {
-        __type: FILTER_TYPE.COMPOSED,
-        __combineMode: composeState.combineMode,
-        refIds: composeState.value.map(({ value }) => value.id),
-        value: composeState.value,
-      },
-    });
-
-    setComposeState(defaultComposeState);
-  }
-  function toggleComposeState() {
-    if (composeState.isActive) setComposeState(defaultComposeState);
-    else setComposeState({ ...defaultComposeState, isActive: true });
-  }
-  /** @param {{ checked: boolean; id: string; label: string }} args */
-  function toggleFilterToCompose({ checked, id, label }) {
-    const newValue = [...composeState.value];
-
-    if (checked) {
-      newValue.push({ __type: 'REF', value: { id, label } });
-    } else {
-      const removeIndex = newValue.findIndex(({ value }) => value.id === id);
-      newValue.splice(removeIndex, 1);
-    }
-
-    setComposeState((prev) => ({ ...prev, value: newValue }));
-  }
-  /** @param {'AND' | 'OR'} combineMode */
-  function updateComposeCombineMode(combineMode) {
-    setComposeState((prev) => ({ ...prev, combineMode }));
-  }
-
-  let nonEmptyFilterCount = Object.values(workspace.all).length;
+  const filterCount = Object.values(workspace.all).length;
+  let nonEmptyFilterCount = filterCount;
   for (const { filter } of Object.values(workspace.all))
     if (checkIfFilterEmpty(filter)) nonEmptyFilterCount -= 1;
-  const disableCompose = nonEmptyFilterCount < 2;
 
   return (
     <div className='explorer-filter-set-workspace'>
-      <header>
-        <h2>Filter Set Workspace</h2>
-        {/* eslint-disable-next-line no-nested-ternary */}
-        {savedFilterSets.isError ? (
-          <div className='explorer-filter-set-workspace__error'>
-            <p>
-              <FontAwesomeIcon
-                className='screen-size-warning__icon'
-                icon='triangle-exclamation'
-                color='var(--pcdc-color__secondary)'
-              />
-              Error obtaining saved Filter Set data...
-              <button
-                className='explorer-filter-set-workspace__action-button'
-                type='button'
-                onClick={() =>
-                  dispatch(fetchFilterSets()).unwrap().catch(console.error)
-                }
-              >
-                Retry
-              </button>
-            </p>
-            <p>
-              If the problem persists, please contact the administrator (
-              <a href={contactEmail}>{contactEmail}</a>) for more information.
-            </p>
-          </div>
-        ) : composeState.isActive ? (
-          <div className='explorer-filter-set-workspace__action-button-group'>
-            <span
-              className='explorer-filter__combine-mode'
-              style={{ display: 'inline-flex', margin: '0 1rem 0 0' }}
-            >
-              Compose with
-              <ButtonToggle 
-                isOn={composeState.combineMode === 'AND'}
-                onText='AND'
-                offText='OR'
-                onToggle={({ value }) => updateComposeCombineMode(value)}
-              />
-            </span>
-            <button
-              className='explorer-filter-set-workspace__action-button'
-              type='button'
-              onClick={toggleComposeState}
-            >
-              Back
-            </button>
-            <button
-              className='explorer-filter-set-workspace__action-button'
-              type='button'
-              onClick={handleCompose}
-              disabled={composeState.value.length < 2}
-            >
-              Done
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className='explorer-filter-set-workspace__action-button-group'>
-              <button
-                className='explorer-filter-set-workspace__action-button'
-                type='button'
-                onClick={handleCreate}
-                disabled={disableNew}
-                title={
-                  disableNew
-                    ? 'No new query if queries without filter exist'
-                    : undefined
-                }
-              >
-                New
-              </button>
-              <button
-                className='explorer-filter-set-workspace__action-button'
-                type='button'
-                onClick={toggleComposeState}
-                disabled={disableCompose}
-              >
-                Compose
-              </button>
-              <button
-                className='explorer-filter-set-workspace__action-button'
-                type='button'
-                onClick={handleDuplicate}
-                disabled={checkIfFilterEmpty(activeFilterSet?.filter ?? {})}
-              >
-                Duplicate
-              </button>
-              <Tooltip
-                arrowContent={<div className='rc-tooltip-arrow-inner' />}
-                overlay={shouldNotRemove ?
-                  'To remove the currently active filter set from the workspace, first remove it from any unsaved composed filter set in the workspace' :
-                  'Remove the currently active filter set from the workspace'
-                }
-                placement='bottom'
-                trigger={['hover', 'focus']}
-              >
-                <button
-                  className='explorer-filter-set-workspace__action-button'
-                  type='button'
-                  onClick={handleRemove}
-                  disabled={shouldNotRemove || workspace.size < 2}
-                >
-                  Remove
-                </button>
-              </Tooltip>
-              <Tooltip
-                arrowContent={<div className='rc-tooltip-arrow-inner' />}
-                overlay={shouldNotRemove ?
-                  'To clear the currently active filter set from the workspace, first remove it from any unsaved composed filter set in the workspace' :
-                  'Clear the currently active filter set'
-                }
-                placement='bottom'
-                trigger={['hover', 'focus']}
-              >
-                <button
-                  className='explorer-filter-set-workspace__action-button'
-                  type='button'
-                  onClick={handleClear}
-                  disabled={shouldNotRemove || checkIfFilterEmpty(activeFilterSet?.filter ?? {})}
-                >
-                  Clear
-                </button>
-              </Tooltip>
-              <button
-                className='explorer-filter-set-workspace__action-button'
-                type='button'
-                onClick={() => setActionFormType('CLEAR-ALL')}
-                disabled={Object.keys(workspace.all).length < 2}
-              >
-                Remove all
-              </button>
-            </div>
-            <div className='explorer-filter-set-workspace__action-button-group'>
-              <button
-                className='explorer-filter-set-workspace__action-button'
-                type='button'
-                onClick={() => setActionFormType('LOAD')}
-              >
-                Load
-              </button>
-              <button
-                className='explorer-filter-set-workspace__action-button'
-                type='button'
-                onClick={() => setActionFormType('SAVE')}
-                disabled={checkIfFilterEmpty(activeFilterSet?.filter ?? {})}
-              >
-                {activeFilterSet.id ? 'Update' : 'Save'}
-              </button>
-              <button
-                className='explorer-filter-set-workspace__action-button'
-                type='button'
-                onClick={() => setActionFormType('SHARE')}
-                disabled={activeSavedFilterSet === undefined}
-              >
-                Share
-              </button>
-              <button
-                className='explorer-filter-set-workspace__action-button'
-                type='button'
-                onClick={handleReset}
-                disabled={
-                  activeSavedFilterSet === undefined ||
-                  JSON.stringify(activeSavedFilterSet.filter) ===
-                    JSON.stringify(activeFilterSet.filter)
-                }
-              >
-                Reset
-              </button>
-              <button
-                className='explorer-filter-set-workspace__action-button'
-                type='button'
-                onClick={() => setActionFormType('DELETE')}
-                disabled={!('id' in (workspace.all[workspace.activeId] ?? {}))}
-              >
-                Delete
-              </button>
-            </div>
-          </>
-        )}
-      </header>
-      <main>
-        {Object.keys(workspace.all).map((id, i) => {
-          const filterSet = workspace.all[id];
-          const isFilterEmpty = checkIfFilterEmpty(filterSet.filter);
-          const filterSetCheckbox = (
-            <input
-              disabled={isFilterEmpty}
-              type='checkbox'
-              style={{ margin: '0 4px' }}
-              onChange={({ target: { checked } }) => {
-                const label = filterSet.name ?? `#${i + 1}`;
-                toggleFilterToCompose({ checked, id, label });
-              }}
-            />
-          );
-          return workspace.activeId === id ? (
-            <div
-              className='explorer-filter-set-workspace__query explorer-filter-set-workspace__query--active'
-              key={id}
-            >
-              <header>
-                {composeState.isActive ? filterSetCheckbox : null}
-                <button
-                  className='explorer-filter-set-workspace__action-button'
-                  type='button'
-                  disabled
-                >
-                  Active
-                </button>
-                <FilterSetLabel filterSet={filterSet} index={i + 1} />
-              </header>
-              <main>
-                {isFilterEmpty ? (
-                  <h4>Try Filters to explore data</h4>
-                ) : (
-                  <FilterDisplay
-                    filter={filterSet.filter}
-                    filterInfo={filterInfo}
-                    onClickCombineMode={handleClickCombineMode}
-                    onCloseFilter={handleCloseFilter}
-                  />
-                )}
-              </main>
-            </div>
-          ) : (
-            <div className='explorer-filter-set-workspace__query' key={id}>
-              <header>
-                {composeState.isActive ? filterSetCheckbox : null}
-                <button
-                  className='explorer-filter-set-workspace__action-button'
-                  type='button'
-                  onClick={() => handleUse(id)}
-                >
-                  Use
-                </button>
-                <FilterSetLabel filterSet={filterSet} index={i + 1} />
-              </header>
-              <main>
-                {isFilterEmpty ? (
-                  <h4>Try Filters to explore data</h4>
-                ) : (
-                  <FilterDisplay
-                    filter={filterSet.filter}
-                    filterInfo={filterInfo}
-                  />
-                )}
-              </main>
-            </div>
-          );
+      <Toolbar aria-label="Tab list actions">
+        <Group className='explorer-action-group explorer-action-group__new-tab'>
+          <Button
+            onPress={handleCreate}
+          >
+            <i className='g3-icon g3-icon--plus g3-icon-color__black g3-icon--sm' /> New Tab
+          </Button>
+        </Group>
+        <Group className='explorer-action-group explorer-action-group__more'>
+          <MenuTrigger>
+              <Button aria-label="Tab action menu">
+                <i className='g3-icon g3-icon--more g3-icon-color__black g3-icon--md' />
+              </Button>
+              <Popover offset={0}>
+                <Menu onAction={action => {
+                  switch(action) {
+                    case 'LOAD':
+                    case 'CLEAR-ALL':
+                      setActionFormType(action);
+                  }
+                }}>
+                  <MenuItem id="LOAD">Load saved</MenuItem>
+                  <MenuItem id="CLEAR-ALL">Remove all</MenuItem>
+                </Menu>
+              </Popover>
+            </MenuTrigger>
+        </Group>
+      </Toolbar>
+      <Tabs
+        orientation='vertical'
+        keyboardActivation='manual'
+        selectedKey={workspace.activeId}
+        disabledKeys={
+          isLoadingRawData ? 
+          workspaceTabIds.filter(id => id !== workspace.activeId) 
+          : []
+        }
+        onSelectionChange={(/** @type {string}*/ requestedSelectionId) => {
+          if (requestedSelectionId !== lastActiveTabId.current) {
+            setFilterPanelVisibile(false);
+            setTimeout(() => { setFilterPanelVisibile(true); }, 200);
+          }
+          if (
+            requestedSelectionId !== workspace.activeId && 
+            workspace.activeId === lastActiveTabId.current
+          ) {
+            workspace.use(requestedSelectionId);
+            lastActiveTabId.current = requestedSelectionId;
+          } else {
+            lastActiveTabId.current = workspace.activeId;
+          }
+        }}
+      >
+        <TabList>
+          {workspaceTabIds.map((workspaceId, i) => {
+            const filterSet = workspace.all[workspaceId];
+
+            return <Tab id={workspaceId} key={workspaceId}>
+              <div className='explorer-filter-set-workspace__tab-title'>
+                <FilterSetLabel filterSet={filterSet} hasTooltip={false} titleTag='h4' />
+              </div>
+            </Tab>;
+          })}
+        </TabList>
+        {workspaceTabIds.map((workspaceId, i) => {
+            const filterSet = workspace.all[workspaceId];
+            const savedFilterSet = savedFilterSets.data.find(({ id }) => id === filterSet.id);
+            const handleAction = (action) => {
+              switch (action) {
+                case 'COMBINE':
+                  handleCombineWith(workspaceId);
+                  return;
+                case 'DUPLICATE':
+                  workspace.duplicate(workspaceId);
+                  return;
+                case 'REVERT':
+                  onFilterChange(savedFilterSet);
+                  return;
+                case 'RESET':
+                  const composedResetFilter = {
+                    __type: FILTER_TYPE.COMPOSED,
+                    __combineMode: /** @type {'AND' | 'OR'} */ ('AND'),
+                    refIds: [],
+                    value: [],
+                  };
+                  onFilterChange(filterSet.filter.__type === 'COMPOSED' ? composedResetFilter : undefined);
+                  return;
+                case 'RENAME':
+                case 'SHARE':
+                case 'DELETE':
+                case 'SAVE':
+                  setActionFormType(action);
+                  return;
+              }
+            };
+            const disabledActions = [];
+
+            if (savedFilterSet === undefined) {
+              disabledActions.push('revert', 'unsave', 'share');
+            } else if (JSON.stringify(savedFilterSet.filter) === JSON.stringify(filterSet.filter)) {
+              disabledActions.push('revert');
+            }
+            
+            return <TabPanel id={workspaceId} key={workspaceId}>
+              <div className={filterPanelVisibile ? 'animate-visible' : 'animate-hidden'}>
+                <div className='explorer-filter-set-workspace___filter-actions'>
+                  {
+                    filterCount <= 1 ?
+                      null
+                    : <Tooltip
+                        arrowContent={<div className='rc-tooltip-arrow-inner' />}
+                        overlay={hasCombinedWithCurrent(workspaceId, workspace) ?
+                          'To remove the currently active filter set from the workspace, first remove it from any unsaved composed filter set in the workspace' :
+                          'Remove the currently active filter set from the workspace'
+                        }
+                        placement='bottom'
+                        trigger={['hover', 'focus']}
+                      >
+                        <button
+                          className='explorer-filter-set-workspace___close-filter-action'
+                          type='button'
+                          disabled={hasCombinedWithCurrent(workspaceId, workspace)}
+                          onClick={() => {
+                            if (hasCombinedWithCurrent(workspaceId, workspace)) {
+                              return;
+                            }
+                            let nextActiveId = workspaceTabIds.at(i-1);
+                            handleRemove(workspaceId, nextActiveId);
+                            lastActiveTabId.current = nextActiveId;
+                          }}
+                        >
+                          <i className='g3-icon g3-icon--cross g3-icon-color__black g3-icon--sm' />
+                        </button>
+                      </Tooltip>
+                  }
+                  <MenuTrigger>
+                    <Button className='react-aria-Button explorer-filter-set-workspace___more-filter-actions' aria-label="Tab action menu">
+                      <i className='g3-icon g3-icon--more g3-icon-color__black g3-icon--sm' />
+                    </Button>
+                    <Popover offset={0}>
+                      {
+                        filterSet.filter.__type === 'STANDARD' ?
+                            <Menu
+                              disabledKeys={disabledActions}
+                              onAction={handleAction}
+                            >
+                                <MenuItem id="RENAME">Rename</MenuItem>
+                                <MenuItem id="RESET">Reset</MenuItem>
+                                <MenuItem id="DUPLICATE">Duplicate</MenuItem>
+                                <MenuItem id="SAVE">{savedFilterSet ? 'Update saved' : 'Save'}</MenuItem>
+                                <MenuItem id="UNSAVE">Unsave and remove</MenuItem>
+                                <MenuItem id="REVERT">Revert to saved</MenuItem>       
+                                <MenuItem id="SHARE">Share</MenuItem>              
+                                <MenuItem id="COMBINE">Combine with...</MenuItem>
+                            </Menu>
+                          : <Menu
+                              disabledKeys={disabledActions}
+                              onAction={handleAction}
+                            >
+                              <MenuItem id="RENAME">Rename</MenuItem>
+                              <MenuItem id="RESET">Reset</MenuItem>
+                              <MenuItem id="DUPLICATE">Duplicate</MenuItem>
+                            </Menu>
+                      }
+                    </Popover>
+                  </MenuTrigger>
+                </div>
+                  { filterSet.filter.__type === FILTER_TYPE.COMPOSED ? (
+                    <CombinedExplorerFilter
+                      workspace={workspace}
+                      title={filterSet.name}
+                      combinedFilter={filterSet.filter}
+                      onFilterChange={onFilterChange}
+                      className='explorer__filter explorer__combined-filter'
+                    />
+                  ) : (
+                    <ExplorerFilter
+                      title={filterSet.name}
+                      anchorValue={anchorValue}
+                      className='explorer__filter'
+                      filter={filterSet.filter}
+                      initialTabsOptions={initialTabsOptions}
+                      onAnchorValueChange={onAnchorValueChange}
+                      onFilterChange={onFilterChange}
+                      tabsOptions={tabsOptions}
+                      dictionaryEntries={dictionaryEntries}
+                      filterUIState={workspaceUIState[workspaceId]}
+                      setFilterUIState={(uiState) => {
+                        setWorkspaceUIState({
+                          ...workspaceUIState,
+                          [workspaceId]: uiState
+                        });
+                      }}
+                    />
+                  )}
+              </div>
+            </TabPanel>;
         })}
-      </main>
+      </Tabs>
       {actionFormType !== undefined && (
         <SimplePopup>
           <FilterSetActionForm
@@ -478,8 +426,8 @@ function ExplorerFilterSetWorkspace() {
               dereferenceFilter(activeFilterSet?.filter, workspace) ?? {}
             }
             filterSets={{
-              active: activeSavedFilterSet,
-              all: savedFilterSets.data,
+              active: actionFormType === 'RENAME' ?  activeFilterSet : activeSavedFilterSet,
+              all: actionFormType === 'RENAME' ? Object.values(workspace.all) : savedFilterSets.data,
               empty: { name: '', description: '', filter: {} },
             }}
             fetchWithToken={fetchWithToken}
@@ -490,6 +438,7 @@ function ExplorerFilterSetWorkspace() {
               load: handleLoad,
               save: handleSave,
               share: handleShare,
+              rename: handleRename
             }}
             type={actionFormType}
           />

@@ -10,15 +10,15 @@ import { updateExplorerFilter, useExplorerById } from '../redux/explorer/slice';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import ExplorerSelect from './ExplorerSelect';
 import ExplorerVisualization from './ExplorerVisualization';
-import ExplorerFilter, { DisabledExplorerFilter } from './ExplorerFilter';
 import './Explorer.css';
-import { FILTER_TYPE } from './ExplorerFilterSetWorkspace/utils';
 import { useStore } from 'react-redux';
 import { getDictionaryVersion } from '../DataDictionary/utils';
+import ExplorerFilterSetWorkspace from './ExplorerFilterSetWorkspace';
 
-/** @typedef {import("../redux/types").RootState} RootState */
-/** @typedef {import("./types").OptionFilter} OptionFilter */
-/** @typedef {import("../redux/types").RootStore} RootStore */
+/** @typedef {import('../redux/types').RootState} RootState */
+/** @typedef {import('./types').OptionFilter} OptionFilter */
+/** @typedef {import('./types').FilterChangeHandler} FilterChangeHandler */
+/** @typedef {import('../redux/types').RootStore} RootStore */
 
 /** @type {{ [x: string]: OptionFilter }} */
 const emptyAdminAppliedPreFilters = {};
@@ -27,10 +27,9 @@ function ExplorerDashboard() {
   /** @type {RootStore} */
   const reduxStore = useStore();
   const dispatch = useAppDispatch();
-
-  /** @param {RootState["explorer"]["explorerFilter"]} filter */
-  function handleFilterChange(filter) {
-    dispatch(updateExplorerFilter(filter));
+  /** @type {FilterChangeHandler} */
+  function handleFilterChange(filter, skipExplorerUpdate) {
+    dispatch(updateExplorerFilter(filter, skipExplorerUpdate));
   }
 
   const {
@@ -110,25 +109,34 @@ function ExplorerDashboard() {
       patientIds={patientIds}
     >
       {(data) => {
-        return (
-          <Dashboard>
-            <Dashboard.Sidebar className='explorer__sidebar'>
-              <div>
-                <ExplorerSelect />
-                {data.filter.__type === FILTER_TYPE.COMPOSED ? (
-                  <DisabledExplorerFilter className='explorer__filter' />
-                ) : (
-                  <ExplorerFilter
-                    anchorValue={data.anchorValue}
-                    className='explorer__filter'
-                    filter={data.filter}
-                    initialTabsOptions={data.initialTabsOptions}
-                    onAnchorValueChange={data.onAnchorValueChange}
-                    onFilterChange={data.onFilterChange}
-                    tabsOptions={data.tabsOptions}
-                    dictionaryEntries={dictionaryEntries}
-                  />
+        return <Dashboard>
+          <Dashboard.Sidebar className='explorer__sidebar'>
+            <ExplorerSelect />
+            <ExplorerFilterSetWorkspace
+              anchorValue={data.anchorValue}
+              initialTabsOptions={data.initialTabsOptions}
+              onAnchorValueChange={data.onAnchorValueChange}
+              onFilterChange={data.onFilterChange}
+              tabsOptions={data.tabsOptions}
+              dictionaryEntries={dictionaryEntries}
+              isLoadingRawData={data.isLoadingRawData}
+            />
+            <div className='explorer__side-bar-footer'>
+              <div className='explorer__version-info-area'>
+                {dataVersion !== '' && (
+                  <div className='explorer__version-info'>
+                    <span>Data Release Version:</span> {dataVersion}
+                  </div>
                 )}
+                {portalVersion !== '' && (
+                  <div className='explorer__version-info'>
+                    <span>Portal Version:</span> {portalVersion}
+                  </div>
+                )}
+                <div className='explorer__version-info'>
+                  <span>Help:</span>{' '}
+                  <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+                </div>
               </div>
               <div className='explorer__version-info-area'>
                 {dataVersion && (
@@ -156,6 +164,7 @@ function ExplorerDashboard() {
                   <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
                 </div>
               </div>
+            </div>
             </Dashboard.Sidebar>
             <Dashboard.Main className='explorer__main'>
               <ExplorerVisualization
@@ -179,7 +188,6 @@ function ExplorerDashboard() {
               />
             </Dashboard.Main>
           </Dashboard>
-        );
       }}
     </GuppyWrapper>
   );

@@ -41,6 +41,7 @@ export type ExplorerFilterSet = ExplorerFilterSet;
 export type UnsavedExplorerFilterSet = UnsavedExplorerFilterSet;
 
 export type ExplorerWorkspace = {
+  sessionTabCount: number;
   activeId: string;
   all: {
     [id: string]: ExplorerFilterSet;

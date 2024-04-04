@@ -9,22 +9,39 @@
 
 .explorer__main {
   padding: 1rem;
+  width: calc(100% - 500px);
 }
 
 .explorer__sidebar {
+  width: 500px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+}
+
+@media screen and (max-width: 1090px) {
+  .explorer__sidebar {
+    display: none;
+  }
+
+  .explorer__main {
+    width: 100%;
+  }
 }
 
 .explorer__filter {
   padding: 1rem 1rem 2rem;
 }
 
+.explorer__side-bar-footer {
+  padding-left: calc(30% - 1px);
+  background-color: var(--pcdc-color__primary);
+}
+
 .explorer__version-info-area {
-  margin: 0 auto;
-  padding: 3rem 0 2rem;
-  width: fit-content;
+  background-color: white;
+  padding: 2rem 1rem 2rem;
+  border-left: 1px solid var(--g3-color__smoke);
+  border-right: 1px solid var(--g3-color__smoke);
 }
 
 .explorer__version-info > span {

@@ -1,7 +1,3 @@
-:root {
-  --dashboard__sidebar-width: 360px;
-}
-
 .dashboard {
   display: flex;
   height: calc(100vh - 121px);
@@ -9,15 +5,11 @@
 
 .dashboard__main {
   height: 100%;
-  width: calc(100vw - var(--dashboard__sidebar-width));
   overflow-y: scroll;
 }
 
 .dashboard__sidebar {
-  background-color: var(--g3-color__white);
-  border-right: 1px solid var(--g3-color__smoke);
   height: 100%;
-  width: var(--dashboard__sidebar-width);
   overflow-y: scroll;
 }
 

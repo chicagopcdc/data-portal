@@ -8,12 +8,14 @@ import FilterSetUpdateForm from '../ExplorerFilterSetForms/FilterSetUpdateForm';
 
 /** @typedef {import('../types').ExplorerFilterSet} ExplorerFilterSet */
 /** @typedef {import('../types').SavedExplorerFilterSet} SavedExplorerFilterSet */
-/** @typedef {'CLEAR-ALL' | 'DELETE' | 'LOAD' | 'SAVE' | 'SHARE'} ActionFormType */
+/** @typedef {import('../types').UnsavedExplorerFilterSet} UnsavedExplorerFilterSet */
+/** @typedef {'CLEAR-ALL' | 'DELETE' | 'LOAD' | 'SAVE' | 'SHARE' | 'RENAME'} ActionFormType */
+/** @typedef {{ active: ExplorerFilterSet; all: ExplorerFilterSet[]; empty: ExplorerFilterSet }} ActionFilterSets */
 
 /**
  * @param {Object} prop
- * @param {SavedExplorerFilterSet['filter']} prop.currentFilter
- * @param {{ active: SavedExplorerFilterSet; all: SavedExplorerFilterSet[]; empty: SavedExplorerFilterSet }} prop.filterSets
+ * @param {ExplorerFilterSet['filter']} prop.currentFilter
+ * @param {ActionFilterSets} prop.filterSets
  * @param {(token: string) => Promise<SavedExplorerFilterSet>} prop.fetchWithToken
  * @param {Object} prop.handlers
  * @param {() => void} prop.handlers.clearAll
@@ -21,6 +23,7 @@ import FilterSetUpdateForm from '../ExplorerFilterSetForms/FilterSetUpdateForm';
  * @param {(deleted: SavedExplorerFilterSet) => void} prop.handlers.delete
  * @param {(loaded: SavedExplorerFilterSet, isshared?: boolean) => void} prop.handlers.load
  * @param {(saved: SavedExplorerFilterSet) => void} prop.handlers.save
+ * @param {(renamed: ExplorerFilterSet) => void} prop.handlers.rename
  * @param {() => Promise} prop.handlers.share
  * @param {ActionFormType} prop.type
  */
@@ -98,6 +101,17 @@ function FilterSetActionForm({
           onClose={handlers.close}
         />
       );
+    case 'RENAME':
+      return (
+        <FilterSetUpdateForm
+          currentFilter={currentFilter}
+          currentFilterSet={filterSets.active}
+          filterSets={filterSets.all}
+          onAction={handlers.rename}
+          onClose={handlers.close}
+          isRenameOnly={true}
+        />
+      );
     default:
       return null;
   }
@@ -114,8 +128,9 @@ FilterSetActionForm.propTypes = {
     load: PropTypes.func,
     save: PropTypes.func,
     share: PropTypes.func,
+    rename: PropTypes.func
   }),
-  type: PropTypes.oneOf(['CLEAR-ALL', 'DELETE', 'LOAD', 'SAVE', 'SHARE']),
+  type: PropTypes.oneOf(['CLEAR-ALL', 'DELETE', 'LOAD', 'SAVE', 'SHARE', 'RENAME']),
 };
 
 export default FilterSetActionForm;

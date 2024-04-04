@@ -2,12 +2,13 @@ import { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   clearWorkspaceAllFilterSets,
-  clearWorkspaceFilterSet,
   createWorkspaceFilterSet,
   duplicateWorkspaceFilterSet,
   loadWorkspaceFilterSet,
   removeWorkspaceFilterSet,
   useWorkspaceFilterSet,
+  createCombinedWorkspaceFilterSet,
+  updateActiveFilterSetName
 } from '../../redux/explorer/slice';
 import { workspacesSessionStorageKey } from '../../redux/explorer/utils';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
@@ -19,7 +20,6 @@ export default function useFilterSetWorkspace() {
   const dispatch = useAppDispatch();
   const explorerId = useAppSelector((s) => s.explorer.explorerId);
   const workspaces = useAppSelector((s) => s.explorer.workspaces);
-
   const location = useLocation();
   useEffect(() => {
     // inject filter value passed via router
@@ -39,27 +39,30 @@ export default function useFilterSetWorkspace() {
     () => ({
       ...workspaces[explorerId],
       size: Object.keys(workspaces[explorerId].all).length,
-      clear() {
-        dispatch(clearWorkspaceFilterSet());
-      },
       clearAll() {
-        dispatch(clearWorkspaceAllFilterSets());
+        return dispatch(clearWorkspaceAllFilterSets());
       },
-      create() {
-        dispatch(createWorkspaceFilterSet());
+      create(workspaceId) {
+        dispatch(createWorkspaceFilterSet(workspaceId));
       },
-      duplicate() {
-        dispatch(duplicateWorkspaceFilterSet());
+      createCombine(id) {
+        dispatch(createCombinedWorkspaceFilterSet(id));
+      },
+      duplicate(id) {
+        dispatch(duplicateWorkspaceFilterSet(id));
       },
       load(filterSet) {
         dispatch(loadWorkspaceFilterSet(filterSet));
       },
-      remove() {
-        dispatch(removeWorkspaceFilterSet());
+      remove(id, newActiveId) {
+        dispatch(removeWorkspaceFilterSet(id, newActiveId));
       },
       use(id) {
         dispatch(useWorkspaceFilterSet(id));
       },
+      rename(name) {
+        dispatch(updateActiveFilterSetName(name));
+      }
     }),
     [workspaces, explorerId]
   );

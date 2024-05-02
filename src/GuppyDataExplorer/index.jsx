@@ -123,22 +123,6 @@ function ExplorerDashboard() {
             />
             <div className='explorer__side-bar-footer'>
               <div className='explorer__version-info-area'>
-                {dataVersion !== '' && (
-                  <div className='explorer__version-info'>
-                    <span>Data Release Version:</span> {dataVersion}
-                  </div>
-                )}
-                {portalVersion !== '' && (
-                  <div className='explorer__version-info'>
-                    <span>Portal Version:</span> {portalVersion}
-                  </div>
-                )}
-                <div className='explorer__version-info'>
-                  <span>Help:</span>{' '}
-                  <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
-                </div>
-              </div>
-              <div className='explorer__version-info-area'>
                 {dataVersion && (
                   <div className='explorer__version-info'>
                     <span>Data Release Version:</span> {dataVersion}

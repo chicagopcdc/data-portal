@@ -37,7 +37,6 @@ const initialPatientIds = initialConfig.patientIdsConfig?.filter
   ? []
   : undefined;
 const initialWorkspaces = initializeWorkspaces(initialExplorerId);
-console.log(initialWorkspaces);
 const initialExplorerFilter = dereferenceFilter(
   initialWorkspaces[initialExplorerId].all[
     initialWorkspaces[initialExplorerId].activeId
@@ -207,18 +206,10 @@ const slice = createSlice({
         }
 
         const { all } = state.workspaces[state.explorerId];
-
-        console.log('KEYS ON REMOVE');
-        console.log(Object.entries(state.workspaces[state.explorerId].all));
-        console.log(Object.keys(state.workspaces[state.explorerId].all));
-
         const [firstEntry] = Object.entries(all);
         const [id, filterSet] = 
             newActiveId && newActiveId !== deleteId ? [newActiveId, all[newActiveId]] 
           : firstEntry ?? [newId, { filter: {} }];
-
-        console.log('WORKSPACE ON REMOVE');
-        console.log(JSON.parse(JSON.stringify(state.workspaces[state.explorerId].all)));
  
         if (id !== activeId) {
           state.workspaces[state.explorerId].activeId = id;
@@ -275,8 +266,6 @@ const slice = createSlice({
         // sync with workspaces
         const { activeId } = state.workspaces[state.explorerId];
         state.workspaces[state.explorerId].all[activeId].filter = newFilter;
-        console.log('FILTER FROM COMPOSED RESET');
-        console.log(newFilter);
       }
     },
     updateActiveFilterSetName(state, action) {

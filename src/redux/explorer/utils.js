@@ -34,8 +34,6 @@ export function dereferenceFilter(filter, workspace) {
 
 /** @param {ExplorerWorkspace} workspace */
 export function updateFilterRefs(workspace) {
-  console.log('UPDATE FILTER REFS');
-  console.log(Object.keys(workspace.all));
   const ids = Object.keys(workspace.all);
   const filterSets = Object.values(workspace.all);
 

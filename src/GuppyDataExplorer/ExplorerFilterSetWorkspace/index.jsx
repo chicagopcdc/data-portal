@@ -117,7 +117,6 @@ function ExplorerFilterSetWorkspace({
         tabIndex: 0
       }
     };
-    console.log(resetWorkspaceUIState);
     setWorkspaceUIState(resetWorkspaceUIState);
     closeActionForm();
     setTimeout(() => {
@@ -326,35 +325,31 @@ function ExplorerFilterSetWorkspace({
             return <TabPanel id={workspaceId} key={workspaceId}>
               <div className={filterPanelVisibile ? 'animate-visible' : 'animate-hidden'}>
                 <div className='explorer-filter-set-workspace___filter-actions'>
-                  {
-                    filterCount <= 1 ?
-                      null
-                    : <Tooltip
-                        arrowContent={<div className='rc-tooltip-arrow-inner' />}
-                        overlay={hasCombinedWithCurrent(workspaceId, workspace) ?
-                          'To remove the currently active filter set from the workspace, first remove it from any unsaved composed filter set in the workspace' :
-                          'Remove the currently active filter set from the workspace'
+                  <Tooltip
+                    arrowContent={<div className='rc-tooltip-arrow-inner' />}
+                    overlay={hasCombinedWithCurrent(workspaceId, workspace) ?
+                      'To remove the currently active filter set from the workspace, first remove it from any unsaved composed filter set in the workspace' :
+                      'Remove the currently active filter set from the workspace'
+                    }
+                    placement='bottom'
+                    trigger={filterCount <= 1 ? [] : ['hover', 'focus']}
+                  >
+                    <button
+                      className={`explorer-filter-set-workspace___close-filter-action ${filterCount <= 1  ? 'hidden' : 'visible'}`}
+                      type='button'
+                      disabled={hasCombinedWithCurrent(workspaceId, workspace)}
+                      onClick={() => {
+                        if (hasCombinedWithCurrent(workspaceId, workspace)) {
+                          return;
                         }
-                        placement='bottom'
-                        trigger={['hover', 'focus']}
-                      >
-                        <button
-                          className='explorer-filter-set-workspace___close-filter-action'
-                          type='button'
-                          disabled={hasCombinedWithCurrent(workspaceId, workspace)}
-                          onClick={() => {
-                            if (hasCombinedWithCurrent(workspaceId, workspace)) {
-                              return;
-                            }
-                            let nextActiveId = workspaceTabIds.at(i-1);
-                            handleRemove(workspaceId, nextActiveId);
-                            lastActiveTabId.current = nextActiveId;
-                          }}
-                        >
-                          <i className='g3-icon g3-icon--cross g3-icon-color__black g3-icon--sm' />
-                        </button>
-                      </Tooltip>
-                  }
+                        let nextActiveId = workspaceTabIds.at(i-1);
+                        handleRemove(workspaceId, nextActiveId);
+                        lastActiveTabId.current = nextActiveId;
+                      }}
+                    >
+                      <i className='g3-icon g3-icon--cross g3-icon-color__black g3-icon--sm' />
+                    </button>
+                  </Tooltip>
                   <MenuTrigger>
                     <Button className='react-aria-Button explorer-filter-set-workspace___more-filter-actions' aria-label="Tab action menu">
                       <i className='g3-icon g3-icon--more g3-icon-color__black g3-icon--sm' />

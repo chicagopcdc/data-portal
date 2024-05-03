@@ -317,9 +317,9 @@ function ExplorerFilterSetWorkspace({
             const disabledActions = [];
 
             if (savedFilterSet === undefined) {
-              disabledActions.push('revert', 'unsave', 'share');
+              disabledActions.push('REVERT', 'UNSAVE', 'SHARE');
             } else if (JSON.stringify(savedFilterSet.filter) === JSON.stringify(filterSet.filter)) {
-              disabledActions.push('revert');
+              disabledActions.push('REVERT');
             }
             
             return <TabPanel id={workspaceId} key={workspaceId}>
@@ -364,11 +364,11 @@ function ExplorerFilterSetWorkspace({
                                 <MenuItem id="RENAME">Rename</MenuItem>
                                 <MenuItem id="RESET">Reset</MenuItem>
                                 <MenuItem id="DUPLICATE">Duplicate</MenuItem>
+                                <MenuItem id="COMBINE">Combine with...</MenuItem>
                                 <MenuItem id="SAVE">{savedFilterSet ? 'Update saved' : 'Save'}</MenuItem>
                                 <MenuItem id="UNSAVE">Unsave and remove</MenuItem>
                                 <MenuItem id="REVERT">Revert to saved</MenuItem>       
                                 <MenuItem id="SHARE">Share</MenuItem>              
-                                <MenuItem id="COMBINE">Combine with...</MenuItem>
                             </Menu>
                           : <Menu
                               disabledKeys={disabledActions}

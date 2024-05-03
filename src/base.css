@@ -620,6 +620,10 @@ input[type="text"] {
   column-gap: 20px;
   forced-color-adjust: none;
 
+  &[data-disabled] {
+    color: var(--g3-color__smoke);
+  }
+
   &[data-focused] {
     background: var(--pcdc-color__primary);
     color: var(--g3-color__white);
@@ -686,10 +690,7 @@ input[type="text"] {
   }
 
   &[data-disabled] {
-    color: var(--text-color-disabled);
-    &[data-selected] {
-      --border-color: var(--text-color-disabled);
-    }
+    color: var(--g3-color__smoke);
   }
 
   &[data-focus-visible]:after {

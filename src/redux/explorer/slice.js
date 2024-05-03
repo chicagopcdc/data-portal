@@ -339,8 +339,7 @@ const slice = createSlice({
         const { activeId } = state.workspaces[state.explorerId];
 
         state.savedFilterSets.data.push(filterSet);
-        filterSet.index = state.workspaces[state.explorerId].all[activeId].index;
-
+        
         // sync with workspaces
         state.workspaces[state.explorerId].all[activeId] = filterSet;
       })
@@ -372,7 +371,6 @@ const slice = createSlice({
         );
         const { activeId } = state.workspaces[state.explorerId];
 
-        filterSet.index = state.workspaces[state.explorerId].all[activeId].index;
         state.savedFilterSets.data[index] = filterSet;
 
         // sync with workspaces
@@ -403,7 +401,7 @@ const slice = createSlice({
       })
       .addCase(updateSurvivalResult.rejected, (state, action) => {
         state.survivalAnalysisResult.data = null;
-        state.survivalAnalysisResult.error = action.payload;
+        state.survivalAnalysisResult.error = action.error;
         state.survivalAnalysisResult.isPending = false;
         state.survivalAnalysisResult.parsed = {};
         state.survivalAnalysisResult.staleFilterSetIds = [];

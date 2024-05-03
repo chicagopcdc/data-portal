@@ -1,4 +1,4 @@
-.base-table {
+.base-table__container {
   transform: rotateX(180deg);
   overflow-x: scroll;
 }

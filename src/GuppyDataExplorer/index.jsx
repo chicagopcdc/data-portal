@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { contactEmail, explorerConfig } from '../localconf';
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -14,6 +14,7 @@ import './Explorer.css';
 import { useStore } from 'react-redux';
 import { getDictionaryVersion } from '../DataDictionary/utils';
 import ExplorerFilterSetWorkspace from './ExplorerFilterSetWorkspace';
+import { Popover, Dialog, DialogTrigger, Button } from 'react-aria-components';
 
 /** @typedef {import('../redux/types').RootState} RootState */
 /** @typedef {import('./types').OptionFilter} OptionFilter */
@@ -31,7 +32,6 @@ function ExplorerDashboard() {
   function handleFilterChange(filter, skipExplorerUpdate) {
     dispatch(updateExplorerFilter(filter, skipExplorerUpdate));
   }
-
   const {
     config: {
       adminAppliedPreFilters = emptyAdminAppliedPreFilters,
@@ -45,39 +45,19 @@ function ExplorerDashboard() {
     explorerIds,
     patientIds,
   } = useAppSelector((state) => state.explorer);
-  useEffect(() => {
-    // sync saved filter sets with explorer id state
-    dispatch(fetchFilterSets()).unwrap().catch(console.error);
-  }, [explorerId]);
-
   const { dataVersion, portalVersion, survivalCurveVersion } = useAppSelector(
     (state) => state.versionInfo,
   );
-
   const [searchParams, setSearchParams] = useSearchParams();
+  const searchParamId = useRef(undefined);
+  // const [showVersionInfo, setShowVersionInfo] = useState(false);
+
   const isSearchParamIdValid =
     searchParams.has('id') &&
     explorerIds.includes(Number(searchParams.get('id')));
-  const searchParamId = useRef(undefined);
   searchParamId.current = isSearchParamIdValid
     ? Number(searchParams.get('id'))
     : explorerIds[0];
-  useEffect(() => {
-    // sync search param with explorer id state
-    setSearchParams(`id=${searchParamId.current}`, { replace: true });
-    if (explorerId !== searchParamId.current)
-      dispatch(useExplorerById(searchParamId.current));
-
-    function switchExplorerOnBrowserNavigation() {
-      if (explorerIds.includes(searchParamId.current))
-        dispatch(useExplorerById(searchParamId.current));
-    }
-
-    window.addEventListener('popstate', switchExplorerOnBrowserNavigation);
-    return () =>
-      window.removeEventListener('popstate', switchExplorerOnBrowserNavigation);
-  }, []);
-
   const dict = reduxStore.getState().submission.dictionary;
   const dictSections = dict ? Object.entries(dict) : [];
 
@@ -94,8 +74,32 @@ function ExplorerDashboard() {
       }
     }
   }
+  
+    const dictionaryVersion = getDictionaryVersion();
 
-  const dictionaryVersion = getDictionaryVersion();
+
+  useEffect(() => {
+    // sync saved filter sets with explorer id state
+    dispatch(fetchFilterSets()).unwrap().catch(console.error);
+  }, [explorerId]);
+
+  
+  useEffect(() => {
+    // sync search param with explorer id state
+    setSearchParams(`id=${searchParamId.current}`, { replace: true });
+    if (explorerId !== searchParamId.current)
+      dispatch(useExplorerById(searchParamId.current));
+
+    function switchExplorerOnBrowserNavigation() {
+      if (explorerIds.includes(searchParamId.current))
+        dispatch(useExplorerById(searchParamId.current));
+    }
+
+    window.addEventListener('popstate', switchExplorerOnBrowserNavigation);
+    return () =>
+      window.removeEventListener('popstate', switchExplorerOnBrowserNavigation);
+  }, []);
+
   return (
     <GuppyWrapper
       key={explorerId}
@@ -123,30 +127,44 @@ function ExplorerDashboard() {
             />
             <div className='explorer__side-bar-footer'>
               <div className='explorer__version-info-area'>
-                {dataVersion && (
-                  <div className='explorer__version-info'>
-                    <span>Data Release Version:</span> {dataVersion}
-                  </div>
-                )}
-                {portalVersion && (
-                  <div className='explorer__version-info'>
-                    <span>Portal Version:</span> {portalVersion}
-                  </div>
-                )}
-                {dictionaryVersion && (
-                  <div className='footer__version-info'>
-                    <span>Dictionary Version:</span> {dictionaryVersion}
-                  </div>
-                )}
-                {survivalCurveVersion && (
-                  <div className='explorer__version-info'>
-                    <span>Survival Curve Version:</span> {survivalCurveVersion}
-                  </div>
-                )}
                 <div className='explorer__version-info'>
                   <span>Help:</span>{' '}
                   <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
-                </div>
+                  <DialogTrigger>
+                    <Button
+                      type='button'
+                      className='explorer__version-info-text-button separator-before'
+                    >
+                      View app version info
+                    </Button>
+                    <Popover>
+                      <Dialog>
+                        <div className='explorer-filter__query-container explorer-filter__query-container--expanded'>
+                          {dataVersion && (
+                            <div className='explorer__version-info'>
+                              <span>Data Release Version:</span> {dataVersion}
+                            </div>
+                          )}
+                          {portalVersion && (
+                            <div className='explorer__version-info'>
+                              <span>Portal Version:</span> {portalVersion}
+                            </div>
+                          )}
+                          {dictionaryVersion && (
+                            <div className='footer__version-info'>
+                              <span>Dictionary Version:</span> {dictionaryVersion}
+                            </div>
+                          )}
+                          {survivalCurveVersion && (
+                            <div className='explorer__version-info'>
+                              <span>Survival Curve Version:</span> {survivalCurveVersion}
+                            </div>
+                          )}
+                        </div>
+                      </Dialog>
+                    </Popover>
+                  </DialogTrigger>
+               </div>             
               </div>
             </div>
             </Dashboard.Sidebar>

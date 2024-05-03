@@ -690,7 +690,8 @@ input[type="text"] {
   }
 
   &[data-disabled] {
-    color: var(--g3-color__smoke);
+    background-color: var(--g3-color__silver);
+    color: var(--g3-color__silver);
   }
 
   &[data-focus-visible]:after {

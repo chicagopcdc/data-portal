@@ -142,6 +142,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
+  color: inherit;
+}
+
+.explorer-filter-set-workspace__tab-title h4 {
+  color: inherit;
 }
 
 .explorer-filter-set-workspace .react-aria-Tab {
@@ -149,6 +154,10 @@
   background-color: var(--g3-color__smoke);
   border: 1px solid transparent;
   border-radius: 8px 0 0 8px;
+
+  &[data-disabled] {
+    color: var(--g3-color__silver);
+  }
 }
 
 .explorer-filter-set-workspace .react-aria-Tab:first-of-type {

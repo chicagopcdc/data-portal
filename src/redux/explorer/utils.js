@@ -14,12 +14,6 @@ import { getGQLFilter } from '../../GuppyComponents/Utils/queries';
 /** @typedef {import('./types').ExplorerState} ExplorerState */
 /** @typedef {import('./types').ExplorerWorkspace} ExplorerWorkspace */
 
-
-function isAnchoredFilterState() {
-  
-}
-
-
 /**
  * @param {ExplorerFilterSet['filter'] | RefFilterState} filter
  * @param {ExplorerWorkspace} workspace

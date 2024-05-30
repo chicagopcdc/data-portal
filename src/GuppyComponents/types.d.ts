@@ -51,7 +51,7 @@ export interface ComposedFilterStateWithRef extends ComposedFilterState {
   value?: (ComposedFilterStateWithRef | StandardFilterState | RefFilterState)[];
 }
 
-export type FilterState = ComposedFilterState | StandardFilterState | ComposedFilterStateWithRef;
+export type FilterState = ComposedFilterState | StandardFilterState | ComposedFilterStateWithRef | EmptyFilter;
 
 
 export type GqlInFilter = {
@@ -231,6 +231,6 @@ export type GuppyData = {
     size: number;
     sort: GqlSort;
   }) => Promise<any>;
-  onAnchorValueChange: (anchorValue: string) => void;
+  onAnchorValueChange: (anchorValue: string, currentFilterState: FilterState) => void;
   onFilterChange: FilterChangeHandler;
 };

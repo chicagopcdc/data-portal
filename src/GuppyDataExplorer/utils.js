@@ -76,9 +76,9 @@ export const humanizeNumber = (number, fixedPoint = 2) => {
 
 
 /** 
- * @param {ExplorerFilterSet} filterSet
+ * @param {any} filterSet
  * @returns {filterSet is SavedExplorerFilterSet}
 */
 export function isFilterSetSaved(filterSet) {
-  return 'descripton' in filterSet;
+  return 'description' in filterSet;
 }

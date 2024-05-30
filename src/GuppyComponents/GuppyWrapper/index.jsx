@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import {
   queryGuppyForAggregationChartData,
@@ -450,7 +450,7 @@ function GuppyWrapper({
   /**
    * @param {string} anchorValue
    */
-  function handleAnchorValueChange(anchorValue) {
+  function handleAnchorValueChange(anchorValue, currentFilterState) {
     if (anchorValue in anchoredTabsOptionsCache) {
       setState((prevState) => ({
         ...prevState,
@@ -466,7 +466,7 @@ function GuppyWrapper({
       setState((prevState) => ({ ...prevState, anchorValue }));
       fetchAggsOptionsDataFromGuppy({
         anchorValue,
-        filter: filterState,
+        filter: mergeFilters(currentFilterState, adminAppliedPreFilters),
         filterTabs: filterConfig.tabs.filter(({ title }) =>
           filterConfig.anchor.tabs.includes(title)
         ),
@@ -498,8 +498,8 @@ function GuppyWrapper({
     downloadRawDataByTypeAndFilter,
     fetchAndUpdateRawData,
     getTotalCountsByTypeAndFilter,
-    onAnchorValueChange: handleAnchorValueChange,
-    onFilterChange: handleFilterChange,
+    onAnchorValueChange: useCallback(handleAnchorValueChange, [adminAppliedPreFilters]),
+    onFilterChange: useCallback(handleFilterChange, []),
   });
 }
 

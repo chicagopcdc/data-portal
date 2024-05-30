@@ -7,9 +7,10 @@ import { capitalizeFirstLetter } from '../../../utils';
  * @typedef {Object} AnchorFilterProps
  * @property {string} anchorField
  * @property {string} anchorValue
+ * @property {any} filter
  * @property {string} [defaultOptionLabel]
  * @property {string} [defaultOptionValue]
- * @property {(anchor: string) => void} onChange
+ * @property {(anchor: string, currentFilterState: any) => void} onChange
  * @property {string[]} options
  * @property {string[]} [optionsInUse]
  * @property {string} [tooltip]
@@ -19,6 +20,7 @@ import { capitalizeFirstLetter } from '../../../utils';
 function AnchorFilter({
   anchorField,
   anchorValue,
+  filter,
   defaultOptionLabel = 'Any',
   defaultOptionValue = '',
   onChange,
@@ -78,7 +80,7 @@ function AnchorFilter({
             style={{ margin: '0 14px' }}
             value={option}
             checked={option === anchorValue}
-            onChange={() => onChange(option)}
+            onChange={() => onChange(option, filter)}
           />
           <span
             className={

@@ -123,7 +123,6 @@ function ExplorerDashboard() {
               onFilterChange={data.onFilterChange}
               tabsOptions={data.tabsOptions}
               dictionaryEntries={dictionaryEntries}
-              isLoadingRawData={data.isLoadingRawData}
             />
             <div className='explorer__side-bar-footer'>
               <div className='explorer__version-info-area'>

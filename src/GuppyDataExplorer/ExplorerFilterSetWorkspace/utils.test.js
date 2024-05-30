@@ -1,4 +1,4 @@
-import { FILTER_TYPE, pluckFromFilter, pluckFromAnchorFilter } from './utils';
+import { FILTER_TYPE, pluckFromFilter, pluckFromAnchorFilter } from '../ExplorerFilterSetWorkspace/utils
 
 describe('pluckFromFilter', () => {
   test('no filter', () => {

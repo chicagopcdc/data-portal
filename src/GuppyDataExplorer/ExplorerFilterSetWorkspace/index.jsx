@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback, memo } from 'react';
 import SimplePopup from '../../components/SimplePopup';
 import Tooltip from 'rc-tooltip';
 import {
@@ -15,7 +15,6 @@ import FilterSetActionForm from './FilterSetActionForm';
 import FilterSetLabel from './FilterSetLabel';
 import useFilterSetWorkspace from './useFilterSetWorkspace';
 import {
-  checkIfFilterEmpty,
   dereferenceFilter,
   FILTER_TYPE,
 } from './utils';
@@ -67,7 +66,6 @@ function ExplorerFilterSetWorkspace({
   onFilterChange,
   tabsOptions,
   dictionaryEntries,
-  isLoadingRawData,
 }) {
   const dispatch = useAppDispatch();
   const savedFilterSets = useAppSelector(
@@ -80,11 +78,8 @@ function ExplorerFilterSetWorkspace({
   );
   const all = workspace.all;
   const workspaceTabIds = Object.keys(all);
-
-  const [filterPanelVisibile, setFilterPanelVisibile] = useState(true);
-
-  let lastActiveTabId = useRef(workspace.activeId);
-
+  const filterCount = Object.values(all).length;
+  const lastActiveTabId = useRef(workspace.activeId);
   const { config: { filterConfig } } = useAppSelector((state) => state.explorer);
   const filterTabs = filterConfig.tabs.map(
     ({ title, fields, searchFields }) => ({
@@ -100,16 +95,15 @@ function ExplorerFilterSetWorkspace({
       tabIndex: 0
     }
   }
-  const [workspaceUIState, setWorkspaceUIState] = useState(initialWorkspaceUIState);
-
+  const workspaceUIState = useRef(initialWorkspaceUIState);
   const [actionFormType, setActionFormType] = useState(
     /** @type {ActionFormType} */ (undefined)
   );
-  function closeActionForm() {
+
+  const closeActionForm = useCallback(() => {
     setActionFormType(undefined);
-  }
-  function handleClearAll() {
-    setFilterPanelVisibile(false);
+  }, []);
+  const handleClearAll = useCallback(() => {
     const { payload: resetFilterSetId } = workspace.clearAll();
     const resetWorkspaceUIState = {
       [resetFilterSetId]: {
@@ -117,61 +111,69 @@ function ExplorerFilterSetWorkspace({
         tabIndex: 0
       }
     };
-    setWorkspaceUIState(resetWorkspaceUIState);
+    workspaceUIState.current = resetWorkspaceUIState;
     closeActionForm();
-    setTimeout(() => {
-      setFilterPanelVisibile(true);
-    }, 200);
-  }
-  function handleCreate() {
-    setFilterPanelVisibile(false);
-    setTimeout(() => {
-      setFilterPanelVisibile(true);
-    }, 200);
+  }, []);
+  const handleCreate = useCallback(() => {
     const newWorkspaceId = crypto.randomUUID();
-    setWorkspaceUIState({
-      ...workspaceUIState,
-      [newWorkspaceId]: {
-        expandedStatus: getExpandedStatus(filterTabs, false),
-        tabIndex: 0
-      }
-    });
+    workspaceUIState.current[newWorkspaceId] = {
+      expandedStatus: getExpandedStatus(filterTabs, false),
+      tabIndex: 0
+    }
     workspace.create(newWorkspaceId);
-  }
+  }, []);
   /** @param {SavedExplorerFilterSet} deleted */
-  async function handleDelete(deleted) {
+  const handleDelete = useCallback(async (deleted) => {
     try {
+      let workspaceId;
+      for (const [id, filterSet] of Object.entries(workspace.all)) {
+        if (filterSet.id === deleted.id) {
+          workspaceId = id;
+          break;
+        }
+      }
       await dispatch(deleteFilterSet(deleted));
-      workspace.remove(deleted.id);
+      workspace.remove(workspaceId);
     } finally {
       closeActionForm();
     }
-  }
+  }, [workspace]);
 
   /**
    * @param {SavedExplorerFilterSet} loaded
    * @param {boolean} [isShared]
    */
-  function handleLoad(loaded, isShared = false) {
+  const handleLoad = useCallback((loaded, isShared = false) => {
+    const newWorkspaceId = crypto.randomUUID();
     if (isShared) {
-      workspace.load({ filter: loaded.filter });
+      workspace.load(loaded, newWorkspaceId);
+      workspaceUIState.current[newWorkspaceId] = {
+        expandedStatus: getExpandedStatus(filterTabs, false),
+        tabIndex: 0
+      }
     } else {
-      let newActiveId;
+      let existingActiveId;
 
-      for (const [id, filterSet] of Object.entries(workspace.all))
+      for (const [id, filterSet] of Object.entries(workspace.all)) {
         if (filterSet.id === loaded.id) {
-          newActiveId = id;
+          existingActiveId = id;
           break;
         }
+      }
 
-      if (newActiveId) workspace.use(newActiveId);
-      else workspace.load(loaded);
+      const nextActiveId = existingActiveId ?? newWorkspaceId;
+
+      workspace.load(loaded, nextActiveId);
+      workspaceUIState.current[nextActiveId] = {
+        expandedStatus: getExpandedStatus(filterTabs, false),
+        tabIndex: 0
+      }
     }
 
     closeActionForm();
-  }
+  }, [workspace]);
   /** @param {SavedExplorerFilterSet} saved */
-  async function handleSave(saved) {
+  const handleSave = useCallback(async (saved) => {
     try {
       if (saved.id === undefined) { 
         await dispatch(createFilterSet(saved));
@@ -182,40 +184,26 @@ function ExplorerFilterSetWorkspace({
     } finally {
       closeActionForm();
     }
-  }
-  function handleShare() {
+  }, []);
+  const handleShare = useCallback(() => {
     return createToken(activeSavedFilterSet);
-  }
-  function handleRemove(id, newActiveId) {
-    setFilterPanelVisibile(false);
+  }, []);
+  const handleRemove = useCallback((id, newActiveId) => {
     workspace.remove(id, newActiveId);
-    setTimeout(() => {
-      setFilterPanelVisibile(true);
-    }, 200);
-  }
+  }, []);
     /** @param {ExplorerFilterSet} renamedFilterSet */
-  function handleRename(renamedFilterSet) {
+  const handleRename = useCallback((renamedFilterSet) => {
     workspace.rename(renamedFilterSet.name);
     closeActionForm();
-  }
+  }, []);
 
   /** @param {string} id */
-  function handleCombineWith(id) {
-    setFilterPanelVisibile(false);
+  const handleCombineWith = useCallback((id) => {
     workspace.createCombine(id);
-    setTimeout(() => {
-      setFilterPanelVisibile(true);
-    }, 200);
-  }
+  }, []);
 
-  const disableNew = Object.values(workspace.all).some(({ filter }) =>
-    checkIfFilterEmpty(filter ?? {})
-  );
-
-  const filterCount = Object.values(workspace.all).length;
-  let nonEmptyFilterCount = filterCount;
-  for (const { filter } of Object.values(workspace.all))
-    if (checkIfFilterEmpty(filter)) nonEmptyFilterCount -= 1;
+  console.log('RE-RENDERED');
+  console.log(workspaceTabIds);
 
   return (
     <div className='explorer-filter-set-workspace'>
@@ -251,16 +239,7 @@ function ExplorerFilterSetWorkspace({
         orientation='vertical'
         keyboardActivation='manual'
         selectedKey={workspace.activeId}
-        disabledKeys={
-          isLoadingRawData ? 
-          workspaceTabIds.filter(id => id !== workspace.activeId) 
-          : []
-        }
         onSelectionChange={(/** @type {string}*/ requestedSelectionId) => {
-          if (requestedSelectionId !== lastActiveTabId.current) {
-            setFilterPanelVisibile(false);
-            setTimeout(() => { setFilterPanelVisibile(true); }, 200);
-          }
           if (
             requestedSelectionId !== workspace.activeId && 
             workspace.activeId === lastActiveTabId.current
@@ -323,7 +302,7 @@ function ExplorerFilterSetWorkspace({
             }
             
             return <TabPanel id={workspaceId} key={workspaceId}>
-              <div className={filterPanelVisibile ? 'animate-visible' : 'animate-hidden'}>
+              <div>
                 <div className='explorer-filter-set-workspace___filter-actions'>
                   <Tooltip
                     arrowContent={<div className='rc-tooltip-arrow-inner' />}
@@ -366,7 +345,7 @@ function ExplorerFilterSetWorkspace({
                                 <MenuItem id="DUPLICATE">Duplicate</MenuItem>
                                 <MenuItem id="COMBINE">Combine with...</MenuItem>
                                 <MenuItem id="SAVE">{savedFilterSet ? 'Update saved' : 'Save'}</MenuItem>
-                                <MenuItem id="UNSAVE">Unsave and remove</MenuItem>
+                                <MenuItem id="DELETE">Unsave and remove</MenuItem>
                                 <MenuItem id="REVERT">Revert to saved</MenuItem>       
                                 <MenuItem id="SHARE">Share</MenuItem>              
                             </Menu>
@@ -401,13 +380,7 @@ function ExplorerFilterSetWorkspace({
                       onFilterChange={onFilterChange}
                       tabsOptions={tabsOptions}
                       dictionaryEntries={dictionaryEntries}
-                      filterUIState={workspaceUIState[workspaceId]}
-                      setFilterUIState={(uiState) => {
-                        setWorkspaceUIState({
-                          ...workspaceUIState,
-                          [workspaceId]: uiState
-                        });
-                      }}
+                      filterUIState={workspaceUIState.current[workspaceId]}
                     />
                   )}
               </div>
@@ -443,4 +416,4 @@ function ExplorerFilterSetWorkspace({
   );
 }
 
-export default ExplorerFilterSetWorkspace;
+export default memo(ExplorerFilterSetWorkspace);

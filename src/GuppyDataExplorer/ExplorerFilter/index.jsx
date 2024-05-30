@@ -25,7 +25,6 @@ import { Popover, Dialog, DialogTrigger, Button } from 'react-aria-components';
 /** @typedef {import('../types').ComposedFilterStateWithRef} ComposedFilterStateWithRef */
 /** @typedef {import('../types').RefFilterState} RefFilterState */
 /** @typedef {import('../../components/Select').SelectItem} SelectItem */
-
 function getSelectedFilterSets(combinedFilter) {
   return (
     combinedFilter.refIds.length < 2 ?
@@ -220,7 +219,6 @@ export const CombinedExplorerFilter = React.memo(_CombinedExplorerFilter);
  * @property {GuppyData['tabsOptions']} tabsOptions
  * @property {Object} dictionaryEntries
  * @property {Object} filterUIState
- * @property {(uiState: Object) => void} setFilterUIState
  */
 
 /** @param {ExplorerFilterProps} props */
@@ -246,7 +244,6 @@ function ExplorerFilter({ className = '', title = 'Filters', ...filterProps }) {
   };
   const hasExplorerFilter = !checkIfFilterEmpty(filter);
   const [showQuery, setShowQuery] = useState(false);
-  const [expandQuery, setExpandQuery] = useState(false);
 
     /** @type {import('../../components/FilterDisplay').ClickCombineModeHandler} */
     function handleClickCombineMode(payload) {  
@@ -269,7 +266,6 @@ function ExplorerFilter({ className = '', title = 'Filters', ...filterProps }) {
       onFilterChange(newFitler);
     }
     setShowQuery(!checkIfFilterEmpty(newFitler));
-    setExpandQuery(!checkIfFilterEmpty(newFitler));
   }
 
   return (
@@ -315,7 +311,6 @@ ExplorerFilter.propTypes = {
   tabsOptions: PropTypes.object.isRequired, // from GuppWrapper
   dictionaryEntries: PropTypes.array,
   filterUIState: PropTypes.object.isRequired,
-  setFilterUIState: PropTypes.func.isRequired
 };
 
 export default React.memo(ExplorerFilter);

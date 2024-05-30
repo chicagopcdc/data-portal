@@ -51,8 +51,8 @@ export default function useFilterSetWorkspace() {
       duplicate(id) {
         dispatch(duplicateWorkspaceFilterSet(id));
       },
-      load(filterSet) {
-        dispatch(loadWorkspaceFilterSet(filterSet));
+      load(filterSet, newActiveId) {
+        dispatch(loadWorkspaceFilterSet(filterSet, newActiveId));
       },
       remove(id, newActiveId) {
         dispatch(removeWorkspaceFilterSet(id, newActiveId));

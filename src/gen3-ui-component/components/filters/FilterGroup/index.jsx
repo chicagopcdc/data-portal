@@ -39,6 +39,7 @@ function findFilterElement(label) {
 /** @typedef {import('../types').FilterChangeHandler} FilterChangeHandler */
 /** @typedef {import('../types').FilterConfig} FilterConfig */
 /** @typedef {import('../types').FilterSectionConfig} FilterSectionConfig */
+/** @typedef {import('../types').FilterState} FilterState */
 /** @typedef {import('../types').StandardFilterState} StandardFilterState */
 
 /**
@@ -50,13 +51,12 @@ function findFilterElement(label) {
  * @property {FilterConfig} filterConfig
  * @property {boolean} [hideZero]
  * @property {string} [lockedTooltipMessage]
- * @property {(anchorValue: string) => void} [onAnchorValueChange]
+ * @property {(anchorValue: string, filterState: FilterState) => void} [onAnchorValueChange]
  * @property {FilterChangeHandler} [onFilterChange]
  * @property {(patientIds: string[]) => void} [onPatientIdsChange]
  * @property {string[]} [patientIds]
  * @property {FilterSectionConfig[][]} tabs
  * @property {Object} filterUIState
- * @property {(uiState: object) => void} setFilterUIState
  */
 
 const defaultExplorerFilter = {};
@@ -76,8 +76,24 @@ function FilterGroup({
   patientIds,
   tabs,
   filterUIState,
-  setFilterUIState,
 }) {
+  const [expandedStatus, __setExpandedStatus] = useState(filterUIState.expandedStatus);
+  const setExpandedStatus = (expandedStatus) => {
+    __setExpandedStatus(expandedStatus);
+    filterUIState.expandedStatus = expandedStatus;
+  };
+  const [tabIndex, __setTabIndex] = useState(filterUIState.tabIndex);
+  const setTabIndex = (tabIndex) => {
+    __setTabIndex(tabIndex);
+    filterUIState.tabIndex = tabIndex;
+  };
+  const [expandedStatusControl, setExpandedStatusControl] = useState(false);
+  const expandedStatusText = expandedStatusControl
+    ? 'Collapse all'
+    : 'Open all';
+  const [filterResults, setFilterResults] = useState(filter);
+  const isInitialRenderRef = useRef(true);
+
   const filterTabs = filterConfig.tabs.map(
     ({ title, fields, searchFields }) => ({
       title,
@@ -85,7 +101,6 @@ function FilterGroup({
       fields: searchFields ? searchFields.concat(fields) : fields,
     })
   );
-  const { expandedStatus, tabIndex } = filterUIState;
   const tabTitle = filterTabs[tabIndex].title;
   const showAnchorFilter =
     filterConfig.anchor !== undefined &&
@@ -97,17 +112,10 @@ function FilterGroup({
     filterConfig.anchor !== undefined && anchorValue !== '' && showAnchorFilter
       ? `${filterConfig.anchor.field}:${anchorValue}`
       : '';
-  const [expandedStatusControl, setExpandedStatusControl] = useState(false);
-  const expandedStatusText = expandedStatusControl
-    ? 'Collapse all'
-    : 'Open all';
-
-  const [filterResults, setFilterResults] = useState(filter);
 
   const [excludedStatus, setExcludedStatus] = useState(
     getExcludedStatus(filterTabs, filterResults)
   );
-
   const [filterStatus, setFilterStatus] = useState(
     getFilterStatus({
       anchorConfig: filterConfig.anchor,
@@ -115,20 +123,18 @@ function FilterGroup({
       filterTabs,
     })
   );
-  const isInitialRenderRef = useRef(true);
+
   useEffect(() => {
     if (isInitialRenderRef.current) {
       isInitialRenderRef.current = false;
       return;
     }
-
     const newFilterStatus = getFilterStatus({
       anchorConfig: filterConfig.anchor,
       filterResults: filter,
       filterTabs,
     });
     const newFilterResults = filter;
-
     setFilterStatus(newFilterStatus);
     setFilterResults(newFilterResults);
   }, [filter]);
@@ -139,6 +145,7 @@ function FilterGroup({
 
   const selectedAnchors = getSelectedAnchors(filterStatus);
 
+
   /**
    * @param {number} sectionIndex
    * @param {boolean} isExpanded
@@ -146,10 +153,7 @@ function FilterGroup({
   function handleToggleSection(sectionIndex, isExpanded) {
     const newExpandedStatus = cloneDeep(expandedStatus);
     newExpandedStatus[tabIndex][sectionIndex] = isExpanded;
-    setFilterUIState({
-      ...filterUIState,
-      expandedStatus: newExpandedStatus
-    });
+    setExpandedStatus(newExpandedStatus);
   }
 
   /** @param {number} sectionIndex */
@@ -279,10 +283,7 @@ function FilterGroup({
   function toggleSections() {
     const newExpandedStatusControl = !expandedStatusControl;
     setExpandedStatusControl(newExpandedStatusControl);
-    setFilterUIState({
-      ...filterUIState,
-      expandedStatus: getExpandedStatus(filterTabs, newExpandedStatusControl)
-    });
+    setExpandedStatus(getExpandedStatus(filterTabs, newExpandedStatusControl));
   }
 
   const filterFinderOptions = filterTabs.map((tab, index) => ({
@@ -304,10 +305,7 @@ function FilterGroup({
   function handleFindFilter({ value }) {
     if (tabIndex !== value.index) {
       filterToFind.current = value.title;
-      setFilterUIState({
-        ...filterUIState,
-        tabIndex: value.index
-      });
+      setTabIndex(value.index);
     } else {
       findFilterElement(value.title);
     }
@@ -330,17 +328,11 @@ function FilterGroup({
             className={'g3-filter-group__tab'.concat(
               tabIndex === index ? ' g3-filter-group__tab--selected' : ''
             )}
-            onClick={() => setFilterUIState({
-              ...filterUIState,
-              tabIndex: index
-            })}
+            onClick={() => setTabIndex(index)}
             onKeyPress={(e) => {
               if (e.charCode === 13 || e.charCode === 32) {
                 e.preventDefault();
-                setFilterUIState({
-                  ...filterUIState,
-                  tabIndex: index
-                });
+                setTabIndex(index);
               }
             }}
             role='button'
@@ -382,6 +374,7 @@ function FilterGroup({
             anchorField={filterConfig.anchor.field}
             anchorValue={anchorValue}
             onChange={onAnchorValueChange}
+            filter={filter}
             options={filterConfig.anchor.options}
             optionsInUse={selectedAnchors[tabIndex]}
             tooltip={filterConfig.anchor.tooltip}
@@ -457,7 +450,6 @@ FilterGroup.propTypes = {
   patientIds: PropTypes.arrayOf(PropTypes.string),
   tabs: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.object)).isRequired,
   filterUIState: PropTypes.object.isRequired,
-  setFilterUIState: PropTypes.func.isRequired,
 };
 
 export default FilterGroup;

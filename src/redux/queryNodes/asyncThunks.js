@@ -14,7 +14,6 @@ export const deleteNode = createAsyncThunk(
       method: 'DELETE',
       onError: () => dispatch(requestErrored()),
     });
-    // console.log('receive delete');
     dispatch(updatePopup({ nodedelete_popup: false, view_popup: false }));
 
     if (status !== 200) return rejectWithValue(data);

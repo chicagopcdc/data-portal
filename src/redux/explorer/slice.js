@@ -170,8 +170,8 @@ const slice = createSlice({
     },
     loadWorkspaceFilterSet: {
       /** @param {ExplorerFilterSet} filterSet */
-      prepare: (filterSet) => ({
-        payload: { filterSet, newActiveId: crypto.randomUUID() },
+      prepare: (filterSet, newActiveId) => ({
+        payload: { filterSet, newActiveId: newActiveId ?? crypto.randomUUID() },
       }),
       /**
        * @param {PayloadAction<{
@@ -180,15 +180,10 @@ const slice = createSlice({
        * }>} action
        */
       reducer: (state, action) => {
-        const { activeId } = state.workspaces[state.explorerId];
-        const activeFilterSet =
-          state.workspaces[state.explorerId].all[activeId];
-        const shouldOverwrite = checkIfFilterEmpty(activeFilterSet.filter);
-        const id = shouldOverwrite ? activeId : action.payload.newActiveId;
-        const { filterSet } = action.payload;
+        const { filterSet, newActiveId } = action.payload;
 
-        state.workspaces[state.explorerId].activeId = id;
-        state.workspaces[state.explorerId].all[id] = filterSet;
+        state.workspaces[state.explorerId].activeId = newActiveId;
+        state.workspaces[state.explorerId].all[newActiveId] = filterSet;
 
         // sync with exploreFilter
         const workspace = state.workspaces[state.explorerId];

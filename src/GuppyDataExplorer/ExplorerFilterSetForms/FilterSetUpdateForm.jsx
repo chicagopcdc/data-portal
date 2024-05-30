@@ -88,8 +88,9 @@ function FilterSetUpdateForm({
                   value={filterSet.description}
                   onChange={(e) => {
                     e.persist();
-                    if (isFilterSetSaved(filterSet)) {
-                      setFilterSet({ ...filterSet, description: e.target.value });
+                    const newFilterSet = { ...filterSet, description: e.target.value };
+                    if (isFilterSetSaved(newFilterSet)) {
+                      setFilterSet(newFilterSet);
                     }
                   }}
                 />

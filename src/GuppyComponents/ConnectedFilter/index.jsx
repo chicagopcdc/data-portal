@@ -33,7 +33,6 @@ import {
  * @property {SimpleAggsData} tabsOptions
  * @property {Array} dictionaryEntries
  * @property {Object} filterUIState
- * @property {( uiState: object) => void} setFilterUIState
  */
 
 /** @param {ConnectedFilterProps} props */
@@ -54,7 +53,6 @@ function ConnectedFilter({
   tabsOptions,
   dictionaryEntries,
   filterUIState,
-  setFilterUIState
 }) {
   if (
     hidden ||
@@ -110,7 +108,6 @@ function ConnectedFilter({
       hideZero={hideZero}
       tabs={filterTabs}
       filterUIState={filterUIState}
-      setFilterUIState={setFilterUIState}
     />
   );
 }
@@ -161,7 +158,6 @@ ConnectedFilter.propTypes = {
   tabsOptions: PropTypes.object.isRequired,
   dictionaryEntries: PropTypes.array.isRequired,
   filterUIState: PropTypes.object.isRequired,
-  setFilterUIState: PropTypes.func.isRequired
 };
 
 export default ConnectedFilter;

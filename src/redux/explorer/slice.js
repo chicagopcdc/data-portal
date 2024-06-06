@@ -147,19 +147,17 @@ const slice = createSlice({
       },
     },
     duplicateWorkspaceFilterSet: {
-      prepare: (id) => ({ payload: { newId: crypto.randomUUID(), sourceId: id }}),
+      prepare: (sourceId, newId) => ({ payload: { newId, sourceId }}),
       /** @param {PayloadAction<{ newId: string, sourceId: string }>} action */
       reducer: (state, action) => {
-        state.workspaces[state.explorerId].sessionTabCount += 1;
-        
-        const sessionTabCount = state.workspaces[state.explorerId].sessionTabCount;
         const newId = action.payload.newId;
         const { activeId } = state.workspaces[state.explorerId];
         const sourceId = action.payload.sourceId ?? activeId;
-        const { filter } = state.workspaces[state.explorerId].all[sourceId ?? activeId];
-        const filterSet = { filter, name: `Filter Tab #${sessionTabCount}` };
+        const { filter, name } = state.workspaces[state.explorerId].all[sourceId ?? activeId];
+        const filterSet = { filter, name: `${name} copy` };
 
         state.workspaces[state.explorerId].all[newId] = filterSet;
+        
         if (sourceId === activeId) {
           state.workspaces[state.explorerId].activeId = newId;
           // sync with exploreFilter

@@ -122,6 +122,14 @@ function ExplorerFilterSetWorkspace({
     }
     workspace.create(newWorkspaceId);
   }, []);
+  const handleDuplicate = useCallback((sourceId) => {
+    const newWorkspaceId = crypto.randomUUID();
+    workspaceUIState.current[newWorkspaceId] = {
+      expandedStatus: getExpandedStatus(filterTabs, false),
+      tabIndex: 0
+    }
+    workspace.duplicate(sourceId, newWorkspaceId);
+  }, []);
   /** @param {SavedExplorerFilterSet} deleted */
   const handleDelete = useCallback(async (deleted) => {
     try {
@@ -185,8 +193,8 @@ function ExplorerFilterSetWorkspace({
       closeActionForm();
     }
   }, []);
-  const handleShare = useCallback(() => {
-    return createToken(activeSavedFilterSet);
+  const handleShare = useCallback((savedFilterSet) => {
+    return createToken(savedFilterSet);
   }, []);
   const handleRemove = useCallback((id, newActiveId) => {
     workspace.remove(id, newActiveId);
@@ -201,9 +209,6 @@ function ExplorerFilterSetWorkspace({
   const handleCombineWith = useCallback((id) => {
     workspace.createCombine(id);
   }, []);
-
-  console.log('RE-RENDERED');
-  console.log(workspaceTabIds);
 
   return (
     <div className='explorer-filter-set-workspace'>
@@ -271,10 +276,10 @@ function ExplorerFilterSetWorkspace({
                   handleCombineWith(workspaceId);
                   return;
                 case 'DUPLICATE':
-                  workspace.duplicate(workspaceId);
+                  handleDuplicate(workspaceId);
                   return;
                 case 'REVERT':
-                  onFilterChange(savedFilterSet);
+                  onFilterChange(savedFilterSet.filter);
                   return;
                 case 'RESET':
                   const composedResetFilter = {

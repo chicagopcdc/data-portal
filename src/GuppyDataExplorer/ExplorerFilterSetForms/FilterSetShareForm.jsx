@@ -25,13 +25,17 @@ function useToken(fetcher) {
   };
 }
 
+/** @typedef {import('../types').ExplorerFilterSet} ExplorerFilterSet */
+
 /**
  * @param {Object} prop
- * @param {() => Promise<string>} prop.onAction
+ * @param {ExplorerFilterSet} prop.savedFilterSet
+ * @param {(ExplorerFilterSet) => Promise<string>} prop.onAction
  * @param {() => void} prop.onClose
  */
-function FilterSetShareForm({ onAction, onClose }) {
-  const token = useToken(onAction);
+function FilterSetShareForm({ savedFilterSet, onAction, onClose }) {
+  console.log(savedFilterSet);
+  const token = useToken(() => onAction(savedFilterSet));
   const [isTokenCopied, setIsTokenCopied] = useState(false);
   function toggleIsTokenCopied() {
     setIsTokenCopied(true);

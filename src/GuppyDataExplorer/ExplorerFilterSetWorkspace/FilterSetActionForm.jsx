@@ -89,6 +89,7 @@ function FilterSetActionForm({
     case 'SHARE':
       return (
         <FilterSetShareForm
+          savedFilterSet={filterSets.active}
           onAction={handlers.share}
           onClose={handlers.close}
         />

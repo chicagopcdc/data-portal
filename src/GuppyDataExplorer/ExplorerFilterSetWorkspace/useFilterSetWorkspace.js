@@ -48,8 +48,8 @@ export default function useFilterSetWorkspace() {
       createCombine(id) {
         dispatch(createCombinedWorkspaceFilterSet(id));
       },
-      duplicate(id) {
-        dispatch(duplicateWorkspaceFilterSet(id));
+      duplicate(sourceId, newId) {
+        dispatch(duplicateWorkspaceFilterSet(sourceId, newId));
       },
       load(filterSet, newActiveId) {
         dispatch(loadWorkspaceFilterSet(filterSet, newActiveId));

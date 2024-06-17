@@ -232,5 +232,4 @@ export type GuppyData = {
     sort: GqlSort;
   }) => Promise<any>;
   onAnchorValueChange: (anchorValue: string, currentFilterState: FilterState) => void;
-  onFilterChange: FilterChangeHandler;
 };

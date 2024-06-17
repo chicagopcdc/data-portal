@@ -37,9 +37,9 @@ import {
  * @property {FilterState} explorerFilter
  * @property {FilterConfig} filterConfig
  * @property {GuppyConfig} guppyConfig
- * @property {FilterChangeHandler} onFilterChange
  * @property {string[]} patientIds
  * @property {string[]} rawDataFields
+ * @property {boolean} isInitialQuery
  */
 
 /**
@@ -65,9 +65,9 @@ function GuppyWrapper({
   explorerFilter = {},
   filterConfig,
   guppyConfig,
-  onFilterChange = () => {},
   patientIds,
   rawDataFields: rawDataFieldsConfig = [],
+  isInitialQuery,
 }) {
   /** @type {[GuppyWrapperState, React.Dispatch<React.SetStateAction<GuppyWrapperState>>]} */
   const [state, setState] = useState({
@@ -186,7 +186,7 @@ function GuppyWrapper({
       anchorValue,
       filterTabs,
       gqlFilter: getGQLFilter(augmentFilter(filter)),
-      isInitialQuery: state.initialTabsOptions === undefined,
+      isInitialQuery,
       signal: controller.current.signal,
     }).then(({ data, errors }) => {
       if (data === undefined)
@@ -485,11 +485,6 @@ function GuppyWrapper({
     }
   }
 
-  /** @type {FilterChangeHandler} */
-  function handleFilterChange(filter, skipExplorerUpdate) {
-    onFilterChange?.(mergeFilters(filter, adminAppliedPreFilters), skipExplorerUpdate);
-  }
-
   return children({
     ...state,
     filter: filterState,
@@ -499,7 +494,6 @@ function GuppyWrapper({
     fetchAndUpdateRawData,
     getTotalCountsByTypeAndFilter,
     onAnchorValueChange: useCallback(handleAnchorValueChange, [adminAppliedPreFilters]),
-    onFilterChange: useCallback(handleFilterChange, []),
   });
 }
 
@@ -528,9 +522,9 @@ GuppyWrapper.propTypes = {
     aggFields: PropTypes.array,
     dataType: PropTypes.string.isRequired,
   }).isRequired,
-  onFilterChange: PropTypes.func,
   patientIds: PropTypes.arrayOf(PropTypes.string),
   rawDataFields: PropTypes.arrayOf(PropTypes.string),
+  isInitialQuery: PropTypes.bool
 };
 
 export default GuppyWrapper;

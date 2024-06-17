@@ -3,6 +3,7 @@ import flat from 'flat';
 import papaparse from 'papaparse';
 import { FILE_DELIMITERS, FILTER_TYPE, GUPPY_URL } from './const';
 import { headers } from '../../localconf';
+import { fetchWithClientCache } from '../../utils.fetch';
 
 /** @typedef {import("../types").AnchorConfig} AnchorConfig */
 /** @typedef {import("../types").AnchoredFilterState} AnchoredFilterState */
@@ -20,6 +21,7 @@ import { headers } from '../../localconf';
 const graphqlEndpoint = `${GUPPY_URL}/graphql`;
 const downloadEndpoint = `${GUPPY_URL}/download`;
 const statusEndpoint = `${GUPPY_URL}/_status`;
+
 
 /**
  * Converts JSON to a specified file format.
@@ -123,7 +125,7 @@ export function queryGuppyForAggregationChartData({
       }`
   ).replace(/\s+/g, ' ');
 
-  return fetch(graphqlEndpoint, {
+  return fetchWithClientCache(graphqlEndpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -165,7 +167,7 @@ export function queryGuppyForAggregationCountData({ type, gqlFilter, signal }) {
       }`
   ).replace(/\s+/g, ' ');
 
-  return fetch(graphqlEndpoint, {
+  return fetchWithClientCache(graphqlEndpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -348,7 +350,9 @@ export function queryGuppyForAggregationOptionsData({
   });
   const variables = { ...gqlFilterByGroup };
 
-  return fetch(graphqlEndpoint, {
+  console.log({ query, variables });
+
+  return fetchWithClientCache(graphqlEndpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -434,7 +438,7 @@ export function queryGuppyForSubAggregationData({
       }`
   ).replace(/\s+/g, ' ');
 
-  return fetch(graphqlEndpoint, {
+  return fetchWithClientCache(graphqlEndpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -533,7 +537,7 @@ export function queryGuppyForRawData({
     ${aggregationFragment}
   }`.replace(/\s+/g, ' ');
 
-  return fetch(graphqlEndpoint, {
+  return fetchWithClientCache(graphqlEndpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -803,7 +807,7 @@ export function queryGuppyForTotalCounts({ type, filter }) {
       }`
   ).replace(/\s+/g, ' ');
 
-  return fetch(graphqlEndpoint, {
+  return fetchWithClientCache(graphqlEndpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -826,7 +830,7 @@ export function queryGuppyForTotalCounts({ type, filter }) {
  * @param {string} args.type
  */
 export function getAllFieldsFromGuppy({ type }) {
-  return fetch(graphqlEndpoint, {
+  return fetchWithClientCache(graphqlEndpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

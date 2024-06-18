@@ -9,12 +9,15 @@
 
 .explorer__main {
   padding: 1rem;
-  width: calc(100% - 500px);
+  width: calc(100% - 350px);
 }
 
 .explorer__sidebar {
-  width: 500px;
+  width: 350px;
   display: flex;
+  padding-right: 1rem;
+  padding-top: 1rem;
+  border-right: 1px solid var(--g3-color__smoke);
   flex-direction: column;
 }
 

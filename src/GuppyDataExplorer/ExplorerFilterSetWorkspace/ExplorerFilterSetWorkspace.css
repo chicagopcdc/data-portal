@@ -8,14 +8,14 @@
 .explorer-filter-set-workspace .react-aria-Toolbar {
   gap: 0;
   display: grid;
-  grid-template-columns: [col-tab-list-start] 30% [col-tab-list-end col-tab-panel-start] 70% [col-tab-panel-end];
+  grid-template-columns: [col-tab-list-start] 15% [col-tab-list-end col-tab-panel-start] 85% [col-tab-panel-end];
 }
 
 .explorer-filter-set-workspace .react-aria-Tabs {
   overflow-y: scroll;
   height: 100%;
   display: grid;
-  grid-template-columns: [col-tab-list-start] 30% [col-tab-list-end col-tab-panel-start] 70% [col-tab-panel-end];
+  grid-template-columns: [col-tab-list-start] 15% [col-tab-list-end col-tab-panel-start] 85% [col-tab-panel-end];
 }
 
 .explorer-filter-set-workspace .react-aria-TabList {
@@ -25,6 +25,7 @@
 }
 
 .explorer-filter-set-workspace .react-aria-TabPanel {
+  padding: 0px 1rem;
   grid-column: col-tab-panel-start / col-tab-panel-end;
   background-color: var(--g3-color__white);
   border-radius: 8px 0 0 0;

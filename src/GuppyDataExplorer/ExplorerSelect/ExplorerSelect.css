@@ -1,10 +1,14 @@
 .explorer-select {
   background-color: var(--pcdc-color__primary);
   border-right: 1px solid var(--g3-color__silver);
-  padding: 1rem 1rem 2rem;
+  padding: 1rem;
 }
 
 .explorer-select__title {
   margin-bottom: 1rem;
   color: var(--g3-color__white);
+}
+
+.explorer-select__options-container {
+  width: 15%;
 }

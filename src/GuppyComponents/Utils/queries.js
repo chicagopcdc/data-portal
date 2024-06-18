@@ -349,9 +349,7 @@ export function queryGuppyForAggregationOptionsData({
     type,
   });
   const variables = { ...gqlFilterByGroup };
-
-  console.log({ query, variables });
-
+  
   return fetchWithClientCache(graphqlEndpoint, {
     method: 'POST',
     headers: {

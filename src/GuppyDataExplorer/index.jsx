@@ -302,6 +302,7 @@ function ExplorerDashboard() {
   }, []);
 
   return <>
+    <ExplorerSelect />
     <div className='explorer-filter-set-workspace'>
       <Toolbar aria-label="Tab list actions">
         <Group className='explorer-action-group explorer-action-group__new-tab'>
@@ -412,7 +413,6 @@ function ExplorerDashboard() {
                 {(data) => {
                   return <Dashboard>
                     <Dashboard.Sidebar className='explorer__sidebar'>
-                      <ExplorerSelect />
                       <div>
                         <div className='explorer-filter-set-workspace___filter-actions'>
                           <Tooltip
@@ -495,48 +495,6 @@ function ExplorerDashboard() {
                             />
                           )}
                       </div>
-                      <div className='explorer__side-bar-footer'>
-                        <div className='explorer__version-info-area'>
-                          <div className='explorer__version-info'>
-                            <span>Help:</span>{' '}
-                            <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
-                            <DialogTrigger>
-                              <Button
-                                type='button'
-                                className='explorer__version-info-text-button separator-before'
-                              >
-                                View app version info
-                              </Button>
-                              yhzAz<Popover>
-                                <Dialog>
-                                  <div className='explorer-filter__query-container explorer-filter__query-container--expanded'>
-                                    {dataVersion && (
-                                      <div className='explorer__version-info'>
-                                        <span>Data Release Version:</span> {dataVersion}
-                                      </div>
-                                    )}
-                                    {portalVersion && (
-                                      <div className='explorer__version-info'>
-                                        <span>Portal Version:</span> {portalVersion}
-                                      </div>
-                                    )}
-                                    {dictionaryVersion && (
-                                      <div className='footer__version-info'>
-                                        <span>Dictionary Version:</span> {dictionaryVersion}
-                                      </div>
-                                    )}
-                                    {survivalCurveVersion && (
-                                      <div className='explorer__version-info'>
-                                        <span>Survival Curve Version:</span> {survivalCurveVersion}
-                                      </div>
-                                    )}
-                                  </div>
-                                </Dialog>
-                              </Popover>
-                            </DialogTrigger>
-                          </div>             
-                        </div>
-                      </div>
                     </Dashboard.Sidebar>
                     <Dashboard.Main className='explorer__main'>
                       <ExplorerVisualization
@@ -565,6 +523,48 @@ function ExplorerDashboard() {
           </TabPanel>;
         })}
       </Tabs>
+      <div className='explorer__side-bar-footer'>
+        <div className='explorer__version-info-area'>
+          <div className='explorer__version-info'>
+            <span>Help:</span>{' '}
+            <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+            <DialogTrigger>
+              <Button
+                type='button'
+                className='explorer__version-info-text-button separator-before'
+              >
+                View app version info
+              </Button>
+              <Popover>
+                <Dialog>
+                  <div className='explorer-filter__query-container explorer-filter__query-container--expanded'>
+                    {dataVersion && (
+                      <div className='explorer__version-info'>
+                        <span>Data Release Version:</span> {dataVersion}
+                      </div>
+                    )}
+                    {portalVersion && (
+                      <div className='explorer__version-info'>
+                        <span>Portal Version:</span> {portalVersion}
+                      </div>
+                    )}
+                    {dictionaryVersion && (
+                      <div className='footer__version-info'>
+                        <span>Dictionary Version:</span> {dictionaryVersion}
+                      </div>
+                    )}
+                    {survivalCurveVersion && (
+                      <div className='explorer__version-info'>
+                        <span>Survival Curve Version:</span> {survivalCurveVersion}
+                      </div>
+                    )}
+                  </div>
+                </Dialog>
+              </Popover>
+            </DialogTrigger>
+          </div>             
+        </div>
+      </div>
       {actionFormType !== undefined && (
         <SimplePopup>
           <FilterSetActionForm

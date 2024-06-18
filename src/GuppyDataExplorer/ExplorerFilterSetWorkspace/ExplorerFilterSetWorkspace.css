@@ -8,7 +8,7 @@
 .explorer-filter-set-workspace .react-aria-Toolbar {
   gap: 0;
   display: grid;
-  grid-template-columns: [col-tab-list-start] 15% [col-tab-list-end col-tab-panel-start] 85% [col-tab-panel-end];
+  grid-template-columns: [col-new-tab-start] 15% [col-new-tab-end col-more-start] 60% [col-more-end col-explorer-select-start] 25% [col-explorer-select-end];
 }
 
 .explorer-filter-set-workspace .react-aria-Tabs {
@@ -100,6 +100,11 @@
 }
 
 .explorer-action-group__new-tab {
+  background-color: var(--pcdc-color__primary);
+  padding: 0 0 1rem 1rem;
+}
+
+.explorer-action-group__explorer-select {
   background-color: var(--pcdc-color__primary);
   padding: 0 0 1rem 1rem;
 }

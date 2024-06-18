@@ -302,7 +302,6 @@ function ExplorerDashboard() {
   }, []);
 
   return <>
-    <ExplorerSelect />
     <div className='explorer-filter-set-workspace'>
       <Toolbar aria-label="Tab list actions">
         <Group className='explorer-action-group explorer-action-group__new-tab'>
@@ -330,6 +329,9 @@ function ExplorerDashboard() {
                 </Menu>
               </Popover>
             </MenuTrigger>
+        </Group>
+        <Group className='explorer-action-group explorer-action-group__explorer-select'>
+          <ExplorerSelect />
         </Group>
       </Toolbar>
       <Tabs

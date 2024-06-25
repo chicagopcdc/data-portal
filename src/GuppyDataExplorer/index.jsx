@@ -481,6 +481,7 @@ function ExplorerDashboard() {
                                       <MenuItem id="RENAME">Rename</MenuItem>
                                       <MenuItem id="RESET">Reset</MenuItem>
                                       <MenuItem id="DUPLICATE">Duplicate</MenuItem>
+                                      <MenuItem id="SAVE">{savedFilterSet ? 'Update saved' : 'Save'}</MenuItem>
                                     </Menu>
                               }
                             </Popover>

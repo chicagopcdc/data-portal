@@ -349,7 +349,7 @@ export function queryGuppyForAggregationOptionsData({
     type,
   });
   const variables = { ...gqlFilterByGroup };
-  
+
   return fetchWithClientCache(graphqlEndpoint, {
     method: 'POST',
     headers: {
@@ -362,7 +362,7 @@ export function queryGuppyForAggregationOptionsData({
 }
 
 export function queryGuppyForStatus() {
-  return fetch(statusEndpoint, {
+  return fetchWithClientCache(statusEndpoint, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',

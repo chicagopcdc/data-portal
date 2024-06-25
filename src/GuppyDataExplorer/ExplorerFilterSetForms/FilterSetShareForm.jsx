@@ -34,7 +34,6 @@ function useToken(fetcher) {
  * @param {() => void} prop.onClose
  */
 function FilterSetShareForm({ savedFilterSet, onAction, onClose }) {
-  console.log(savedFilterSet);
   const token = useToken(() => onAction(savedFilterSet));
   const [isTokenCopied, setIsTokenCopied] = useState(false);
   function toggleIsTokenCopied() {

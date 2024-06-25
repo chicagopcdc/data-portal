@@ -13,8 +13,7 @@ for (const { guppyConfig, id, label } of explorerConfig)
     label: capitalizeFirstLetter(label || guppyConfig.dataType),
     value: String(id),
   });
-
-export default function ExplorerTabs() {
+export default function ExplorerSelect({ onChange }) {
   const dispatch = useAppDispatch();
   const explorerId = useAppSelector((state) => state.explorer.explorerId);
 

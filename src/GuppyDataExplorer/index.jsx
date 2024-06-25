@@ -151,14 +151,18 @@ function ExplorerDashboard() {
       fields: searchFields ? searchFields.concat(fields) : fields,
     })
   );
-  const initialWorkspaceUIState = {};
+
+  const workspaceUIState = useRef({});
+
   for (let workspaceId of Object.keys(all)) {
-    initialWorkspaceUIState[workspaceId] = {
-      expandedStatus: getExpandedStatus(filterTabs, false),
-      tabIndex: 0
+    if (!workspaceUIState.current[workspaceId]) {
+      workspaceUIState.current[workspaceId] = {
+        expandedStatus: getExpandedStatus(filterTabs, false),
+        tabIndex: 0
+      }
     }
   }
-  const workspaceUIState = useRef(initialWorkspaceUIState);
+
   const [actionFormType, setActionFormType] = useState(
     /** @type {ActionFormType} */ (undefined)
   );
@@ -167,9 +171,11 @@ function ExplorerDashboard() {
   const handleFilterChange = useCallback((filter, skipExplorerUpdate) => {
     dispatch(updateExplorerFilter(mergeFilters(filter, adminAppliedPreFilters), skipExplorerUpdate));
   }, []);
+
   const closeActionForm = useCallback(() => {
     setActionFormType(undefined);
   }, []);
+
   const handleClearAll = useCallback(() => {
     const { payload: resetFilterSetId } = workspace.clearAll();
     const resetWorkspaceUIState = {
@@ -181,6 +187,7 @@ function ExplorerDashboard() {
     workspaceUIState.current = resetWorkspaceUIState;
     closeActionForm();
   }, []);
+
   const handleCreate = useCallback(() => {
     const newWorkspaceId = crypto.randomUUID();
     workspaceUIState.current[newWorkspaceId] = {
@@ -189,6 +196,7 @@ function ExplorerDashboard() {
     }
     workspace.create(newWorkspaceId);
   }, []);
+
   const handleDuplicate = useCallback((sourceId) => {
     const newWorkspaceId = crypto.randomUUID();
     workspaceUIState.current[newWorkspaceId] = {
@@ -197,6 +205,7 @@ function ExplorerDashboard() {
     }
     workspace.duplicate(sourceId, newWorkspaceId);
   }, []);
+
   /** @param {SavedExplorerFilterSet} deleted */
   const handleDelete = useCallback(async (deleted) => {
     try {
@@ -247,6 +256,7 @@ function ExplorerDashboard() {
 
     closeActionForm();
   }, [workspace]);
+
   /** @param {SavedExplorerFilterSet} saved */
   const handleSave = useCallback(async (saved) => {
     try {
@@ -331,7 +341,9 @@ function ExplorerDashboard() {
             </MenuTrigger>
         </Group>
         <Group className='explorer-action-group explorer-action-group__explorer-select'>
-          <ExplorerSelect />
+          <ExplorerSelect onChange={() => {
+
+          }} />
         </Group>
       </Toolbar>
       <Tabs

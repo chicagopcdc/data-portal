@@ -205,7 +205,7 @@ const slice = createSlice({
         const [firstEntry] = Object.entries(all);
         const [id, filterSet] = 
             newActiveId && newActiveId !== deleteId ? [newActiveId, all[newActiveId]] 
-          : firstEntry ?? [newId, { filter: {} }];
+          : firstEntry ?? [newId, { filter: {}, name: `Filter Tab #1` }];
  
         if (id !== activeId) {
           state.workspaces[state.explorerId].activeId = id;
@@ -281,7 +281,7 @@ const slice = createSlice({
         const activeId = crypto.randomUUID();
         const newWorkspace = {
           activeId,
-          all: { [activeId]: { filter: {}, index: 1 }, },
+          all: { [activeId]: { filter: {}, name: `Filter Tab #1` }, },
           sessionTabCount: 1
         };
         return { payload: { explorerId, newWorkspace } };

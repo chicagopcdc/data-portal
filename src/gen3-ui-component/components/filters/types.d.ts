@@ -4,6 +4,7 @@ export type {
   AnchorConfig,
   AnchoredFilterState,
   StandardFilterState,
+  FilterState,
   FilterChangeHandler,
   FilterConfig,
   FilterTabsOption,

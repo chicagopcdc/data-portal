@@ -208,6 +208,11 @@
 
 .g3-icon--more {
   mask-image: svg-load('./img/icons/more.svg');
+  mask-size: 100% 100%;
+  -webkit-mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  transform: rotate(90deg);
 }
 
 .g3-icon--planet {

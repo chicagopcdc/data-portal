@@ -4,6 +4,7 @@ import { FILTER_TYPE } from '../../../../GuppyComponents/Utils/const';
 export { FILTER_TYPE } from '../../../../GuppyComponents/Utils/const';
 
 /** @typedef {import('../types').AnchorConfig} AnchorConfig */
+/** @typedef {import('../types').EmptyFilter} EmptyFilter */
 /** @typedef {import('../types').AnchoredFilterState} AnchoredFilterState */
 /** @typedef {import('../types').AnchoredFilterTabStatus} AnchoredFilterTabStatus */
 /** @typedef {import('../types').FilterSectionStatus} FilterSectionStatus */
@@ -144,7 +145,7 @@ function _removeEmptyFilter(anchoredFilter) {
  */
 export function removeEmptyFilter(filterResults) {
   const newValue = /** @type {StandardFilterState['value']} */ ({});
-  for (const [field, filter] of Object.entries(filterResults.value))
+  for (const [field, filter] of Object.entries(filterResults.value ?? {}))
     if (filter.__type === FILTER_TYPE.ANCHORED) {
       const newAnchoredFilter = _removeEmptyFilter(filter);
       if (Object.keys(newAnchoredFilter.value).length > 0)
@@ -232,28 +233,30 @@ export function updateExclusion({
   const newFilterResults = cloneDeep(filterResults);
 
   const fieldName = filterTabs[tabIndex].fields[sectionIndex];
-  if (!anchorLabel) {
-    newFilterResults.value[fieldName] = {
-      ...newFilterResults.value[fieldName],
-      selectedValues: newFilterResults.value[fieldName]?.selectedValues ?? [],
-      __type: FILTER_TYPE.OPTION,
-      isExclusion,
-    };
-  } else {
-    if (!(anchorLabel in newFilterResults.value)) {
-      newFilterResults.value[anchorLabel] = {
-        __type: FILTER_TYPE.ANCHORED,
-        value: {},
+  if (newFilterResults.value) {
+    if (!anchorLabel) {
+      newFilterResults.value[fieldName] = {
+        ...newFilterResults.value[fieldName],
+        selectedValues: newFilterResults.value[fieldName]?.selectedValues ?? [],
+        __type: FILTER_TYPE.OPTION,
+        isExclusion,
+      };
+    } else {
+      if (!(anchorLabel in newFilterResults.value)) {
+        newFilterResults.value[anchorLabel] = {
+          __type: FILTER_TYPE.ANCHORED,
+          value: {},
+        };
+      }
+      newFilterResults.value[anchorLabel].value[fieldName] = {
+        ...newFilterResults.value[anchorLabel].value[fieldName],
+        selectedValues:
+          newFilterResults.value[anchorLabel].value[fieldName]?.selectedValues ??
+          [],
+        __type: FILTER_TYPE.OPTION,
+        isExclusion,
       };
     }
-    newFilterResults.value[anchorLabel].value[fieldName] = {
-      ...newFilterResults.value[anchorLabel].value[fieldName],
-      selectedValues:
-        newFilterResults.value[anchorLabel].value[fieldName]?.selectedValues ??
-        [],
-      __type: FILTER_TYPE.OPTION,
-      isExclusion,
-    };
   }
 
   return {

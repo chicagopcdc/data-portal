@@ -3,7 +3,7 @@ import { render } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import explorerReducer from '../../redux/explorer/slice';
 import ExplorerFilterDisplay from './index';
-import { FILTER_TYPE } from '../ExplorerFilterSetWorkspace/utils';
+import { FILTER_TYPE } from '../ExplorerFilter/utilse/utils';
 
 /** @typedef {import('../../redux/types').RootState} RootState */
 /** @typedef {import('../../GuppyComponents/types').AnchoredFilterState} AnchoredFilterState */

@@ -155,3 +155,32 @@ export const fetchWithCredsAndTimeout = (opts, timeoutInMS) => {
       });
   });
 };
+
+export function fetchWithClientCache(url, options) {
+  return caches.open('data-portal-fetch-cache')
+    .then(async (cache) => {
+      let fetchRequest = new Request(url, options);
+        // Web Cache API does not allow for caching POST requests
+        // as they are not usually idempotent, for our purposes they are.
+        // Create a new URL for the purposes of a unique cache key
+        const cacheUrl = new URL(fetchRequest.url);
+        // Create a unique URL by appending the body to the original pathname
+        cacheUrl.pathname = cacheUrl.pathname +  await fetchRequest.clone().text();
+        // convert the request to a GET to be able to cache it
+        const cacheRequest = new Request(cacheUrl.toString(), {
+          headers: fetchRequest.headers,
+          method: "GET"
+        });
+      return cache.match(cacheRequest)
+        .then((responseCacheHit) => {
+          if (!responseCacheHit) {
+            let response = fetch(fetchRequest);
+            response.then((res) => {
+              cache.put(cacheRequest, res.clone());
+            });
+            return response;
+          }
+          return responseCacheHit;
+        })
+    })
+}

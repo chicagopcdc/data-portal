@@ -6,6 +6,7 @@ import { queryGuppyForRawData } from './queries';
 /** @typedef {import('../types').AggsCount} AggsCount */
 /** @typedef {import('../types').AggsData} AggsData */
 /** @typedef {import('../types').ComposedFilterState} ComposedFilterState */
+/** @typedef {import('../types').ComposedFilterStateWithRef} ComposedFilterStateWithRef */
 /** @typedef {import('../types').FilterState} FilterState */
 /** @typedef {import('../types').FilterConfig} FilterConfig */
 /** @typedef {import('../types').GqlFilter} GqlFilter */
@@ -16,7 +17,7 @@ import { queryGuppyForRawData } from './queries';
 /** @typedef {{ [x: string]: { selectedValues?: string[] } }} AdminAppliedPreFilter */
 
 /**
- * @param {ComposedFilterState} userFilter
+ * @param {ComposedFilterState | ComposedFilterStateWithRef} userFilter
  * @param {AdminAppliedPreFilter} adminAppliedPreFilter
  */
 function mergeToComposedFilterState(userFilter, adminAppliedPreFilter) {

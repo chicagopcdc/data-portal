@@ -25,7 +25,7 @@ const tableHeader = [
 
 /** @param {ResearcherInfo} researcher */
 function parseResearcherInfo(researcher) {
-  return researcher ? (
+  return researcher.first_name && researcher.last_name && researcher.institution  ? (
     <span>
       {researcher.first_name} {researcher.last_name}
       <br /> ({researcher.institution})

@@ -6,16 +6,17 @@ import Button from '../../gen3-ui-component/components/Button';
 import { defaultFilterSet as survivalDefaultFilterSet } from '../ExplorerSurvivalAnalysis/ControlForm';
 import ExplorerFilterDisplay from '../ExplorerFilterDisplay';
 import './ExplorerFilterSetForms.css';
+import { isFilterSetSaved } from '../utils';
 
-/** @typedef {import('../types').SavedExplorerFilterSet} SavedExplorerFilterSet */
+/** @typedef {import('../types').ExplorerFilterSet} ExplorerFilterSet */
 
 /**
  * @param {Object} prop
- * @param {SavedExplorerFilterSet} prop.currentFilterSet
- * @param {SavedExplorerFilterSet['filter']} prop.currentFilter
- * @param {SavedExplorerFilterSet[]} prop.filterSets
+ * @param {ExplorerFilterSet} prop.currentFilterSet
+ * @param {ExplorerFilterSet['filter']} prop.currentFilter
+ * @param {ExplorerFilterSet[]} prop.filterSets
  * @param {boolean} prop.isFiltersChanged
- * @param {(created: SavedExplorerFilterSet) => void} prop.onAction
+ * @param {(created: ExplorerFilterSet) => void} prop.onAction
  * @param {() => void} prop.onClose
  */
 function FilterSetCreateForm({
@@ -76,7 +77,10 @@ function FilterSetCreateForm({
               value={filterSet.description}
               onChange={(e) => {
                 e.persist();
-                setFilterSet({ ...filterSet, description: e.target.value });
+                const newFilterSet = { ...filterSet, description: e.target.value };
+                if (isFilterSetSaved(newFilterSet)) {
+                  setFilterSet(newFilterSet);
+                }
               }}
             />
           }

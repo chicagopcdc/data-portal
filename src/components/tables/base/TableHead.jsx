@@ -12,7 +12,7 @@ import {
   Flex
 } from '@adobe/react-spectrum';
 import SimpleInputField from '../../SimpleInputField';
-import MultiSelect from '../../MultiSelect';
+import Select from '../../Select';
 
 /**
  * @typedef {Object} TableHeadProps
@@ -97,12 +97,14 @@ function TableHead({ cols, setFilters, data }) {
                   <Provider theme={defaultTheme}>
                     <Form validationBehavior="native">
                       <Flex margin={0} direction="row" alignItems='center' gap={8}>
-                        <MultiSelect
-                          onChange={(options) => {
-                              filters[i] = options.map((opt) => opt.text);
+                        <Select
+                          onChange={(/** @type {import('../../Select').SelectItem[]} */options) => {
+                              filters[i] = options.map((opt) => opt.display);
                               setFilters([...filters]);
                           }}
-                          items={uniqueValues.map((value, index) => ({ id: index, text: value }))} 
+                          items={uniqueValues.map((value, index) => ({ id: index, display: value, text: value }))}
+                          selectionMode="multiple"
+                          inlineClear={true}
                         />
                       </Flex>
                     </Form>

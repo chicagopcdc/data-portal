@@ -32,6 +32,7 @@ import {
  * @property {string[]} [patientIds]
  * @property {SimpleAggsData} tabsOptions
  * @property {Array} dictionaryEntries
+ * @property {Object} filterUIState
  */
 
 /** @param {ConnectedFilterProps} props */
@@ -50,14 +51,16 @@ function ConnectedFilter({
   onPatientIdsChange,
   patientIds,
   tabsOptions,
-  dictionaryEntries
+  dictionaryEntries,
+  filterUIState,
 }) {
   if (
     hidden ||
     filterConfig.tabs === undefined ||
     filterConfig.tabs.length === 0
-  )
+  ) {
     return null;
+  }
 
   const processedTabsOptions = sortTabsOptions(
     updateCountsInInitialTabsOptions(initialTabsOptions, tabsOptions, filter)
@@ -104,6 +107,7 @@ function ConnectedFilter({
       patientIds={patientIds}
       hideZero={hideZero}
       tabs={filterTabs}
+      filterUIState={filterUIState}
     />
   );
 }
@@ -152,7 +156,8 @@ ConnectedFilter.propTypes = {
   onPatientIdsChange: PropTypes.func,
   patientIds: PropTypes.arrayOf(PropTypes.string),
   tabsOptions: PropTypes.object.isRequired,
-  dictionaryEntries: PropTypes.array.isRequired
+  dictionaryEntries: PropTypes.array.isRequired,
+  filterUIState: PropTypes.object.isRequired,
 };
 
 export default ConnectedFilter;

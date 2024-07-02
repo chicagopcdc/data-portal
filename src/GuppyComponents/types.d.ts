@@ -38,7 +38,21 @@ export type ComposedFilterState = {
   value?: (ComposedFilterState | StandardFilterState)[];
 };
 
-export type FilterState = ComposedFilterState | StandardFilterState;
+export type RefFilterState = {
+  __type: 'REF';
+  value: {
+    id: string;
+    label: string;
+  };
+};
+
+export interface ComposedFilterStateWithRef extends ComposedFilterState {
+  refIds?: string[];
+  value?: (ComposedFilterStateWithRef | StandardFilterState | RefFilterState)[];
+}
+
+export type FilterState = ComposedFilterState | StandardFilterState | ComposedFilterStateWithRef | EmptyFilter;
+
 
 export type GqlInFilter = {
   IN: {
@@ -183,7 +197,7 @@ export type AggsData = {
     | SimpleAggsData;
 };
 
-export type FilterChangeHandler = (filter: FilterState) => void;
+export type FilterChangeHandler = (filter: FilterState, skipExplorerUpdate?: boolean) => void;
 
 export type GuppyData = {
   accessibleCount: number;
@@ -217,6 +231,5 @@ export type GuppyData = {
     size: number;
     sort: GqlSort;
   }) => Promise<any>;
-  onAnchorValueChange: (anchorValue: string) => void;
-  onFilterChange: FilterChangeHandler;
+  onAnchorValueChange: (anchorValue: string, currentFilterState: FilterState) => void;
 };

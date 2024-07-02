@@ -60,12 +60,6 @@
     box-shadow: unset;
   }
   
-  @layer popover {
-    .react-aria-Popover {
-      max-width: unset;
-      padding: 1.25rem;
-    }
-  }
   @media (forced-colors: active) {
     .react-aria-DateRangePicker {
         forced-color-adjust: none;
@@ -232,81 +226,6 @@
       --invalid-color: LinkText;
       --pressed-color: Canvas;
       --spectrum-alias-background-color-default: Canvas;
-    }
-  }
-
-  .react-aria-Popover {
-    --background-color: var(--g3-color__white);
-    --border-color: var(--g3-color__bg-cloud);
-    border: 1px solid var(--border-color);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-    border-radius: 6px;
-    background: var(--background-color);
-    outline: none;
-    max-width: unset;
-    padding: 1.25rem;
-    box-sizing: border-box;
-  }
-  .react-aria-Popover .react-aria-OverlayArrow svg {
-    display: block;
-    fill: var(--background-color);
-    stroke: var(--border-color);
-    stroke-width: 1px;
-  }
-  .react-aria-Popover[data-placement=top] {
-    --origin: translateY(8px);
-  }
-  .react-aria-Popover[data-placement=top]:has(.react-aria-OverlayArrow) {
-    margin-bottom: 6px;
-  }
-  .react-aria-Popover[data-placement=bottom] {
-    --origin: translateY(-8px);
-  }
-  .react-aria-Popover[data-placement=bottom]:has(.react-aria-OverlayArrow) {
-    margin-top: 6px;
-  }
-  .react-aria-Popover[data-placement=bottom] .react-aria-OverlayArrow svg {
-    transform: rotate(180deg);
-  }
-  .react-aria-Popover[data-placement=right] {
-    --origin: translateX(-8px);
-  }
-  .react-aria-Popover[data-placement=right]:has(.react-aria-OverlayArrow) {
-    margin-left: 6px;
-  }
-  .react-aria-Popover[data-placement=right] .react-aria-OverlayArrow svg {
-    transform: rotate(90deg);
-  }
-  .react-aria-Popover[data-placement=left] {
-    --origin: translateX(8px);
-  }
-  .react-aria-Popover[data-placement=left]:has(.react-aria-OverlayArrow) {
-    margin-right: 6px;
-  }
-  .react-aria-Popover[data-placement=left] .react-aria-OverlayArrow svg {
-    transform: rotate(-90deg);
-  }
-  .react-aria-Popover[data-entering] {
-    animation: popover-slide 200ms;
-  }
-  .react-aria-Popover[data-exiting] {
-    animation: popover-slide 200ms reverse ease-in;
-  }
-  
-  @media (forced-colors: active) {
-    .react-aria-Popover {
-      --background-color: Canvas;
-      --border-color: ButtonBorder;
-    }
-  }
-  @keyframes popover-slide {
-    from {
-      transform: var(--origin);
-      opacity: 0;
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
     }
   }
 

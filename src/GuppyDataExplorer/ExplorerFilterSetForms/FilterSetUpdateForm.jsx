@@ -5,16 +5,19 @@ import SimpleInputField from '../../components/SimpleInputField';
 import Button from '../../gen3-ui-component/components/Button';
 import ExplorerFilterDisplay from '../ExplorerFilterDisplay';
 import './ExplorerFilterSetForms.css';
+import { isFilterSetSaved } from '../utils';
 
-/** @typedef {import('../types').SavedExplorerFilterSet} SavedExplorerFilterSet */
+
+/** @typedef {import('../types').ExplorerFilterSet} ExplorerFilterSet */
 
 /**
  * @param {Object} prop
- * @param {SavedExplorerFilterSet} prop.currentFilterSet
- * @param {SavedExplorerFilterSet['filter']} prop.currentFilter
- * @param {SavedExplorerFilterSet[]} prop.filterSets
- * @param {boolean} prop.isFiltersChanged
- * @param {(updated: SavedExplorerFilterSet) => void} prop.onAction
+ * @param {ExplorerFilterSet} prop.currentFilterSet
+ * @param {ExplorerFilterSet['filter']} prop.currentFilter
+ * @param {ExplorerFilterSet[]} prop.filterSets
+ * @param {boolean} [prop.isFiltersChanged]
+ * @param {boolean} [prop.isRenameOnly]
+ * @param {(updated: ExplorerFilterSet) => void} prop.onAction
  * @param {() => void} prop.onClose
  */
 function FilterSetUpdateForm({
@@ -22,6 +25,7 @@ function FilterSetUpdateForm({
   currentFilter,
   filterSets,
   isFiltersChanged,
+  isRenameOnly,
   onAction,
   onClose,
 }) {
@@ -40,16 +44,21 @@ function FilterSetUpdateForm({
   }
   return (
     <div className='explorer-filter-set-form'>
-      <h4>Save changes to the current Filter Set</h4>
-      {isFiltersChanged && (
-        <p>
-          <FontAwesomeIcon
-            icon='triangle-exclamation'
-            color='var(--pcdc-color__secondary)'
-          />{' '}
-          You have changed filters for this Filter Set.
-        </p>
-      )}
+      {isRenameOnly ? 
+          <h4>Rename current Filter Set</h4>
+        : <>
+            <h4>Save changes to the current Filter Set</h4>
+            {isFiltersChanged && (
+              <p>
+                <FontAwesomeIcon
+                  icon='triangle-exclamation'
+                  color='var(--pcdc-color__secondary)'
+                />{' '}
+                You have changed filters for this Filter Set.
+              </p>
+            )}
+          </>
+      } 
       <form onSubmit={(e) => e.preventDefault()}>
         <SimpleInputField
           label='Name'
@@ -68,27 +77,35 @@ function FilterSetUpdateForm({
           }
           error={error}
         />
-        <SimpleInputField
-          label='Description'
-          input={
-            <textarea
-              id='update-filter-set-description'
-              placeholder='Describe the Filter Set (optional)'
-              value={filterSet.description}
-              onChange={(e) => {
-                e.persist();
-                setFilterSet({ ...filterSet, description: e.target.value });
-              }}
+        {!isRenameOnly ? 
+          <>
+            <SimpleInputField
+              label='Description'
+              input={
+                <textarea
+                  id='update-filter-set-description'
+                  placeholder='Describe the Filter Set (optional)'
+                  value={filterSet.description}
+                  onChange={(e) => {
+                    e.persist();
+                    const newFilterSet = { ...filterSet, description: e.target.value };
+                    if (isFilterSetSaved(newFilterSet)) {
+                      setFilterSet(newFilterSet);
+                    }
+                  }}
+                />
+              }
             />
-          }
-        />
-        <ExplorerFilterDisplay filter={filterSet.filter} />
-        {isFiltersChanged && (
-          <ExplorerFilterDisplay
-            filter={currentFilter}
-            title='Filters (changed)'
-          />
-        )}
+            <ExplorerFilterDisplay filter={filterSet.filter} />
+            {isFiltersChanged && (
+              <ExplorerFilterDisplay
+                filter={currentFilter}
+                title='Filters (changed)'
+              />
+            )}
+          </>
+          : null
+        }
       </form>
       <div>
         <Button buttonType='default' label='Back to page' onClick={onClose} />

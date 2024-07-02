@@ -18,6 +18,7 @@ import type {
   ParsedSurvivalAnalysisResult,
   SurvivalAnalysisResult,
 } from '../../GuppyDataExplorer/ExplorerSurvivalAnalysis/types';
+import { SerializedError } from '@reduxjs/toolkit';
 
 export type ExplorerConfig = {
   adminAppliedPreFilters?: {
@@ -41,6 +42,7 @@ export type ExplorerFilterSet = ExplorerFilterSet;
 export type UnsavedExplorerFilterSet = UnsavedExplorerFilterSet;
 
 export type ExplorerWorkspace = {
+  sessionTabCount: number;
   activeId: string;
   all: {
     [id: string]: ExplorerFilterSet;
@@ -59,7 +61,7 @@ export type ExplorerState = {
   };
   survivalAnalysisResult: {
     data: SurvivalAnalysisResult;
-    error: Error;
+    error: Error | SerializedError;
     isPending: boolean;
     parsed: ParsedSurvivalAnalysisResult;
     staleFilterSetIds: number[];

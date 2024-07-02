@@ -121,7 +121,7 @@ function FilterSection({
   });
 
   /** @type {React.MutableRefObject<HTMLInputElement>} */
-  const inputElem = useRef();
+  const inputElem = useRef(null);
   useEffect(() => {
     setState((prevState) => ({
       ...prevState,

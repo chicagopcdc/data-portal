@@ -28,7 +28,7 @@ export default function ExplorerTabs() {
   const currentExplorer = explorerOptions.find(
     (o) => o.value === String(explorerId)
   );
-  return explorerOptions.length > 1 ? (
+  return (explorerOptions.length > 1 || true) ? (
     <div className='explorer-select'>
       <h4 className='explorer-select__title'>Explorers</h4>
       <div className='explorer-select__options-container'>

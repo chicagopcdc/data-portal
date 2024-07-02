@@ -3,6 +3,10 @@ import {
   FilterState,
   GqlFilter,
   StandardFilterState,
+  ComposedFilterStateWithRef,
+  RefFilterState,
+  CombineMode,
+  FilterChangeHandler,
 } from '../GuppyComponents/types';
 
 export type {
@@ -16,18 +20,10 @@ export type {
 
 export type ExplorerFilter = FilterState;
 
-export type RefFilterState = {
-  __type: 'REF';
-  value: {
-    id: string;
-    label: string;
-  };
-};
-
-export interface ComposedFilterStateWithRef extends ComposedFilterState {
-  refIds?: string[];
-  value?: (ComposedFilterStateWithRef | StandardFilterState | RefFilterState)[];
-}
+export type ComposedFilterStateWithRef = ComposedFilterStateWithRef;
+export type RefFilterState = RefFilterState;
+export type CombineMode = CombineMode;
+export type FilterChangeHandler = FilterChangeHandler;
 
 export type SingleChartConfig = {
   chartType: string;
@@ -96,7 +92,7 @@ export type UnsavedExplorerFilterSet = {
   explorerId?: never;
   filter: ComposedFilterStateWithRef | StandardFilterState;
   id?: never;
-  name?: never;
+  name?: string;
 };
 
 export type ExplorerFilterSet =

@@ -60,16 +60,18 @@ function Table({ title, header, data, footer }) {
   return (
     <div className='base-table'>
       {title ? <h2>{title}</h2> : null}
-      <table className='base-table__body'>
-        <TableHead cols={header} data={data} setFilters={setFilters} />
-        {footer.length > 0 && <TableFoot cols={footer} />}
-        <tbody>
-          {filteredData
-            .map((row, i) => (
-              <TableRow key={`${title}_${i}`} cols={row} />
-            ))}
-        </tbody>
-      </table>
+      <div className='base-table__container'>
+        <table className='base-table__body'>
+          <TableHead cols={header} data={data} setFilters={setFilters} />
+          {footer.length > 0 && <TableFoot cols={footer} />}
+          <tbody>
+            {filteredData
+              .map((row, i) => (
+                <TableRow key={`${title}_${i}`} cols={row} />
+              ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

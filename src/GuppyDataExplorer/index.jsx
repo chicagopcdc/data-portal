@@ -169,7 +169,11 @@ function ExplorerDashboard() {
 
   /** @type {FilterChangeHandler} */
   const handleFilterChange = useCallback((filter, skipExplorerUpdate) => {
-    dispatch(updateExplorerFilter(mergeFilters(filter, adminAppliedPreFilters), skipExplorerUpdate));
+    if (adminAppliedPreFilters === emptyAdminAppliedPreFilters) {
+      dispatch(updateExplorerFilter(filter, skipExplorerUpdate));
+    } else {
+      dispatch(updateExplorerFilter(mergeFilters(filter, adminAppliedPreFilters), skipExplorerUpdate));
+    }
   }, []);
 
   const closeActionForm = useCallback(() => {
@@ -262,7 +266,6 @@ function ExplorerDashboard() {
     try {
       if (saved.id === undefined) { 
         await dispatch(createFilterSet(saved));
-
       } else {
         await dispatch(updateFilterSet(saved));
       }
@@ -482,6 +485,7 @@ function ExplorerDashboard() {
                                       <MenuItem id="RESET">Reset</MenuItem>
                                       <MenuItem id="DUPLICATE">Duplicate</MenuItem>
                                       <MenuItem id="SAVE">{savedFilterSet ? 'Update saved' : 'Save'}</MenuItem>
+                                      <MenuItem id="REVERT">Revert to saved</MenuItem>       
                                     </Menu>
                               }
                             </Popover>

@@ -736,6 +736,10 @@ input[type="text"] {
   transition: visibility 0s 200ms, opacity 200ms linear;
 }
 
+.space-before { 
+  margin-left: 10px;
+}
+
 .separator-before { 
   margin-left: 10px;
 }

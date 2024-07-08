@@ -65,6 +65,7 @@ function getChartData({
   nodeCountTitle,
   totalCount,
 }) {
+  console.log(aggsChartData);
   const summaries = [];
   const countItems = [{ label: nodeCountTitle, value: totalCount }];
   const stackedBarCharts = [];
@@ -72,7 +73,8 @@ function getChartData({
   for (const field of Object.keys(chartConfig)) {
     if (aggsChartData[field]?.histogram !== undefined) {
       const { chartType: type, title, showPercentage } = chartConfig[field];
-      const { histogram } = aggsChartData[field];
+      const { histogram: histogramMaybe } = aggsChartData[field];
+      const histogram = histogramMaybe ?? [];
       switch (type) {
         case 'count': {
           const optionFilter = filter.value[field];

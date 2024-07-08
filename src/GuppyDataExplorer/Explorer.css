@@ -15,8 +15,7 @@
 .explorer__sidebar {
   width: 350px;
   display: flex;
-  padding-right: 1rem;
-  padding-top: 1rem;
+  padding: 1rem;
   border-right: 1px solid var(--g3-color__smoke);
   flex-direction: column;
 }

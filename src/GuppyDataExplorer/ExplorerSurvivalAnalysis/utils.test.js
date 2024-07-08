@@ -1,4 +1,4 @@
-import { FILTER_TYPE } from '../ExplorerFilter/utilse/utils';
+import { FILTER_TYPE } from '../ExplorerFilterSetWorkspace/utils';
 import {
   checkIfFilterHasDisallowedVariables,
   checkIfFilterInScope,

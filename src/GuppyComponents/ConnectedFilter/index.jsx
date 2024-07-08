@@ -14,6 +14,7 @@ import {
 /** @typedef {import('../types').GuppyConfig} GuppyConfig */
 /** @typedef {import('../types').SimpleAggsData} SimpleAggsData */
 /** @typedef {import('../types').StandardFilterState} StandardFilterState */
+/** @typedef {import('../types').FilterState} FilterState */
 
 /**
  * @typedef {Object} ConnectedFilterProps
@@ -26,7 +27,7 @@ import {
  * @property {boolean} [hidden]
  * @property {boolean} [hideZero]
  * @property {SimpleAggsData} [initialTabsOptions]
- * @property {(anchorValue: string) => void} onAnchorValueChange
+ * @property {(anchorValue: string, currentFilterState: FilterState) => void} onAnchorValueChange
  * @property {FilterChangeHandler} onFilterChange
  * @property {(x: string[]) => void} [onPatientIdsChange]
  * @property {string[]} [patientIds]

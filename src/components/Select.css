@@ -16,6 +16,11 @@
   width: 100%;
 }
 
+.react-aria-Select__disabled {
+  opacity: 0.6;
+
+}
+
 .react-aria-Select .clear-button {
   width: var(--Select-clear-button-side-length);
   height: var(--Select-clear-button-side-length);
@@ -58,6 +63,10 @@
   text-decoration: none;
   order: 3;
   margin-left: var(--Select-button-separtion-length);
+}
+
+.react-aria-Select.react-aria-Select__disabled .react-aria-Select-trigger {
+  background: var(--g3-color__gray);
 }
   
 .react-aria-Select .react-aria-Button[data-pressed] {

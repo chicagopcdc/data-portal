@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import explorerReducer from '../../redux/explorer/slice';
-import { FILTER_TYPE } from '../ExplorerFilter/utilse/utils';
+import { FILTER_TYPE } from '../ExplorerFilterSetWorkspace/utils';
 
 export const testReduxStore = configureStore({
   reducer: { explorer: explorerReducer },

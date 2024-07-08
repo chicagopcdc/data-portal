@@ -19,20 +19,24 @@ import { Popover, Dialog, DialogTrigger, Button } from 'react-aria-components';
 /** @typedef {import('../../redux/types').RootState} RootState */
 /** @typedef {import('../../GuppyComponents/types').StandardFilterState} StandardFilterState */
 /** @typedef {import('../types').GuppyData} GuppyData */
+/** @typedef {import('../types').FilterChangeHandler} FilterChangeHandler */
 /** @typedef {import('../types').SavedExplorerFilterSet} SavedExplorerFilterSet */
 /** @typedef {import('../types').ExplorerFilterSet} ExplorerFilterSet */
 /** @typedef {import('../types').UnsavedExplorerFilterSet} UnsavedExplorerFilterSet */
 /** @typedef {import('../types').ComposedFilterStateWithRef} ComposedFilterStateWithRef */
 /** @typedef {import('../types').RefFilterState} RefFilterState */
 /** @typedef {import('../../components/Select').SelectItem} SelectItem */
+
 function getSelectedFilterSets(combinedFilter) {
-  return (
-    combinedFilter.refIds.length < 2 ?
-      combinedFilter.refIds.length === 0 ?
-      ['', ''] 
-      : [...combinedFilter.refIds, ''] 
-    : [...combinedFilter.refIds]
-  );
+  let refs = combinedFilter.refIds ?? [];
+
+  if (combinedFilter.value.some((val) => val.__type !== 'REF') && refs.length === 0) {
+    return [''];
+  } else if (refs.length === 0) {
+    return ['', ''];
+  }
+
+  return [...refs];
 }
 
 /** 
@@ -41,7 +45,7 @@ function getSelectedFilterSets(combinedFilter) {
  * @property {any} workspace
  * @property {string} [title]
  * @property {ComposedFilterStateWithRef} combinedFilter
- * @property {GuppyData['onFilterChange']} onFilterChange
+ * @property {FilterChangeHandler} onFilterChange
  */
 /** @param {CombinedExplorerFilterProps} props */
 function _CombinedExplorerFilter({ workspace, title = 'Filter', combinedFilter, onFilterChange, className }) {
@@ -55,14 +59,18 @@ function _CombinedExplorerFilter({ workspace, title = 'Filter', combinedFilter, 
         display: <FilterSetLabel hasTooltip={false} filterSet={filterSet} />,
         text: filterSet.name
       };
-    });    
+    });
   const [selectedFilterSets, setSelectedFilterSets] = useState(getSelectedFilterSets(combinedFilter));
   const [combineMode, setCombineMode] = useState('AND');
+  const combinedQueries = combinedFilter.value.filter(query => query.__type === 'STANDARD');
+  const {
+    config: { filterConfig, },
+  } = useAppSelector((state) => state.explorer);
 
   useEffect(() => {
     setSelectedFilterSets(getSelectedFilterSets(combinedFilter));
     setCombineMode(combinedFilter.__combineMode);
-  }, [combinedFilter])
+  }, [combinedFilter]);
 
   return (
     <div className={className}>
@@ -71,7 +79,69 @@ function _CombinedExplorerFilter({ workspace, title = 'Filter', combinedFilter, 
       </div>
       <div className='explorer-filter__combined-filter-container'>
         <h4 className='explorer-filter__combined-filter-title'>Combine Filters</h4>
-        <ul>
+        <ul className='explorer-filter__combined-filter-fields'>
+          {combinedQueries.map((/** @type {StandardFilterState} */query, index, arr) => {
+            let key = index.toString() + JSON.stringify(query.value);
+            return <li key={key}>
+              <div className='explorer-filter__combine-filter-select'>
+                <Select
+                  items={[{ id: key, text: `Combined query #${index + 1}` }]}
+                  disabled={true}
+                  selection={key}
+                />
+                <button
+                  className='explorer-filter__combine-filter-delete explorer-filter__text-button'
+                  onClick={() => {
+                    let queryIndex = combinedFilter.value.findIndex((q) => q === query);
+                    let newValue = [...combinedFilter.value];
+                    let [deleted] = newValue.splice(queryIndex, 1);
+                    onFilterChange(
+                      { 
+                        ...combinedFilter,
+                        /** @type {(ComposedFilterStateWithRef | StandardFilterState | RefFilterState)[]} */
+                        value: newValue,
+                        refIds: selectedFilterSets
+                      },
+                      false
+                    );
+                  }}
+                >
+                  Delete
+                </button>
+                <DialogTrigger>
+                  <Button
+                    type='button'
+                    className='explorer-filter__text-button space-before'
+                  >
+                    View
+                  </Button>
+                  <Popover>
+                    <Dialog>
+                      <div className='explorer-filter__query-container explorer-filter__query-container--expanded'>
+                        <FilterDisplay
+                          filter={query}
+                          filterInfo={filterConfig.info}
+                        />
+                      </div>
+                    </Dialog>
+                  </Popover>
+                </DialogTrigger>
+              </div>
+              {index < arr.length-1 || selectedFilterSets.length > 0 ? 
+                <Pill
+                  onClick={() => {
+                    /** @type {import('../types').CombineMode} */
+                    let newMode = combineMode === 'AND' ? 'OR' : 'AND';
+                    setCombineMode(newMode);
+                    onFilterChange({ ...combinedFilter, __combineMode: newMode });
+                  }}
+                >
+                  {combineMode}
+                </Pill>
+                : null
+              }
+            </li>;
+          })}
           {selectedFilterSets.map((id, index) => {
             return <li key={index.toString() + (id ? id : '')}>
               <div className='explorer-filter__combine-filter-select'>
@@ -89,21 +159,24 @@ function _CombinedExplorerFilter({ workspace, title = 'Filter', combinedFilter, 
                     onChange={(/** @type {SelectItem} */item) => {
                       let newSelected = [...selectedFilterSets];
                       newSelected[index] = item?.id?.toString() ?? '';
+                      /** @type {(ComposedFilterStateWithRef | StandardFilterState | RefFilterState)[]} */
+                      let newSelectedValues = newSelected
+                        .filter(id => id !== '')
+                        .map(id => {
+                          let option = combineFilterSetOptions.find(option => option.id === id)
+                          return  { 
+                            __type: 'REF',
+                            value: {
+                              id, label: option.text
+                            }
+                          };
+                        });
+                      let newValues = combinedFilter.value.filter(query => query.__type === 'STANDARD').concat(newSelectedValues);
                       setSelectedFilterSets(newSelected);
                       onFilterChange({
                         ...combinedFilter,
                         /** @type {(ComposedFilterStateWithRef | StandardFilterState | RefFilterState)[]} */
-                        value: newSelected
-                          .filter(id => id !== '')
-                          .map(id => {
-                            let option = combineFilterSetOptions.find(option => option.id === id)
-                            return  { 
-                              __type: 'REF',
-                              value: {
-                                id, label: option.text
-                              }
-                            };
-                          }),
+                        value: newValues,
                         refIds: newSelected
                       });
                     }} 
@@ -121,39 +194,8 @@ function _CombinedExplorerFilter({ workspace, title = 'Filter', combinedFilter, 
                       onChange={(/** @type {SelectItem} */item) => {
                         let newSelected = [...selectedFilterSets];
                         newSelected[index] = item?.id?.toString() ?? '';
-                        setSelectedFilterSets(newSelected);
-                        onFilterChange({
-                          ...combinedFilter,
-                          /** @type {(ComposedFilterStateWithRef | StandardFilterState | RefFilterState)[]} */
-                          value: newSelected
-                            .filter(id => id !== '')
-                            .map(id => {
-                              let option = combineFilterSetOptions.find(option => option.id === id)
-                              return  { 
-                                __type: 'REF',
-                                value: {
-                                  id, label: option.text
-                                }
-                              };
-                            }),
-                          refIds: newSelected
-                        });
-                      }} 
-                      selection={id}
-                    />
-                }
-                <button
-                  className='explorer-filter__combine-filter-delete explorer-filter__text-button'
-                  disabled={selectedFilterSets.length < 3}
-                  onClick={() => {
-                    let newSelected = [...selectedFilterSets];
-                    let [deleted] = newSelected.splice(index, 1);
-                    setSelectedFilterSets(newSelected);
-                    onFilterChange(
-                      { 
-                        ...combinedFilter,
                         /** @type {(ComposedFilterStateWithRef | StandardFilterState | RefFilterState)[]} */
-                        value: newSelected
+                        let newSelectedValues = newSelected
                           .filter(id => id !== '')
                           .map(id => {
                             let option = combineFilterSetOptions.find(option => option.id === id)
@@ -163,11 +205,46 @@ function _CombinedExplorerFilter({ workspace, title = 'Filter', combinedFilter, 
                                 id, label: option.text
                               }
                             };
-                          }),
-                        refIds: newSelected
-                      },
-                      deleted === ''
-                    );
+                          });
+                        let newValues = combinedFilter.value.filter(query => query.__type === 'STANDARD').concat(newSelectedValues);
+                        setSelectedFilterSets(newSelected);
+                        onFilterChange({
+                          ...combinedFilter,
+                          /** @type {(ComposedFilterStateWithRef | StandardFilterState | RefFilterState)[]} */
+                          value: newValues,
+                          refIds: newSelected
+                        });
+                      }} 
+                      selection={id}
+                    />
+                }
+                <button
+                  className='explorer-filter__combine-filter-delete explorer-filter__text-button'
+                  disabled={combinedQueries.length > 0 ? selectedFilterSets.length < 2 : selectedFilterSets.length < 3}
+                  onClick={() => {
+                    let newSelected = [...selectedFilterSets];
+                    let [deleted] = newSelected.splice(index, 1);
+                    /** @type {(ComposedFilterStateWithRef | StandardFilterState | RefFilterState)[]} */
+                    let newSelectedValues = newSelected
+                      .filter(id => id !== '')
+                      .map(id => {
+                        let option = combineFilterSetOptions.find(option => option.id === id)
+                        return  { 
+                          __type: 'REF',
+                          value: {
+                            id, label: option.text
+                          }
+                        };
+                      });
+                    let newValues = combinedFilter.value.filter(query => query.__type === 'STANDARD').concat(newSelectedValues);
+                    setSelectedFilterSets(newSelected);
+                    console.log(newSelected);
+                    onFilterChange({
+                      ...combinedFilter,
+                      /** @type {(ComposedFilterStateWithRef | StandardFilterState | RefFilterState)[]} */
+                      value: newValues,
+                      refIds: newSelected
+                    }, deleted === '');
                   }}
                 >
                   Delete
@@ -214,7 +291,7 @@ export const CombinedExplorerFilter = React.memo(_CombinedExplorerFilter);
  * @property {string} [title]
  * @property {GuppyData['initialTabsOptions']} [initialTabsOptions]
  * @property {StandardFilterState} filter
- * @property {GuppyData['onFilterChange']} onFilterChange
+ * @property {FilterChangeHandler} onFilterChange
  * @property {GuppyData['onAnchorValueChange']} onAnchorValueChange
  * @property {GuppyData['tabsOptions']} tabsOptions
  * @property {Object} dictionaryEntries

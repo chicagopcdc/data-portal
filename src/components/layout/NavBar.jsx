@@ -41,7 +41,7 @@ function NavBar({ dictIcons, navItems, navTitle, userAccess }) {
 
   const navButtonRefs = {};
   for (const { link } of navItems)
-    if (navButtonRefs[link] === undefined) navButtonRefs[link] = useRef();
+    if (navButtonRefs[link] === undefined) navButtonRefs[link] = useRef(null);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [tooltipDetails, setTooltipDetails] = useState({ content: '' });

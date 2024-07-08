@@ -72,6 +72,7 @@
 }
 
 .explorer-filter__combine-filter-select {
+  width: 100%;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -84,6 +85,7 @@
 }
 
 .explorer__combined-filter ul > li {
+  width: 100%;
   flex-direction: column;
   display: flex;
   align-items: center;
@@ -111,4 +113,11 @@
 .explorer-filter__combined-filter-title {
   margin-left: calc(-45px - 8px);
   margin-bottom: 16px;
+}
+
+.explorer-filter__combined-filter-fields {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: start;
 }

@@ -65,7 +65,6 @@ function getChartData({
   nodeCountTitle,
   totalCount,
 }) {
-  console.log(aggsChartData);
   const summaries = [];
   const countItems = [{ label: nodeCountTitle, value: totalCount }];
   const stackedBarCharts = [];

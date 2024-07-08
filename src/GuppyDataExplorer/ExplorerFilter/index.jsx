@@ -238,7 +238,6 @@ function _CombinedExplorerFilter({ workspace, title = 'Filter', combinedFilter, 
                       });
                     let newValues = combinedFilter.value.filter(query => query.__type === 'STANDARD').concat(newSelectedValues);
                     setSelectedFilterSets(newSelected);
-                    console.log(newSelected);
                     onFilterChange({
                       ...combinedFilter,
                       /** @type {(ComposedFilterStateWithRef | StandardFilterState | RefFilterState)[]} */

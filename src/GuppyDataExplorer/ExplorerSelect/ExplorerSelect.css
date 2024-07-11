@@ -1,8 +1,16 @@
 .explorer-select {
-  border-bottom: 1px solid var(--g3-color__silver);
-  padding: 1rem 1rem 2rem;
+  width: 100%;
+  display: flex;
+  background-color: var(--pcdc-color__primary);
+  align-items: center;
 }
 
 .explorer-select__title {
-  margin-bottom: 1rem;
+  color: var(--g3-color__white);
+  padding-right: 1rem;
+}
+
+.explorer-select__options-container {
+  width: 100%;
+  padding-right: 1rem;
 }

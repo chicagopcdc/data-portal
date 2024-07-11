@@ -11,7 +11,6 @@ import DataSummaryCardGroup from '../../components/cards/DataSummaryCardGroup';
 import ExplorerRequestAccessButton from '../ExplorerRequestAccessButton';
 import Popup from '../../components/Popup';
 import ExplorerExploreExternalButton from '../ExplorerExploreExternalButton';
-import ExplorerFilterSetWorkspace from '../ExplorerFilterSetWorkspace';
 import ExplorerTable from '../ExplorerTable';
 import ExplorerSurvivalAnalysis from '../ExplorerSurvivalAnalysis';
 import ReduxExplorerButtonGroup from '../ExplorerButtonGroup/ReduxExplorerButtonGroup';
@@ -73,7 +72,8 @@ function getChartData({
   for (const field of Object.keys(chartConfig)) {
     if (aggsChartData[field]?.histogram !== undefined) {
       const { chartType: type, title, showPercentage } = chartConfig[field];
-      const { histogram } = aggsChartData[field];
+      const { histogram: histogramMaybe } = aggsChartData[field];
+      const histogram = histogramMaybe ?? [];
       switch (type) {
         case 'count': {
           const optionFilter = filter.value[field];
@@ -304,7 +304,6 @@ function ExplorerVisualization({
           <ReduxExplorerButtonGroup {...buttonGroupProps} />
         </div>
       </div>
-      <ExplorerFilterSetWorkspace />
       <ViewContainer
         showIf={explorerView === 'summary view'}
         isLoading={isLoadingAggsData}

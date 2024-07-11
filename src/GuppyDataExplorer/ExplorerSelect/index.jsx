@@ -13,8 +13,7 @@ for (const { guppyConfig, id, label } of explorerConfig)
     label: capitalizeFirstLetter(label || guppyConfig.dataType),
     value: String(id),
   });
-
-export default function ExplorerTabs() {
+export default function ExplorerSelect({ onChange }) {
   const dispatch = useAppDispatch();
   const explorerId = useAppSelector((state) => state.explorer.explorerId);
 
@@ -28,7 +27,7 @@ export default function ExplorerTabs() {
   const currentExplorer = explorerOptions.find(
     (o) => o.value === String(explorerId)
   );
-  return explorerOptions.length > 1 ? (
+  return (explorerOptions.length > 1 || true) ? (
     <div className='explorer-select'>
       <h4 className='explorer-select__title'>Explorers</h4>
       <div className='explorer-select__options-container'>

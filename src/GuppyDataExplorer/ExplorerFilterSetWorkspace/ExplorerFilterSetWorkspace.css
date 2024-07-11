@@ -1,18 +1,39 @@
 .explorer-filter-set-workspace {
-  background-color: var(--g3-color__white);
-  padding: 1rem;
-  margin-top: 10px;
-  resize: vertical;
-  overflow: -moz-scrollbars-vertical; 
-  overflow-y: scroll;
+  background-color: var(--pcdc-color__primary);
+  padding-top: 1rem;
+  border-right: 1px solid var(--g3-color__silver);
+  flex-grow: 1;
 }
 
-/* Medium screen and less */
-@media screen and (max-width: 1090px) {
-  .explorer-filter-set-workspace {
-    display: none;
-  }
+.explorer-filter-set-workspace .react-aria-Toolbar {
+  gap: 0;
+  display: grid;
+  grid-template-columns: [col-new-tab-start] 15% [col-new-tab-end col-more-start] 60% [col-more-end col-explorer-select-start] 25% [col-explorer-select-end];
 }
+
+.explorer-filter-set-workspace .react-aria-Tabs {
+  overflow-y: scroll;
+  height: 100%;
+  display: grid;
+  grid-template-columns: [col-tab-list-start] 15% [col-tab-list-end col-tab-panel-start] 85% [col-tab-panel-end];
+}
+
+.explorer-filter-set-workspace .react-aria-TabList {
+  grid-column: col-tab-list-start / col-tab-list-end;
+  background-color: var(--pcdc-color__primary);
+  padding-left: 1rem;
+}
+
+.explorer-filter-set-workspace .react-aria-TabPanel {
+  padding: 0px 1rem;
+  grid-column: col-tab-panel-start / col-tab-panel-end;
+  background-color: var(--g3-color__white);
+  border-radius: 8px 0 0 0;
+  border-right: 1px solid var(--g3-color__silver);
+  border-left: 1px solid var(--g3-color__silver);
+  border-top: 1px solid var(--g3-color__silver);
+}
+
 .explorer-filter-set-workspace > header {
   display: flex;
 }
@@ -36,18 +57,11 @@
 }
 
 .explorer-filter-set-workspace button {
-  background-color: inherit;
   border: none;
-  height: initial;
-  width: initial;
 }
 
 .explorer-filter-set-workspace button:disabled {
   cursor: not-allowed;
-}
-
-.explorer-filter-set-workspace button:not(:disabled) {
-  color: var(--g3-color__gray);
 }
 
 .explorer-filter-set-workspace
@@ -75,54 +89,101 @@
   background-color: var(--pcdc-color__secondary-light);
 }
 
-.explorer-filter-set-workspace__query {
+.explorer-action-group {
+  flex-direction: row;
   display: flex;
-  padding: 0.25rem;
-  background-color: var(--g3-color__bg-cloud);
+  align-items: flex-end;
 }
 
-.explorer-filter-set-workspace__query > header {
-  display: flex;
-  align-items: center;
+.explorer-action-group .g3-icon--plus {
+  margin-right: 3px;
 }
 
-.explorer-filter-set-workspace__query > header::after {
-  border: 0.5px solid var(--g3-color__lightgray);
-  content: '';
-  margin: 0 0.5rem;
-  height: 1rem;
+.explorer-action-group__new-tab {
+  background-color: var(--pcdc-color__primary);
+  padding: 0 0 1rem 1rem;
 }
 
-.explorer-filter-set-workspace__query > header > button {
-  width: 3rem;
-  text-align: center;
+.explorer-action-group__explorer-select {
+  background-color: var(--pcdc-color__primary);
+  padding: 0 0 1rem 1rem;
 }
 
-.explorer-filter-set-workspace__query > header > h3 {
-  font-size: 0.8rem;
-  line-height: 1rem;
-  padding: 0.25rem;
-  color: inherit;
-  max-width: 6rem;
+.explorer-action-group__new-tab .react-aria-Button {
+  width: 100%;
+  border-radius: 5px 0 0 5px;
+}
+
+.explorer-action-group__more .react-aria-Button {
+  border-radius: 0 5px 5px 0;
+}
+
+.explorer-action-group .react-aria-Button {
+  height: 40px;
+  padding: 10px;
+  text-wrap: nowrap;
+  border: 1px solid var(--pcdc-color__primary);
+  background-color: var(--g3-primary-btn__bg-color);
+  color: var(--g3-primary-btn__color);
+  fill: var(--g3-primary-btn__color);
+}
+
+.explorer-action-group .react-aria-Button[data-hovered],
+.explorer-action-group .react-aria-Button[data-active] {
+  background-color: var(--g3-primary-btn__bg-color--hover);
+}
+
+.explorer-action-group__more {
+  flex-grow: 1;
+  flex-direction: row;
+  align-items: baseline;
+}
+
+.explorer-filter-set-workspace__tab-title {
+  max-width: 150px;
+  -webkit-line-clamp: 2;
+  /* autoprefixer: off */
+  -webkit-box-orient: vertical;
+  /* autoprefixer: on */
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  color: inherit;
 }
 
-.explorer-filter-set-workspace__query--active {
+.explorer-filter-set-workspace__tab-title h4 {
+  color: inherit;
+}
+
+.explorer-filter-set-workspace .react-aria-Tab {
+  margin-bottom: 8px;
+  background-color: var(--g3-color__smoke);
+  border: 1px solid transparent;
+  border-radius: 8px 0 0 8px;
+
+  &[data-disabled] {
+    color: var(--g3-color__silver);
+  }
+}
+
+.explorer-filter-set-workspace .react-aria-Tab:first-of-type {
+  margin-top: 8px;
+}
+
+.explorer-filter-set-workspace .react-aria-Tab[data-selected],
+.explorer-filter-set-workspace .react-aria-Tab[data-hovered] {
+  background-color: var(--g3-color__white);
+  border: 1px solid var(--border-color, transparent);
+  border-inline-end: 5px solid var(--border-color, transparent);
+}
+
+.explorer-filter-set-workspace___close-filter-action,
+.explorer-filter-set-workspace___more-filter-actions {
   background-color: transparent;
-  border: 1px solid var(--g3-color__lime);
-  border-left-width: 0.25rem;
-  padding-left: 0;
 }
 
-.explorer-filter-set-workspace__query--active
-  button.explorer-filter-set-workspace__action-button {
-  color: var(--g3-color__lime);
-  cursor: initial;
-}
-
-.explorer-filter-set-workspace__query > h4 {
-  display: inline-block;
-  margin-right: 0.25rem;
+.explorer-filter-set-workspace___filter-actions {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 }

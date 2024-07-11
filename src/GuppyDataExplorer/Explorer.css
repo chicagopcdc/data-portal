@@ -9,26 +9,69 @@
 
 .explorer__main {
   padding: 1rem;
+  width: calc(100% - 350px);
 }
 
 .explorer__sidebar {
+  width: 350px;
   display: flex;
+  padding: 1rem;
+  border-right: 1px solid var(--g3-color__smoke);
   flex-direction: column;
-  justify-content: space-between;
+}
+
+@media screen and (max-width: 1090px) {
+  .explorer__sidebar {
+    display: none;
+  }
+
+  .explorer__main {
+    width: 100%;
+  }
 }
 
 .explorer__filter {
   padding: 1rem 1rem 2rem;
 }
 
+.explorer__side-bar-footer {
+  position: sticky;
+  bottom: 0;
+  background-color: var(--pcdc-color__primary);
+}
+
 .explorer__version-info-area {
-  margin: 0 auto;
-  padding: 3rem 0 2rem;
-  width: fit-content;
+  color: var(--g3-color__white);
+  padding: 1rem;
 }
 
 .explorer__version-info > span {
   font-style: italic;
+}
+
+.explorer__version-info > a {
+  color:  var(--g3-color__white);
+  text-decoration: underline;
+
+  &:hover {
+    color: var(--g3-color__silver);
+  }
+}
+
+.explorer__version-info-text-button {
+  text-wrap: nowrap;
+  text-decoration: underline;
+  background: none;
+  border: none;
+  padding: none;
+  width: initial;
+  height: initial;
+  font-style: italic;
+  color: var(--g3-color__white);
+
+  &:hover {
+    color: var(--g3-color__silver);
+  }
 }
 
 /* Medium screen and less */

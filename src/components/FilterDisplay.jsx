@@ -21,6 +21,10 @@ import './FilterDisplay.css';
 
 /** @typedef {import('../GuppyDataExplorer/types').ExplorerFilterSet} ExplorerFilterSet */
 
+function isFilterNonEmpty(filter) {
+  return Object.keys(filter?.value ?? {}).length > 0;
+}
+
 /**
  * @param {Object} props
  * @param {[anchorField: string, anchorValue: string]} [props.anchorInfo]
@@ -40,10 +44,11 @@ function FilterDisplay({
   onClickFilter,
   onCloseFilter,
 }) {
-  if (filter.__type === FILTER_TYPE.COMPOSED)
+  if (filter.__type === FILTER_TYPE.COMPOSED) {
+    const composedValues = filter.value.filter(isFilterNonEmpty);
     return (
       <span className='filter-display'>
-        {filter.value.map((__filter, i) => (
+        {composedValues.map((__filter, i) => (
           <Fragment key={i}>
             {__filter.__type === 'REF' ? (
               <Pill>{__filter.value.label}</Pill>
@@ -52,11 +57,12 @@ function FilterDisplay({
                 <FilterDisplay filter={__filter} filterInfo={filterInfo} />
               </span>
             )}
-            {i < filter.value.length - 1 && <Pill>{filter.__combineMode}</Pill>}
+            {i < composedValues.length - 1 && <Pill>{filter.__combineMode}</Pill>}
           </Fragment>
         ))}
       </span>
     );
+  }
 
   const filterElements = /** @type {JSX.Element[]} */ ([]);
   const { __combineMode, value: __filter } = filter;

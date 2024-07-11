@@ -1,0 +1,178 @@
+.react-aria-Select {
+  --field-border: var(--g3-color__gray);
+  --field-background: var(--g3-color__white);
+  --text-color: var(--g3-color__gray);
+  --text-color-placeholder: var(--g3-color__smoke);
+  --text-color-invalid: var(--g3-color__rose);
+  --highlight-background: var(--pcdc-color__primary);
+  --highlight-foreground:  var(--g3-color__white);
+  --highlight-background-invalid: var(--g3-color__white);
+  --Select-trigger-side-length: var(--pcdc-input-height);
+  --Select-clear-button-side-length: 1.143rem;
+  --Select-button-separtion-length: 4px;
+
+  color: var(--text-color);
+
+  width: 100%;
+}
+
+.react-aria-Select__disabled {
+  opacity: 0.6;
+
+}
+
+.react-aria-Select .clear-button {
+  width: var(--Select-clear-button-side-length);
+  height: var(--Select-clear-button-side-length);
+  border-radius: 1.143rem;
+  font-size: 0.857rem;
+  line-height: 0.857rem;
+  vertical-align: middle;
+  text-align: center;
+  background: gray;
+  color: white;
+  border: none;
+  padding: 0;
+  outline: none;
+  order: 2;
+}
+
+.react-aria-Select .clear-button:disabled {
+  visibility: hidden;
+}
+
+.react-aria-Select .clear-button[data-pressed] {
+  background: dimgray;
+}
+.react-aria-Select .clear-button[data-focus-visible] {
+  outline: 2px solid black;
+  outline-offset: 2px;
+}
+
+.react-aria-Select .react-aria-Select-trigger {
+  color: white;
+  background: var(--pcdc-color__primary);
+  appearance: none;
+  vertical-align: middle;
+  width: var(--Select-trigger-side-length);
+  height: var(--Select-trigger-side-length);
+  font-size: 0.857rem;
+  text-align: center;
+  outline: none;
+  padding: 0;
+  text-decoration: none;
+  order: 3;
+  margin-left: var(--Select-button-separtion-length);
+}
+
+.react-aria-Select.react-aria-Select__disabled .react-aria-Select-trigger {
+  background: var(--g3-color__gray);
+}
+  
+.react-aria-Select .react-aria-Button[data-pressed] {
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.1);
+  background: var(--g3-default-btn__bg-color--hover);
+  border-color: var(--g3-default-btn__border-color--active);
+}
+  
+.react-aria-Select .react-aria-Button[data-focus-visible] {
+  outline: 2px solid var(--g3-color__base-blue);
+  outline-offset: -1px;
+}
+
+.react-aria-Select .react-aria-Group {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--field-border);
+  border-radius: 6px;
+  background: var(--field-background);
+  white-space: nowrap;
+  padding: 2px;
+}
+
+.react-aria-Select .react-aria-Group[data-focus-within] {
+  border-color: var(--highlight-background);
+  box-shadow: 0 0 0 1px var(--highlight-background);
+}
+
+.react-aria-Select .react-aria-Select__current-values {
+  width: calc(100% - var(--Select-trigger-side-length) - 1.143rem - 4px);
+  height: 1.429rem;
+  background: var(--field-background);
+  border: none;
+  outline: none;
+  text-align: start;
+  overflow: hidden;
+  padding-left: 8px;
+  text-overflow: ellipsis;
+  color: var(--g3-color__gray);
+  order: 1;
+}
+
+.react-aria-ListBox {
+  --disabled-foreground: var(--g3-color__smoke);
+  --field-border: var(--g3-color__lightgray);
+  --field-background: var(--g3-color__lightgray);
+  --text-color: var(--g3-color__gray);
+  --text-color-placeholder: var(--g3-color__smoke);
+  --text-color-invalid: var(--g3-color__rose);
+  --highlight-background: var(--pcdc-color__primary);
+  --highlight-foreground:  var(--g3-color__white);
+  --highlight-background-invalid: var(--g3-color__white);
+  --Select-trigger-side-length: var(--pcdc-input-height);
+  --Select-clear-button-side-length: 1.143rem;
+  --Select-button-separtion-length: 4px;
+
+  color: var(--text-color);
+
+  display: flex;
+  flex-direction: column;
+  max-height: inherit;
+  overflow: auto;
+  background: var(--overlay-background);
+  forced-color-adjust: none;
+  outline: none;
+  min-width: 150px;
+  max-height: 300px;
+  box-sizing: border-box;
+}
+.react-aria-ListBox[data-focus-visible] {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: -1px;
+}
+
+.react-aria-ListBoxItem {
+  margin: 2px;
+  padding: 0.286rem 0.571rem;
+  border-radius: 6px;
+  outline: none;
+  cursor: default;
+  color: var(--text-color);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.react-aria-ListBoxItem[data-focus-visible] {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: -2px;
+}
+.react-aria-ListBoxItem[data-selected] {
+  background: var(--highlight-background);
+  color: var(--highlight-foreground);
+}
+.react-aria-ListBoxItem[data-selected][data-focus-visible] {
+  outline-color: var(--highlight-foreground);
+  outline-offset: -4px;
+}
+
+.react-aria-ListBoxItem[data-hovered] {
+  background: var(--highlight-background);
+  color: var(--highlight-foreground);
+}
+
+.react-aria-ListBoxItem[data-disabled] {
+  color: var(--disabled-foreground);
+}

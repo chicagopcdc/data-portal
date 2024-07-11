@@ -79,7 +79,7 @@ export const createProject = createAsyncThunk(
               case '5XX':
                 return {
                   isError: true,
-                  message: 'Oops! An issue occured on our end, please try again',
+                  message: 'Oops! An issue occurred on our end, please try again',
                   data: null,
                   meta: null
                 };
@@ -94,7 +94,7 @@ export const createProject = createAsyncThunk(
             console.error(`WARNING: failed to with status ${response.statusText}`);
             return {
               isError: true,
-              message: 'An unknown error occured',
+              message: 'An unknown error occurred',
               data: null,
               meta: null
             };
@@ -134,7 +134,7 @@ export const createProject = createAsyncThunk(
               case '5XX':
                 return {
                   isError: true,
-                  message: 'Oops! An issue occured on our end, please try again',
+                  message: 'Oops! An issue occurred on our end, please try again',
                   data: null,
                 };
               case '4XX':
@@ -147,7 +147,7 @@ export const createProject = createAsyncThunk(
             console.error(`WARNING: failed to with status ${response.statusText}`);
             return {
               isError: true,
-              message: 'An unknown error occured',
+              message: 'An unknown error occurred',
               data: null,
             };
           }
@@ -174,7 +174,7 @@ export const createProject = createAsyncThunk(
               case '5XX':
                 return {
                   isError: true,
-                  message: 'Oops! An issue occured on our end, please try again',
+                  message: 'Oops! An issue occurred on our end, please try again',
                   data: null,
                 };
               case '4XX':
@@ -187,7 +187,7 @@ export const createProject = createAsyncThunk(
             console.error(`WARNING: failed to with status ${response.statusText}`);
             return {
               isError: true,
-              message: 'An unknown error occured',
+              message: 'An unknown error occurred',
               data: null,
             };
           }
@@ -214,7 +214,7 @@ export const createProject = createAsyncThunk(
               case '5XX':
                 return {
                   isError: true,
-                  message: 'Oops! An issue occured on our end, please try again',
+                  message: 'Oops! An issue occurred on our end, please try again',
                   data: null,
                 };
               case '4XX':
@@ -227,7 +227,7 @@ export const createProject = createAsyncThunk(
             console.error(`WARNING: failed to with status ${response.statusText}`);
             return {
               isError: true,
-              message: 'An unknown error occured',
+              message: 'An unknown error occurred',
               data: null,
             };
           }
@@ -254,7 +254,7 @@ export const createProject = createAsyncThunk(
               case '5XX':
                 return {
                   isError: true,
-                  message: 'Oops! An issue occured on our end, please try again',
+                  message: 'Oops! An issue occurred on our end, please try again',
                   data: null,
                 };
               case '4XX':
@@ -267,7 +267,7 @@ export const createProject = createAsyncThunk(
             console.error(`WARNING: failed to with status ${response.statusText}`);
             return {
               isError: true,
-              message: 'An unknown error occured',
+              message: 'An unknown error occurred',
               data: null,
             };
           }
@@ -294,7 +294,7 @@ export const createProject = createAsyncThunk(
               case '5XX':
                 return {
                   isError: true,
-                  message: 'Oops! An issue occured on our end, please try again',
+                  message: 'Oops! An issue occurred on our end, please try again',
                   data: null,
                 };
               case '4XX':
@@ -307,7 +307,7 @@ export const createProject = createAsyncThunk(
             console.error(`WARNING: failed to with status ${response.statusText}`);
             return {
               isError: true,
-              message: 'An unknown error occured',
+              message: 'An unknown error occurred',
               data: null,
             };
           }

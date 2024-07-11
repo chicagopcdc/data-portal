@@ -50,6 +50,7 @@
   flex-grow: 1;
   cursor: pointer;
   outline: none;
+  max-width: 135px;
 }
 
 .g3-single-select-filter__tooltip-icon {

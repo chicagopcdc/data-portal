@@ -58,6 +58,8 @@ export const updateFilterSet = createAsyncThunk(
   }
 );
 
+// const createUpdateSurvivalAsyncThunk = createAsyncThunk;
+
 export const updateSurvivalResult = createAsyncThunk(
   'explorer/updateSurvivalResult',
   /**

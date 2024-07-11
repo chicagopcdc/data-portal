@@ -113,7 +113,7 @@ h3,
 h4 {
   font-weight: 600;
   line-height: 2em;
-  color: var(--g3-color__black);
+  color: var(--g3-color__gray);
 }
 
 h1 {
@@ -485,3 +485,269 @@ input[type="text"] {
   -moz-appearance: none;
   color: var(--g3-color__gray);
 }
+
+@layer popover {
+  .react-aria-Popover {
+    max-width: unset;
+    padding: 1.25rem;
+  }
+}
+
+.react-aria-Popover {
+  --background-color: var(--g3-color__white);
+  --border-color: var(--g3-color__bg-cloud);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  background: var(--background-color);
+  outline: none;
+  max-width: unset;
+  padding: 1.25rem;
+  box-sizing: border-box;
+}
+.react-aria-Popover .react-aria-OverlayArrow svg {
+  display: block;
+  fill: var(--background-color);
+  stroke: var(--border-color);
+  stroke-width: 1px;
+}
+.react-aria-Popover[data-placement=top] {
+  --origin: translateY(8px);
+}
+.react-aria-Popover[data-placement=top]:has(.react-aria-OverlayArrow) {
+  margin-bottom: 6px;
+}
+.react-aria-Popover[data-placement=bottom] {
+  --origin: translateY(-8px);
+}
+.react-aria-Popover[data-placement=bottom]:has(.react-aria-OverlayArrow) {
+  margin-top: 6px;
+}
+.react-aria-Popover[data-placement=bottom] .react-aria-OverlayArrow svg {
+  transform: rotate(180deg);
+}
+.react-aria-Popover[data-placement=right] {
+  --origin: translateX(-8px);
+}
+.react-aria-Popover[data-placement=right]:has(.react-aria-OverlayArrow) {
+  margin-left: 6px;
+}
+.react-aria-Popover[data-placement=right] .react-aria-OverlayArrow svg {
+  transform: rotate(90deg);
+}
+.react-aria-Popover[data-placement=left] {
+  --origin: translateX(8px);
+}
+.react-aria-Popover[data-placement=left]:has(.react-aria-OverlayArrow) {
+  margin-right: 6px;
+}
+.react-aria-Popover[data-placement=left] .react-aria-OverlayArrow svg {
+  transform: rotate(-90deg);
+}
+.react-aria-Popover[data-entering] {
+  animation: popover-slide 200ms;
+}
+.react-aria-Popover[data-exiting] {
+  animation: popover-slide 200ms reverse ease-in;
+}
+
+@media (forced-colors: active) {
+  .react-aria-Popover {
+    --background-color: Canvas;
+    --border-color: ButtonBorder;
+  }
+}
+@keyframes popover-slide {
+  from {
+    transform: var(--origin);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.react-aria-Toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+
+  &[data-orientation=horizontal] {
+    flex-direction: row;
+  }
+
+  .react-aria-Group {
+    display: contents;
+  }
+
+  .react-aria-ToggleButton {
+    width: 32px;
+  }
+}
+
+.react-aria-Separator {
+  align-self: stretch;
+  background-color: var(--g3-primary-btn__border-color);
+
+  &[aria-orientation=vertical] {
+    width: 1px;
+    margin: 0px 10px;
+  }
+}
+
+.react-aria-Menu {
+  max-height: inherit;
+  box-sizing: border-box;
+  overflow: auto;
+  padding: 2px;
+  min-width: 150px;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.react-aria-MenuItem {
+  margin: 2px;
+  padding: 0.286rem 0.571rem;
+  border-radius: 6px;
+  outline: none;
+  color: var(--g3-primary-btn__color);
+  position: relative;
+  display: grid;
+  grid-template-areas: "label kbd"
+  "desc  kbd";
+  align-items: center;
+  column-gap: 20px;
+  forced-color-adjust: none;
+
+  &[data-disabled] {
+    color: var(--g3-color__smoke);
+  }
+
+  &[data-focused] {
+    background: var(--pcdc-color__primary);
+    color: var(--g3-color__white);
+  }
+}
+
+.react-aria-MenuItem,
+.react-aria-Button,
+.react-aria-Tab {
+  cursor: pointer;
+}
+
+.react-aria-Tabs {
+  display: flex;
+  color: var(--text-color);
+
+  &[data-orientation=horizontal] {
+    flex-direction: column;
+  }
+  &[data-orientation=vertical] {
+    flex-direction: row;
+  }
+}
+
+.react-aria-TabList {
+  display: flex;
+
+  &[data-orientation=horizontal] {
+    border-bottom: 1px solid var(--border-color);
+
+    .react-aria-Tab {
+      border-bottom: 5px solid var(--border-color);
+    }
+  }
+
+  &[data-orientation=vertical] {
+    flex-direction: column;
+    border-inline-end: 1px solid var(--border-color);
+
+    .react-aria-Tab {
+      border-inline-end: 5px solid var(--border-color, transparent);
+    }
+  }
+}
+
+.react-aria-Tab {
+  padding: 10px;
+  cursor: default;
+  outline: none;
+  position: relative;
+  color: var(--text-color-base);
+  transition: color 200ms;
+  --border-color: transparent;
+  forced-color-adjust: none;
+
+  &[data-hovered],
+  &[data-focused] {
+    color: var(--text-color-hover);
+  }
+
+  &[data-selected] {
+    --border-color: var(--pcdc-color__secondary);
+    color: var(--text-color);
+  }
+
+  &[data-disabled] {
+    background-color: var(--g3-color__silver);
+    color: var(--g3-color__silver);
+  }
+
+  &[data-focus-visible]:after {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 4px;
+    border: 2px solid var(--focus-ring-color);
+  }
+}
+
+.react-aria-TabPanel {
+  padding: 16px;
+  outline: none;
+
+  &[data-focus-visible] {
+    outline: 2px solid var(--focus-ring-color);
+  }
+
+  &[data-inert] {
+    display: none;
+  }
+}
+
+.visible {
+  visibility: visible;
+}
+
+.hidden {
+  visibility: hidden;
+}
+
+.animate-visible {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 200ms linear;
+}
+
+.animate-hidden {
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0s 200ms, opacity 200ms linear;
+}
+
+.space-before { 
+  margin-left: 10px;
+}
+
+.separator-before { 
+  margin-left: 10px;
+}
+
+.separator-before::before {
+  border-left: 1px solid var(--g3-color__lightgray);
+  content: '';
+  height: 1.5rem;
+  margin-right: 10px;
+} 
+

@@ -10,6 +10,7 @@ import { getGQLFilter } from '../../GuppyComponents/Utils/queries';
 /** @typedef {import('../../GuppyDataExplorer/types').RefFilterState} RefFilterState */
 /** @typedef {import('../../GuppyDataExplorer/types').SurvivalAnalysisConfig} SurvivalAnalysisConfig */
 /** @typedef {import('../../GuppyDataExplorer/types').SavedExplorerFilterSet} SavedExplorerFilterSet */
+/** @typedef {import('../../GuppyComponents/types').StandardFilterState} StandardFilterState */
 /** @typedef {import('./types').ExplorerState} ExplorerState */
 /** @typedef {import('./types').ExplorerWorkspace} ExplorerWorkspace */
 
@@ -63,7 +64,7 @@ export function convertToFilterSetDTO({ filter: filters, ...rest }) {
   return { ...rest, filters, gqlFilter: getGQLFilter(filters) };
 }
 
-/** @returns {ExplorerFilterSet['filter']['value']} */
+/** @returns {StandardFilterState['value']} */
 export function polyfillFilterValue(filter) {
   const value = {};
   for (const [key, val] of Object.entries(filter))
@@ -76,7 +77,7 @@ export function polyfillFilterValue(filter) {
       value[key] = { __type: FILTER_TYPE.OPTION, ...val };
     else if ('lowerBound' in val)
       value[key] = { __type: FILTER_TYPE.RANGE, ...val };
-
+  // @ts-ignore
   return value;
 }
 
@@ -182,9 +183,15 @@ export function initializeWorkspaces(explorerId) {
     if (e.message !== 'No stored workspaces') console.error(e);
 
     const activeId = crypto.randomUUID();
-    const filterSet = { filter: {} };
+    /** @type {import('./types').UnsavedExplorerFilterSet} */
+    const filterSet = {
+      filter: {
+        __type: 'STANDARD'
+      },
+      name: `Filter Tab #1`
+    };
     return {
-      [explorerId]: { activeId, all: { [activeId]: filterSet } },
+      [explorerId]: { activeId, all: { [activeId]: filterSet }, sessionTabCount: 1 },
     };
   }
 }

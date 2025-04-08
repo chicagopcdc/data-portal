@@ -90,3 +90,11 @@
 .top-bar-menu > button:hover svg {
   color: var(--pcdc-color__secondary-light);
 }
+
+@media screen and (max-width: 420px) {
+  .top-bar-menu > button i.g3-icon,
+  .top-bar-menu > button svg {
+    height: 18px;
+    width: 18px;
+  }
+}

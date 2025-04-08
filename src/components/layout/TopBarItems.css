@@ -40,3 +40,16 @@ button.top-bar-item {
 .top-bar-item__content:hover {
   border-bottom: 1px solid var(--g3-color__white);
 }
+
+@media screen and (max-width: 420px) {
+  .top-bar-item__content.body-typo {
+    font-size: 12px;
+  }
+
+  .top-bar-item__content > i.g3-icon {
+    width: 10px;
+    height: 10px;
+    top: 1px;
+    margin-left: 0.2rem;
+  }
+}

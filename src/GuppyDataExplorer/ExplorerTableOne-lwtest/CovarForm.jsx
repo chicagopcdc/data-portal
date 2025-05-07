@@ -11,7 +11,7 @@ import { overrideSelectTheme } from '../../utils';
 import { defaultFilterSet } from '../ExplorerSurvivalAnalysis/ControlForm';
 import FilterSetCard from './FilterSetCard';
 import CovarCard from './CovarCard';
-import option from '../../../data/tableOneHelper.json'
+import option from '../../../data/config/tableOneHelper.json'
 import { getGQLFilter } from '../../GuppyComponents/Utils/queries';
 import "./index.css"
 //import { getGQLFilter } from '@src/GuppyComponents/Utils/queries';

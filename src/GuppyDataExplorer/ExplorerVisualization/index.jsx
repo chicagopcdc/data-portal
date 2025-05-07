@@ -14,7 +14,7 @@ import ExplorerExploreExternalButton from '../ExplorerExploreExternalButton';
 import ExplorerFilterSetWorkspace from '../ExplorerFilterSetWorkspace';
 import ExplorerTable from '../ExplorerTable';
 import ExplorerSurvivalAnalysis from '../ExplorerSurvivalAnalysis';
-import ExplorerTableOne from '../ExplorerTableOne-lwtest';
+import ExplorerTableOne from '../ExplorerTableOne';
 import ReduxExplorerButtonGroup from '../ExplorerButtonGroup/ReduxExplorerButtonGroup';
 import './ExplorerVisualization.css';
 import { FILTER_TYPE } from '../ExplorerFilterSetWorkspace/utils';

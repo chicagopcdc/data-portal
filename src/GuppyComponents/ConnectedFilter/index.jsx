@@ -73,8 +73,9 @@ function ConnectedFilter({
         if (fields?.length > 0) arrayFields.current.concat(fields);
     });
   }, []);
-  const filterTabs = filterConfig.tabs.map(({ fields, searchFields }) =>{
-    return(getFilterSections({
+
+  const filterTabs = filterConfig.tabs.map(({ fields, searchFields }) =>
+    getFilterSections({
       dictionaryEntries,
       adminAppliedPreFilters,
       arrayFields: arrayFields.current,
@@ -84,8 +85,7 @@ function ConnectedFilter({
       initialTabsOptions,
       searchFields,
       tabsOptions: processedTabsOptions,
-    }))
-  }
+    })
   );
 
   return (

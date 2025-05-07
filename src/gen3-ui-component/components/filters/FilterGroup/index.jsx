@@ -379,8 +379,7 @@ function FilterGroup({
           />
         )}
         {tabs[tabIndex]
-          .map((section, index) => {
-            return(            
+          .map((section, index) => (
             <FilterSection
               key={section.title}
               sectionTitle={section.title}
@@ -409,7 +408,7 @@ function FilterGroup({
               title={section.title}
               tooltip={section.tooltip}
             />
-          )})}
+          ))}
       </div>
     </div>
   );

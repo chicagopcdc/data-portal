@@ -87,7 +87,6 @@ export const updateSurvivalResult = createAsyncThunk(
     const cache = {};
     const filterSets = [];
     const usedFilterSetIds = [];
-    console.log(args.usedFilterSets)
     for (const [index, filterSet] of args.usedFilterSets.entries()) {
       const { filter, id, isStale, name: _name } = filterSet;
       const name = `${index + 1}. ${_name}`;
@@ -97,7 +96,6 @@ export const updateSurvivalResult = createAsyncThunk(
 
       usedFilterSetIds.push(id);
     }
-    console.log(filterSets)
 
     if (filterSets.length === 0) return { data: cache, usedFilterSetIds };
 

@@ -96,7 +96,6 @@ export async function fetchWithCreds(opts) {
     };
 
     let response = await fetch(path, request);
-    console.log(path)
 
     // user is authorized; return data
     if (response.status !== 403 && response.status !== 401)

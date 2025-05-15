@@ -63,7 +63,7 @@ const plugins = [
   new webpack.optimize.AggressiveMergingPlugin(), // Merge chunks
 ];
 
-let optimization = {minimize: false,};
+let optimization = {};
 let devtool = false;
 
 if (isProduction) {
@@ -84,7 +84,7 @@ if (isProduction) {
   );
 }
 
-module.exports = {
+const webserverConfig = {
   entry: './src/index.jsx',
   target: 'web',
   bail: isProduction,
@@ -164,4 +164,56 @@ module.exports = {
       xmlhttprequest: '{XMLHttpRequest:XMLHttpRequest}',
     },
   ],
-};
+}
+
+const packageConfig = {
+  entry: "./src/index.js",
+  output: {
+    filename: "bundle.js", 
+    path: path.resolve(__dirname, "dist"),
+    libraryTarget: "commonjs2",
+  },
+  mode: "production", // Ensures optimized output without eval()
+  target: "node", // Ensures it runs in Node.js
+  module: {
+    rules: [
+      {
+        test: /\.m?js/,
+        resolve: {
+          fullySpecified: false,
+        },
+      },
+      {
+        test: /\.jsx?$/,
+        exclude:
+          /node_modules\/(?!(graphiql|graphql-language-service-parser)\/).*/,
+        loader: 'babel-loader',
+        options: isProduction
+          ? undefined
+          : { plugins: [require.resolve('react-refresh/babel')] },
+      },
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader', 'postcss-loader'],
+      },
+      {
+        test: /\.svg$/,
+        use: ['@svgr/webpack'],
+      },
+      {
+        test: /\.(png|jpg|gif)$/,
+        type: 'asset/inline',
+      },
+      {
+        test: /\.(woff|woff2|eot|ttf|otf)$/i,
+        type: 'asset/resource',
+      },
+    ],
+  },
+  optimization: {
+    minimize: false, // ✅ Ensures function names are preserved
+  },
+  devtool: false, // Removes eval() and ensures proper execution
+}
+
+module.exports = process.env.PACKAGE === 'true' ? packageConfig : webserverConfig;

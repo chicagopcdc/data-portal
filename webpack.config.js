@@ -63,7 +63,7 @@ const plugins = [
   new webpack.optimize.AggressiveMergingPlugin(), // Merge chunks
 ];
 
-let optimization = {};
+let optimization = {minimize: false,};
 let devtool = false;
 
 if (isProduction) {

@@ -167,7 +167,7 @@ const webserverConfig = {
 }
 
 const packageConfig = {
-  entry: "./src/index.js",
+  entry: "./src/index.jsx",
   output: {
     filename: "bundle.js", 
     path: path.resolve(__dirname, "dist"),
@@ -185,12 +185,16 @@ const packageConfig = {
       },
       {
         test: /\.jsx?$/,
-        exclude:
-          /node_modules\/(?!(graphiql|graphql-language-service-parser)\/).*/,
+        exclude: /node_modules\/(?!(graphiql|graphql-language-service-parser)\/).*/,
         loader: 'babel-loader',
-        options: isProduction
-          ? undefined
-          : { plugins: [require.resolve('react-refresh/babel')] },
+        options: {
+          presets: [
+            require.resolve('@babel/preset-env'),
+            require.resolve('@babel/preset-react'),
+          ],
+          // Only add the react-refresh plugin when not in production
+          plugins: !isProduction ? [require.resolve('react-refresh/babel')] : [],
+        },
       },
       {
         test: /\.css$/,
@@ -214,6 +218,27 @@ const packageConfig = {
     minimize: false, // ✅ Ensures function names are preserved
   },
   devtool: false, // Removes eval() and ensures proper execution
+  resolve: {
+    fallback: { "punycode": require.resolve("punycode/") },
+    alias: {
+      "@adobe/react-spectrum": path.resolve('./node_modules/@adobe/react-spectrum/dist/main.js'),
+      graphql: path.resolve('./node_modules/graphql'),
+      react: path.resolve('./node_modules/react'), // Same issue.
+      graphiql: path.resolve('./node_modules/graphiql'),
+      'graphql-language-service-parser': path.resolve(
+        './node_modules/graphql-language-service-parser'
+      ),
+    },
+    extensions: ['.mjs', '.js', '.jsx', '.json'],
+  },
+  plugins,
+  externals: [
+    {
+      xmlhttprequest: '{XMLHttpRequest:XMLHttpRequest}',
+    },
+  ],
 }
 
+console.log(process.env.PACKAGE);
+console.log(process.env.NODE_ENV);
 module.exports = process.env.PACKAGE === 'true' ? packageConfig : webserverConfig;

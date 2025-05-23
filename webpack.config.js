@@ -84,7 +84,7 @@ if (isProduction) {
   );
 }
 
-const webserverConfig = {
+module.exports = {
   entry: './src/index.jsx',
   target: 'web',
   bail: isProduction,
@@ -164,81 +164,4 @@ const webserverConfig = {
       xmlhttprequest: '{XMLHttpRequest:XMLHttpRequest}',
     },
   ],
-}
-
-const packageConfig = {
-  entry: "./src/index.jsx",
-  output: {
-    filename: "bundle.js", 
-    path: path.resolve(__dirname, "dist"),
-    libraryTarget: "commonjs2",
-  },
-  mode: "production", // Ensures optimized output without eval()
-  target: "node", // Ensures it runs in Node.js
-  module: {
-    rules: [
-      {
-        test: /\.m?js/,
-        resolve: {
-          fullySpecified: false,
-        },
-      },
-      {
-        test: /\.jsx?$/,
-        exclude: /node_modules\/(?!(graphiql|graphql-language-service-parser)\/).*/,
-        loader: 'babel-loader',
-        options: {
-          presets: [
-            require.resolve('@babel/preset-env'),
-            require.resolve('@babel/preset-react'),
-          ],
-          // Only add the react-refresh plugin when not in production
-          plugins: !isProduction ? [require.resolve('react-refresh/babel')] : [],
-        },
-      },
-      {
-        test: /\.css$/,
-        use: ['style-loader', 'css-loader', 'postcss-loader'],
-      },
-      {
-        test: /\.svg$/,
-        use: ['@svgr/webpack'],
-      },
-      {
-        test: /\.(png|jpg|gif)$/,
-        type: 'asset/inline',
-      },
-      {
-        test: /\.(woff|woff2|eot|ttf|otf)$/i,
-        type: 'asset/resource',
-      },
-    ],
-  },
-  optimization: {
-    minimize: false, // ✅ Ensures function names are preserved
-  },
-  devtool: false, // Removes eval() and ensures proper execution
-  resolve: {
-    fallback: { "punycode": require.resolve("punycode/") },
-    alias: {
-      "@adobe/react-spectrum": path.resolve('./node_modules/@adobe/react-spectrum/dist/main.js'),
-      graphql: path.resolve('./node_modules/graphql'),
-      react: path.resolve('./node_modules/react'), // Same issue.
-      graphiql: path.resolve('./node_modules/graphiql'),
-      'graphql-language-service-parser': path.resolve(
-        './node_modules/graphql-language-service-parser'
-      ),
-    },
-    extensions: ['.mjs', '.js', '.jsx', '.json'],
-  },
-  plugins,
-  externals: [
-    {
-      xmlhttprequest: '{XMLHttpRequest:XMLHttpRequest}',
-    },
-  ],
-}
-
-console.log(process.env.PACKAGE);
-console.log(process.env.NODE_ENV);
-module.exports = process.env.PACKAGE === 'true' ? packageConfig : webserverConfig;
+};

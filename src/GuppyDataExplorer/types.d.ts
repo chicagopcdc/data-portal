@@ -70,6 +70,10 @@ export type TableConfig = {
   linkFields?: string[];
 };
 
+export type TableOneConfig = {
+  enabled: boolean;
+};
+
 export type PatientIdsConfig = {
   export?: boolean;
   filter?: boolean;

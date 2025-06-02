@@ -190,10 +190,9 @@ function ExplorerVisualization({
     patientIdsConfig,
     survivalAnalysisConfig,
     tableConfig,
-  } = useAppSelector((state) => {
-  return state.explorer.config});
+    tableOneConfig,
+  } = useAppSelector((state) => state.explorer.config);
 
-  const tableOneConfig = true;
 
   const nodeCountTitle =
     guppyConfig.nodeCountTitle || capitalizeFirstLetter(guppyConfig.dataType);
@@ -201,7 +200,7 @@ function ExplorerVisualization({
   const explorerViews = ['summary view'];
   if (tableConfig.enabled) explorerViews.push('table view');
   if (survivalAnalysisConfig.enabled) explorerViews.push('survival analysis');
-  if (tableOneConfig) explorerViews.push('table one');
+  if (tableOneConfig.enabled) explorerViews.push('table one');
   
 
   const explorerView = searchParams.get('view') ?? explorerViews[0];
@@ -368,7 +367,7 @@ function ExplorerVisualization({
         </ViewContainer>
         
       )}
-      {tableOneConfig && (
+      {tableOneConfig.enabled && (
         <ViewContainer showIf={explorerView === 'table one'}>
           <ExplorerTableOne />
         </ViewContainer>

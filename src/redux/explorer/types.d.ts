@@ -13,6 +13,7 @@ import type {
   UnsavedExplorerFilterSet,
   SurvivalAnalysisConfig,
   TableConfig,
+  TableOneConfig,
 } from '../../GuppyDataExplorer/types';
 import type {
   ParsedSurvivalAnalysisResult,
@@ -32,6 +33,7 @@ export type ExplorerConfig = {
   patientIdsConfig?: PatientIdsConfig;
   survivalAnalysisConfig: SurvivalAnalysisConfig & { enabled: Boolean };
   tableConfig: TableConfig;
+  tableOneConfig: TableOneConfig;
 };
 
 export type ExplorerFilter = ExplorerFilter;

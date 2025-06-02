@@ -160,6 +160,7 @@ export function getCurrentConfig(explorerId) {
     patientIdsConfig: config.patientIds,
     survivalAnalysisConfig: { enabled: false },
     tableConfig: config.table,
+    tableOneConfig: config.tableOneConfig,
   };
 }
 

@@ -38,6 +38,7 @@ import { adminFetchUsers } from './redux/user/asyncThunks';
 import { fetchGraphvizLayout } from './redux/ddgraph/asyncThunks';
 import {
   fetchSurvivalConfig,
+  fetchTableOneConfig,
   fetchFilterSets,
   fetchFederationQuery,
 } from './redux/explorer/asyncThunks';
@@ -219,6 +220,7 @@ function App() {
                 Promise.all([
                   dispatch(fetchDictionary()),
                   dispatch(fetchSurvivalConfig()),
+                  dispatch(fetchTableOneConfig()),
                 ])
               }
             >
@@ -239,6 +241,7 @@ function App() {
                   dispatch(fetchFederationQuery(token)),
                   dispatch(fetchDictionary()),
                   dispatch(fetchSurvivalConfig()),
+                  dispatch(fetchTableOneConfig()),
                 ]);
               }}
             >

@@ -1,63 +1,68 @@
 export type { GqlFilter } from '../../GuppyComponents/types';
 export type { ExplorerFilterSet, SavedExplorerFilterSet } from '../types';
 
-export type ColorScheme = {
-  [key: string]: string;
+export type TableOneBaseVariable = {
+  name: string;
+  type: 'categorical' | 'continuous';
+  missingFromTotal: string;
+  missingFromTrue: string;
 };
 
-export type RisktableDataPoint = {
-  nrisk: number;
-  time: number;
-};
-
-export type RisktableData = {
-  data: RisktableDataPoint[];
+export type TableOneCategoricalData = {
+  data: {
+    true: string;
+    total: string;
+  };
   name: string;
 };
 
-export type SurvivalDataPoint = {
-  prop: number;
-  time: number;
-};
-
-export type SurvivalData = {
-  data: SurvivalDataPoint[];
-  name: string;
-};
-
-export type SurvivalResultForFilterSet = {
-  name: string;
-  count: {
-    fitted: number;
+export type TableOneContinuousData = {
+  mean: {
+    true: number;
     total: number;
   };
-  risktable: RisktableDataPoint[];
-  survival: SurvivalDataPoint[];
 };
 
-export type SurvivalAnalysisResult = {
-  [id: string]: SurvivalResultForFilterSet;
+export type TableOneContinuesVariable = TableOneBaseVariable &
+  TableOneContinuousData;
+
+export type TableOneCategoricalVariable = TableOneBaseVariable & {
+  keys: TableOneCategoricalData[];
 };
 
-export type ParsedSurvivalAnalysisResult = {
-  count?: {
-    [name: string]: SurvivalResultForFilterSet['count'];
-  };
-  risktable?: RisktableData[];
-  survival?: SurvivalData[];
+export type TableOneResult = {
+  variables: (TableOneCategoricalVariable | TableOneContinuesVariable)[];
+  totalCount: number;
+  trueCount: number;
+};
+
+export type TableOneFilterSet = {
+  filter: GqlFilter;
+  id: number;
+  name: string;
+  explorerId: number;
+};
+
+export type CovariateCategorical = {
+  type: 'categorical';
+  label: string;
+  selectedKeys: string[];
+};
+
+export type CovariateContinuous = {
+  type: 'continuous';
+  label: string;
+};
+
+export type Covariate = CovariateCategorical | CovariateContinuous;
+
+export type Covariates = {
+  [key: string]: Covariate;
 };
 
 export type UserInput = {
-  timeInterval: number;
-  startTime: number;
-  endTime: number;
-  efsFlag: boolean;
-  usedFilterSets: SavedExplorerFilterSet[];
+  filterSets: TableOneFilterSet[];
+  covariates: Covariates;
 };
 
 export type UserInputSubmitHandler = (userInput: UserInput) => void;
-
-export type DisallowedVariable = {
-  label: string;
-  field: string;
-}

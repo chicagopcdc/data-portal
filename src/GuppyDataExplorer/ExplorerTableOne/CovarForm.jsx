@@ -1,99 +1,80 @@
-import { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
+import { useState } from 'react';
 import Tooltip from 'rc-tooltip';
 import 'rc-tooltip/assets/bootstrap_white.css';
 import Select from 'react-select';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Button from '../../gen3-ui-component/components/Button';
-import SimpleInputField from '../../components/SimpleInputField';
 import { useAppSelector } from '../../redux/hooks';
 import { overrideSelectTheme } from '../../utils';
-import { defaultFilterSet } from '../ExplorerSurvivalAnalysis/ControlForm';
-import FilterSetCard from './FilterSetCard';
+import {
+  defaultFilterSet,
+  ControlFormSelect,
+} from '../ExplorerSurvivalAnalysis/ControlForm';
+import FilterSetCard from '../ExplorerSurvivalAnalysis/FilterSetCard';
 import CovarCard from './CovarCard';
-import option from '../../../data/config/tableOneHelper.json'
 import { getGQLFilter } from '../../GuppyComponents/Utils/queries';
-import "./index.css"
-//import { getGQLFilter } from '@src/GuppyComponents/Utils/queries';
+import './ExplorerTableOne.css';
+import {
+  checkIfFilterHasDisallowedVariables,
+  checkIfFilterInScope,
+} from '../ExplorerSurvivalAnalysis/utils';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
+/** @typedef {import('./types').ExplorerFilterSet} ExplorerFilterSet */
 
+/** @type {ExplorerFilterSet['id'][]} */
 const emptyFilterSetIds = [];
-var requestbody = {
-  filterSets :[],
-  usedFilterSetIds :[],
-  covarFields :["_subject_id"],
-  covariates:[]
-}
 
-const response = {
-  variables: [
-    {
-      keys: [
-        {
-          data: {
-            true: "19.8%",
-          },
-          name: "Alive",
-        },
-        {
-          data: {
-            true: "33.0%",
-          },
-          name: "Dead",
-        },
-        {
-          data: {
-            true: "17.6%",
-          },
-          name: "Unknown",
-        },
-      ],
-      name: "lkss",
-      size: {
-        total: 363,
-        true: 91,
-      },
-    },
-  ],
-};
+function CovarForm({ onSubmit, options }) {
+  // Start here
 
-
-
-function CovarForm() {
-  const variable = response.variables[0];
-  const[ selectableVaris, setSelectableVaris] = useState(option)
-  const[isReplied, setIsReplied] = useState(null)   
-  const filterConfig= useAppSelector((state) => state.explorer.config.filterConfig);
   const savedFilterSets = useAppSelector(
-    (state) => state.explorer.savedFilterSets.data
+    (state) => state.explorer.savedFilterSets.data,
   );
 
-  console.log(savedFilterSets)
+  const staleFilterSetIdSet = useAppSelector(
+    (state) => new Set(state.explorer.survivalAnalysisResult.staleFilterSetIds),
+  );
 
-  const [selectFilterSet, setSelectFilterSet] = useState(null);
+  const consortiums = useAppSelector(
+    (state) => state.explorer.config.tableOneConfig.consortium ?? [],
+  );
+  const disallowedVariables = useAppSelector(
+    (state) => state.explorer.config.tableOneConfig.excludedVariables ?? [],
+  );
+
+  const [isInputChanged, setIsInputChanged] = useState(false);
+
+  const [selectedFilterSet, setSelectedFilterSet] = useState(null);
   const [usedFilterSetIds, setUsedFilterSetIds] = useState(emptyFilterSetIds);
-  const [covarList, setCovarList] = useState([]);
-  const [numnum, setnum] = useState(0);
-  const [disableOption, setDisableOption] = useState([]);
+  const [selectedCovariatesList, setCovariatesList] = useState([]);
+  const [selectedCovariates, setSelectedCovariates] = useState(new Set());
 
-  const [variList, setVariList] = useState([])
-
-  const emptyCovar = {label:'',
-                      name:0,
-                      type:''}
-  
   const filterSetOptions = [];
   const usedFilterSets = [];
-  for(const filterSet of [defaultFilterSet, ...savedFilterSets]){
+  for (const filterSet of [defaultFilterSet, ...savedFilterSets]) {
     const { name: label, id: value } = filterSet;
     const isUsed = usedFilterSetIds.includes(value);
-    const isDisabled = isUsed || false;
+    const isOutOfScope = !checkIfFilterInScope(consortiums, filterSet.filter);
+    const isDisallowedVariables = checkIfFilterHasDisallowedVariables(
+      disallowedVariables,
+      filterSet.filter,
+    );
+    const isDisabled = isUsed || isOutOfScope || isDisallowedVariables;
+
+    const disabledOverlay = isUsed
+      ? 'This Filter Set is already in use.'
+      : isOutOfScope
+        ? 'This Filter Set includes out of scope consortia.'
+        : isDisallowedVariables
+          ? 'This Filter Set includes disallowed variables and cannot be used for survival analysis.'
+          : '';
+
     filterSetOptions.push({
-      label: isUsed ? (
+      label: isDisabled ? (
         <Tooltip
           arrowContent={<div className='rc-tooltip-arrow-inner' />}
           mouseLeaveDelay={0}
-          overlay='This Filter Set is already in use.'
+          overlay={disabledOverlay}
           placement='right'
         >
           <span>{label}</span>
@@ -106,87 +87,147 @@ function CovarForm() {
     });
 
     if (isUsed) {
-      usedFilterSets.push({ ...filterSet });
+      const isStale = staleFilterSetIdSet.has(value);
+      usedFilterSets.push({ ...filterSet, isStale });
     }
   }
 
-  const addCovar = ()=>{
-    var obj = emptyCovar;
-    obj.name = numnum;
-    requestbody.covarFields.push("")
-    requestbody.covariates.push({})
-    setnum(numnum+1)
-    setCovarList([...covarList,obj]);
-  }
-
-  const handleSubmit = ()=>{
+  const submitUserInput = () => {
+    setIsInputChanged(false);
     const filterSets = [];
+    for (const filterSet of usedFilterSets) {
+      const { filter, id, explorerId, name } = filterSet;
 
-    for (const [index, filterSet] of usedFilterSets.entries()) {
-    const { filter, id, isStale, name: _name } = filterSet;
-    const name = `${index + 1}. ${_name}`;
-    
-    //check cache here!!
-
-    // const shouldUseCache = id in result && !isStale && !args.shouldRefetch;
-    // if (shouldUseCache) cache[id] = { ...result[id], name }; 
-
-    filterSets.push({ filters: getGQLFilter(filter) ?? {}, id, name });
+      filterSets.push({
+        filter: getGQLFilter(filter) ?? {},
+        id: id,
+        //this isnt getting loaded in with SavedFilterSets
+        explorerId: explorerId,
+        name: name,
+      });
     }
-    requestbody.filterSets = savedFilterSets;
-    requestbody.usedFilterSetIds = usedFilterSetIds;
-
-    requestbody.filterSets = filterSets
-    console.log(requestbody)
-
-   
-    setIsReplied(requestbody)
-  }
-
-  const updateBody = (input, type, i)=>{
-    if(type == "value"){
-      requestbody.covariates[i].values = [...input]
-    }
-    else if(type == "key"){
-      requestbody.covariates[i].keys = [...input]
-    }
-    else if(type == "variable"){
-      requestbody.covarFields[i+1] = input.label;
-      requestbody.covariates[i] = {
-        type: input.type,
-        name: input.name,
-        label:input.label,
-        values: [],
-        keys: []
+    const covariates = {};
+    for (const covariate of selectedCovariatesList) {
+      covariates[covariate.name] = {
+        label: covariate.label,
+        type: covariate.type,
+      };
+      if (covariate.type === 'categorical') {
+        covariates[covariate.name].selectedKeys = covariate.selectedKeys; // ✅ Fixed!
       }
     }
 
-    console.log(requestbody)
-  }
-  return(
-    <div className='explorer-table-one__covar-form'>
-      <div className = 'exploerer-table-one__filter-group-variable'>
+    onSubmit({
+      covariates,
+      filterSets,
+    });
+  };
+
+  const resetUserInput = () => {
+    setSelectedFilterSet(null);
+    setCovariatesList([]);
+    setSelectedCovariates(new Set());
+    setUsedFilterSetIds([]);
+    setIsInputChanged(false);
+  };
+
+  return (
+    <form className='explorer-survival-analysis__control-form'>
+      <ControlFormSelect
+        inputId='allowed-consortium'
+        label={
+          <Tooltip
+            arrowContent={<div className='rc-tooltip-arrow-inner' />}
+            mouseLeaveDelay={0}
+            overlay='Survival curves can only be generated for Filter Sets that include patients from allowed consortia.'
+            placement='left'
+          >
+            <span>
+              <FontAwesomeIcon
+                icon='circle-info'
+                color='var(--pcdc-color__primary-light)'
+              />{' '}
+              Allowed Consortia
+            </span>
+          </Tooltip>
+        }
+        components={{
+          IndicatorsContainer: () => null,
+          MultiValueRemove: () => null,
+        }}
+        isMulti
+        isDisabled
+        value={consortiums.map((label) => ({ label }))}
+        theme={overrideSelectTheme}
+      />
+      <ControlFormSelect
+        inputId='disallowed-variables'
+        label={
+          <Tooltip
+            arrowContent={<div className='rc-tooltip-arrow-inner' />}
+            mouseLeaveDelay={0}
+            overlay='Filter sets that use disallowed variables cannot be utilized for survival analysis'
+            placement='left'
+          >
+            <span>
+              <FontAwesomeIcon
+                icon='circle-info'
+                color='var(--pcdc-color__primary-light)'
+              />{' '}
+              Disallowed Variables
+            </span>
+          </Tooltip>
+        }
+        components={{
+          IndicatorsContainer: () => null,
+          MultiValueRemove: () => null,
+        }}
+        isMulti
+        isDisabled
+        value={disallowedVariables}
+        theme={overrideSelectTheme}
+      />
+      <div className='explorer-survival-analysis__filter-group'>
         <div className='explorer-survival-analysis__filter-set-select'>
           <Select
             inputId='survival-filter-sets'
             placeholder='Select Filter Set to analyze'
             options={filterSetOptions}
-            onChange={setSelectFilterSet}
+            onChange={setSelectedFilterSet}
             maxMenuHeight={160}
-            value={selectFilterSet}
+            value={selectedFilterSet}
             theme={overrideSelectTheme}
             menuPlacement='auto'
           />
-          <Button
-            label='Add'
-            buttonType='default'
-            enabled={selectFilterSet !== null}
-            onClick={() => {
-              console.log(usedFilterSetIds);
-              setUsedFilterSetIds((ids) => [...ids, selectFilterSet.value]);
-              setSelectFilterSet(null);
-            }}
-          />
+          {usedFilterSetIds.length >= 1 ? (
+            <Tooltip
+              arrowContent={<div className='rc-tooltip-arrow-inner' />}
+              mouseLeaveDelay={0}
+              overlay={'Only 1 Filter Set Can Be Selected'}
+              placement='top'
+            >
+              <span>
+                <Button label='Add' buttonType='default' enabled={false} />
+              </span>
+            </Tooltip>
+          ) : (
+            <span>
+              <Button
+                label='Add'
+                buttonType='default'
+                enabled={
+                  selectedFilterSet !== null && usedFilterSetIds.length < 1
+                }
+                onClick={() => {
+                  setUsedFilterSetIds((ids) => [
+                    ...ids,
+                    selectedFilterSet.value,
+                  ]);
+                  setSelectedFilterSet(null);
+                }}
+              />
+            </span>
+          )}
         </div>
         {usedFilterSets.length === 0 ? (
           <span style={{ fontStyle: 'italic' }}>
@@ -194,80 +235,54 @@ function CovarForm() {
             analysis.
           </span>
         ) : (
-          usedFilterSets.map((filterSet, i) => (
+          usedFilterSets.map((filterSet) => (
             <FilterSetCard
               key={filterSet.id}
               filterSet={filterSet}
-              label={`${i + 1}. ${filterSet.name}`}
+              label={filterSet.name}
               onClose={() => {
                 setUsedFilterSetIds((ids) =>
-                  ids.filter((id) => id !== filterSet.id)
+                  ids.filter((id) => id !== filterSet.id),
                 );
               }}
             />
           ))
         )}
       </div>
-
-      {covarList.map((e, index) => {
-        return(
+      {selectedCovariatesList.map((e, index) => {
+        return (
           <CovarCard
-            count = {index}
-            variate = {e}
-            covarList = {covarList}
-            setCovarList = {setCovarList}
-            selectableVaris = {selectableVaris}
-            setSelectableVaris = {setSelectableVaris}
-            updateBody = {updateBody}
-            variList = {variList}
-            setVariList = {setVariList}
+            postion={index}
+            covariates={selectedCovariatesList}
+            updateCovariates={setCovariatesList}
+            selectedCovariates={selectedCovariates}
+            setSelectedCovariates={setSelectedCovariates}
+            option={options}
           />
-        )
-
+        );
       })}
-        
-        <div className='explorer-survival-analysis__button-group'>
-        <Button label='Add Variable' buttonType='default' onClick={addCovar}/>
-        </div>
-        
-        <div className='explorer-survival-analysis__button-group'>
-        <Button label='Reset' buttonType='default'/>
+
+      <div className='explorer-survival-analysis__button-group'>
+        <Button
+          label='Add Variable'
+          buttonType='default'
+          onClick={() => setCovariatesList((prev) => [...prev, {}])}
+        />
+      </div>
+      <div className='explorer-survival-analysis__button-group'>
+        <Button label='Reset' buttonType='default' onClick={resetUserInput} />
         <Button
           label='Apply'
           buttonType='primary'
-          onClick={handleSubmit}
+          onClick={submitUserInput}
+          enabled={
+            usedFilterSets.length > 0 &&
+            selectedCovariatesList.length > 0 &&
+            Array.from(selectedCovariates).length > 0
+          }
         />
       </div>
-      {isReplied == null? null : <div className="table-container">
-      <h2>Table One for {variable.name}</h2>
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>Category</th>
-            <th>True</th>
-            <th>False</th>
-          </tr>
-        </thead>
-        <tbody>
-          {variable.keys.map((key, index) => {
-            const trueValue = parseFloat(key.data.true.replace("%", "")) / 100;
-            const falseValue = (1 - trueValue) * 100;
-            return (
-              <tr key={index}>
-                <td>{key.name}</td>
-                <td>{key.data.true}</td>
-                <td>{falseValue.toFixed(1)}%</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-      <div className="summary">
-        <p>Total: {variable.size.total}</p>
-        <p>True Count: {variable.size.true}</p>
-        <p>False Count: {variable.size.total - variable.size.true}</p>
-      </div>
-    </div>}
-      </div>)
+    </form>
+  );
 }
-export default CovarForm
+export default CovarForm;

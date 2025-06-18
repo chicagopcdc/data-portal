@@ -19,6 +19,7 @@ import type {
   ParsedSurvivalAnalysisResult,
   SurvivalAnalysisResult,
 } from '../../GuppyDataExplorer/ExplorerSurvivalAnalysis/types';
+import type { TableOneResult } from '../../GuppyDataExplorer/ExplorerTableOne/types';
 
 export type ExplorerConfig = {
   adminAppliedPreFilters?: {
@@ -33,7 +34,7 @@ export type ExplorerConfig = {
   patientIdsConfig?: PatientIdsConfig;
   survivalAnalysisConfig: SurvivalAnalysisConfig & { enabled: Boolean };
   tableConfig: TableConfig;
-  tableOneConfig: TableOneConfig;
+  tableOneConfig: TableOneConfig & { enabled: Boolean };
 };
 
 export type ExplorerFilter = ExplorerFilter;
@@ -66,6 +67,11 @@ export type ExplorerState = {
     parsed: ParsedSurvivalAnalysisResult;
     staleFilterSetIds: number[];
     usedFilterSetIds: number[];
+  };
+  tableOneResult: {
+    data: TableOneResult;
+    isPending: boolean;
+    error: Error;
   };
   workspaces: {
     [explorerId: ExplorerState['explorerId']]: ExplorerWorkspace;

@@ -6,6 +6,8 @@ import * as survivalAnalysisAPI from './survivalAnalysisAPI';
 /** @typedef {import('../../GuppyDataExplorer/types').SavedExplorerFilterSet} SavedExplorerFilterSet */
 /** @typedef {import('../types').AppGetState} AppGetState */
 /** @typedef {import('./types').ExplorerState} ExplorerState */
+/** @typedef {import('../../GuppyDataExplorer/ExplorerTableOne/types').Covariates} Covariates */
+/** @typedef {import('../../GuppyDataExplorer/ExplorerTableOne/types').TableOneFilterSet} TableOneFilterSet */
 
 export const createFilterSet = createAsyncThunk(
   'explorer/createFilterSet',
@@ -17,7 +19,7 @@ export const createFilterSet = createAsyncThunk(
     } catch (e) {
       return rejectWithValue(e);
     }
-  }
+  },
 );
 
 export const deleteFilterSet = createAsyncThunk(
@@ -30,7 +32,7 @@ export const deleteFilterSet = createAsyncThunk(
     } catch (e) {
       return rejectWithValue(e);
     }
-  }
+  },
 );
 
 export const fetchFilterSets = createAsyncThunk(
@@ -42,7 +44,7 @@ export const fetchFilterSets = createAsyncThunk(
     } catch (e) {
       return rejectWithValue(e);
     }
-  }
+  },
 );
 
 export const updateFilterSet = createAsyncThunk(
@@ -55,7 +57,7 @@ export const updateFilterSet = createAsyncThunk(
     } catch (e) {
       return rejectWithValue(e);
     }
-  }
+  },
 );
 
 export const fetchFederationQuery = createAsyncThunk(
@@ -67,7 +69,7 @@ export const fetchFederationQuery = createAsyncThunk(
     } catch (e) {
       return rejectWithValue(e);
     }
-  }
+  },
 );
 
 export const updateSurvivalResult = createAsyncThunk(
@@ -110,7 +112,7 @@ export const updateSurvivalResult = createAsyncThunk(
     } catch (e) {
       return rejectWithValue(e);
     }
-  }
+  },
 );
 
 let shouldFetchSurvivalConfig = true;
@@ -121,5 +123,31 @@ export const fetchSurvivalConfig = createAsyncThunk(
 
     shouldFetchSurvivalConfig = false;
     return survivalAnalysisAPI.fetchConfig();
-  }
+  },
+);
+
+export const fetchTableOneConfig = createAsyncThunk(
+  'explorer/fetchTableOneConfig',
+  async () => {
+    return survivalAnalysisAPI.fetchTableOneConfig();
+  },
+);
+
+export const updateTableOneResult = createAsyncThunk(
+  'explorer/updateTableOneResult',
+  /**
+   * @param {{
+   *  covariates: Covariates;
+   *  filterSets: TableOneFilterSet[];
+   * }} args
+   */
+  async (args, { rejectWithValue }) => {
+    try {
+      return await survivalAnalysisAPI.fetchTableOneResult({
+        ...args,
+      });
+    } catch (e) {
+      return rejectWithValue(e);
+    }
+  },
 );

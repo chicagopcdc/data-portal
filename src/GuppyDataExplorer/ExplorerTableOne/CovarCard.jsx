@@ -1,164 +1,141 @@
 import { useState } from 'react';
-import PropTypes, { object } from 'prop-types';
-import Tooltip from 'rc-tooltip';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import SimpleInputField from '../../components/SimpleInputField';
-import ExplorerFilterDisplay from '../ExplorerFilterDisplay';
-import Button from '../../gen3-ui-component/components/Button';
 import { overrideSelectTheme } from '../../utils';
+import './ExplorerTableOne.css';
 import Select from 'react-select';
-import './index.css';
+import Button from '../../gen3-ui-component/components/Button';
+import '../ExplorerSurvivalAnalysis/ExplorerSurvivalAnalysis.css';
 
-
-
-export default function CovarCard({ count, variate, covarList, setCovarList, selectableVaris, setSelectableVaris, updateBody, variList, setVariList}) {
-  const [selectedVar, setSelectedVar] = useState(null)
-  const [coVarOption, setcoVarOption] = useState(null)
-  const [selectedCoVar, setSelectedCovar] = useState(null)
-  const [checkedValue, setCheckedValue] = useState([])
-  const [changedKeys, setChangedKeys] = useState([]);
-  const removeCovar = () => {
-    console.log(count)
-    setCovarList(covarList.filter((_, index) => index !== count));
-  };
-
-  function ControlFormSelect({ label, ...selectProps }) {
-    return (
-      <SimpleInputField
-        label={label}
-        input={
-          <Select
-            {...selectProps}
-            isClearable={false}
-            theme={overrideSelectTheme}
-            styles={{
-              control: (provided, { isDisabled }) => ({
-                ...provided,
-                cursor: isDisabled ? 'not-allowed' : '',
-                pointerEvents: 'auto',
-              }),
-              multiValue: (provided, { isDisabled }) => ({
-                ...provided,
-                backgroundColor: isDisabled
-                  ? 'lightgrey'
-                  : provided.backgroundColor,
-                paddingRight: isDisabled ? '3px' : provided.paddingRight,
-              }),
-            }}
-          />
-        }
-      />
-    );
-  }
+export default function CovarCard({
+  postion,
+  covariates,
+  updateCovariates,
+  selectedCovariates,
+  setSelectedCovariates,
+  option,
+}) {
+  const [showAllValues, setShowAllValues] = useState(false);
+  const filterFinderOptions = Object.keys(option).map((group) => ({
+    label: group,
+    options: option[group].map((item) => ({
+      label: item.name,
+      value: item, // Store the whole dictionary object as value
+      isDisabled: selectedCovariates.has(item.name), // Disable if already selected
+    })),
+  }));
 
   return (
     <div className='explorer-survival-analysis__filter-set-card'>
-      <h2>Covariate {count+1}</h2>
-      <ControlFormSelect
-          inputId='allowed-consortium'
-          label=' group '
-          theme={overrideSelectTheme}
-          options={Object.keys(selectableVaris).map((label)=> (
-            { label:label,
-            value:label
-           }))}
-          value = {selectedVar}
-          onChange ={(e)=>{
-            setSelectedVar(e)
+      <h2>Covariate {postion + 1}</h2>
+      <div className='covar_card_form_controls'>
+        <Select
+          className='g3-filter-group__filter-finder'
+          placeholder='Find filter to use'
+          onChange={(e) => {
+            setSelectedCovariates((prev) => {
+              const newSet = new Set(prev);
+              newSet.delete(covariates[postion].name); // Remove old covariate
+              newSet.add(e.value.name);
+              return newSet;
+            });
+            updateCovariates((prevCovariates) => {
+              const newCovariates = [...prevCovariates];
+              newCovariates[postion] = {
+                label: e.value.label,
+                type: e.value.type,
+                name: e.value.name,
+                values: e.value.values || [],
+              };
+              return newCovariates;
+            });
           }}
-      />
-      { selectedVar!=null?(
-          <ControlFormSelect
-          inputId='allowed-consortium'
-          label=' variable '
+          options={filterFinderOptions}
           theme={overrideSelectTheme}
-          options={selectableVaris[selectedVar.value].map((e)=>(
-            {label:e.name, value:e}
-          ))}
-          onChange = {(e)=>{
-            setcoVarOption(e)
-            setSelectedCovar(e.value)
-
-            updateBody(e.value, "variable", count)
-          }}
-          value = {coVarOption}
-            
-      />
-        ):null
-      }
-
-      {selectedCoVar!=null&&selectedCoVar.type=="categorical"?(
-        <div className='covar_card_check_group'>
-          <label>
-                    Values:
-                    {
-                        selectedCoVar.values.map((k)=>{
-                            return(
-                                <label className = 'covar_card_check' key={k.toString()}>
-                                    <input
-                                        type="checkbox"
-                                        value={k}
-                                        onChange={(e)=>{
-                                          var v = e.target.value;
-                                          if(e.target.checked){                                            
-                                            updateBody([...checkedValue,v],"value",count)
-                                            updateBody([...changedKeys,v],"key",count)
-                                            setCheckedValue((pre) => [...pre, v])
-                                            setChangedKeys((pre) => [...pre, v])
-                                          }
-                                          else{
-                                            const index = checkedValue.indexOf(v);
-                                            updateBody(checkedValue.filter((item) => item !== v),"value",count)
-                                            const newa = [...changedKeys]
-                                            newa.splice(index,1)
-                                            updateBody(newa,"key",count)
-                                            setCheckedValue((pre)=>pre.filter((item) => item !== v)) 
-                                            setChangedKeys((pre) => newa)                                           
-                                          }                                          
-                                        }}
-                                    />
-                                    {k}
-                                </label>
-                                    )
-                            })
-                    }
-
-                </label>
-                <label>
-                    Keys:
-                    {
-                        checkedValue.map((k,i)=>{
-                            return(
-                                <label className = 'covar_card_check' key={k.toString()}>
-                                    {k} =
-                                    <input
-                                        type="text"
-                                        value={changedKeys[i]}
-                                        onChange={(e) =>{
-                                            var v = e.target.value;
-                                            var update = [...changedKeys];
-                                            update[i] = v;
-                                            setChangedKeys(update)
-                                            updateBody(update,"key",count)
-                                          }
-                                          
-
-                                        }
-                                    />
-                                </label>
-                            )
-                        })
-                    }
-                </label>
-                </div>
-        ):null
-      }
-      
-      <Button
-          label='delete'
-          buttonType='primary'
-          onClick={removeCovar}
+          value={
+            'name' in covariates[postion]
+              ? { label: covariates[postion].name, value: covariates[postion] }
+              : null
+          }
+          isOptionDisabled={(option) => option.isDisabled} // This disables the option
         />
+      </div>
+
+      {covariates[postion].type == 'categorical' &&
+      covariates[postion].values ? (
+        <div className='covar_card_check_group'>
+          <div className='covar_card_check_header'>
+            <span className='covar_card_check_label'>Values:</span>
+            {covariates[postion].values.length > 5 && (
+              <button
+                type='button'
+                className='covar_card_toggle_button'
+                onClick={() => setShowAllValues(!showAllValues)}
+              >
+                {showAllValues
+                  ? 'Show Less'
+                  : `Show All (${covariates[postion].values.length})`}
+              </button>
+            )}
+          </div>
+          <div className='covar_card_check_list'>
+            {(showAllValues
+              ? covariates[postion].values
+              : covariates[postion].values.slice(0, 5)
+            ).map((k) => {
+              return (
+                <label className='covar_card_check_item' key={k.toString()}>
+                  <input
+                    type='checkbox'
+                    value={k}
+                    className='covar_card_checkbox'
+                    checked={
+                      covariates[postion].selectedKeys?.includes(k) || false
+                    }
+                    onChange={(e) => {
+                      var v = e.target.value;
+                      updateCovariates((prevCovariates) => {
+                        const newCovariates = [...prevCovariates];
+                        const currentCovariate = { ...newCovariates[postion] };
+                        const selectedKeys =
+                          currentCovariate.selectedKeys || [];
+
+                        if (e.target.checked) {
+                          currentCovariate.selectedKeys = [...selectedKeys, v];
+                        } else {
+                          currentCovariate.selectedKeys = selectedKeys.filter(
+                            (key) => key !== v,
+                          );
+                        }
+
+                        newCovariates[postion] = currentCovariate;
+                        return newCovariates;
+                      });
+                    }}
+                  />
+                  <span className='covar_card_check_text'>{k}</span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
+      <Button
+        label='delete'
+        buttonType='primary'
+        onClick={() => {
+          const covariateName = covariates[postion].name;
+          setSelectedCovariates((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(covariateName);
+            return newSet;
+          });
+          updateCovariates((prevCovariates) => {
+            const newCovariates = [...prevCovariates];
+            newCovariates.splice(postion, 1);
+            return newCovariates;
+          });
+        }}
+      />
     </div>
   );
 }

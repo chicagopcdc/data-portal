@@ -9,6 +9,7 @@ import { getGQLFilter } from '../../GuppyComponents/Utils/queries';
 /** @typedef {import('../../GuppyDataExplorer/types').ExplorerFilterSetDTO} ExplorerFilterSetDTO */
 /** @typedef {import('../../GuppyDataExplorer/types').RefFilterState} RefFilterState */
 /** @typedef {import('../../GuppyDataExplorer/types').SurvivalAnalysisConfig} SurvivalAnalysisConfig */
+/** @typedef {import('../../GuppyDataExplorer/types').TableOneConfig} TableOneConfig */
 /** @typedef {import('../../GuppyDataExplorer/types').SavedExplorerFilterSet} SavedExplorerFilterSet */
 /** @typedef {import('./types').ExplorerState} ExplorerState */
 /** @typedef {import('./types').ExplorerWorkspace} ExplorerWorkspace */
@@ -41,7 +42,7 @@ export function updateFilterRefs(workspace) {
     if ('refIds' in filter)
       for (const [index, refId] of [...filter.refIds].entries()) {
         const refIndex = filter.value.findIndex(
-          ({ __type, value }) => __type === 'REF' && value.id === refId
+          ({ __type, value }) => __type === 'REF' && value.id === refId,
         );
 
         if (refId in workspace.all) {
@@ -134,6 +135,13 @@ export function isSurvivalAnalysisEnabled(config) {
       if (config.result[option] !== undefined && config.result[option])
         return true;
 
+  return false;
+}
+
+/** @param {TableOneConfig} config */
+export function isTableOneEnabled(config) {
+  if (config?.result !== undefined)
+    if (config.result.enabled !== undefined) return config.result.enabled;
   return false;
 }
 

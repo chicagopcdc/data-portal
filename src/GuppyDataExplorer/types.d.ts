@@ -71,7 +71,11 @@ export type TableConfig = {
 };
 
 export type TableOneConfig = {
-  enabled: boolean;
+  consortium?: string[];
+  excludedVariables?: any;
+  result?: {
+    enabled?: boolean;
+  };
 };
 
 export type PatientIdsConfig = {
@@ -80,7 +84,6 @@ export type PatientIdsConfig = {
 };
 
 export type SurvivalAnalysisConfig = {
-  consortium?: string[];
   result?: {
     risktable?: boolean;
     survival?: boolean;

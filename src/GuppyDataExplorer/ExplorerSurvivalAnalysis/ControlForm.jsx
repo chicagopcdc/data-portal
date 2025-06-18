@@ -100,17 +100,17 @@ function validateNumberInput(e, setStateAction) {
  */
 function ControlForm({ countByFilterSet, onSubmit }) {
   const consortiums = useAppSelector(
-    (state) => state.explorer.config.survivalAnalysisConfig.consortium ?? []
+    (state) => state.explorer.config.survivalAnalysisConfig.consortium ?? [],
   );
   const savedFilterSets = useAppSelector(
-    (state) => state.explorer.savedFilterSets.data
+    (state) => state.explorer.savedFilterSets.data,
   );
   const staleFilterSetIdSet = useAppSelector(
-    (state) => new Set(state.explorer.survivalAnalysisResult.staleFilterSetIds)
+    (state) => new Set(state.explorer.survivalAnalysisResult.staleFilterSetIds),
   );
   const disallowedVariables = useAppSelector(
     (state) =>
-      state.explorer.config.survivalAnalysisConfig['excluded_variables'] ?? []
+      state.explorer.config.survivalAnalysisConfig['excluded_variables'] ?? [],
   );
 
   const [timeInterval, setTimeInterval] = useState(DEFAULT_INTERVAL);
@@ -128,7 +128,7 @@ function ControlForm({ countByFilterSet, onSubmit }) {
     const isOutOfScope = !checkIfFilterInScope(consortiums, filterSet.filter);
     const isDisallowedVariables = checkIfFilterHasDisallowedVariables(
       disallowedVariables,
-      filterSet.filter
+      filterSet.filter,
     );
 
     const isDisabled = isUsed || isOutOfScope || isDisallowedVariables;
@@ -136,10 +136,10 @@ function ControlForm({ countByFilterSet, onSubmit }) {
     const disabledOverlay = isUsed
       ? 'This Filter Set is already in use.'
       : isOutOfScope
-      ? 'This Filter Set includes out of scope consortia.'
-      : isDisallowedVariables
-      ? 'This Filter Set includes disallowed variables and cannot be used for survival analysis.'
-      : '';
+        ? 'This Filter Set includes out of scope consortia.'
+        : isDisallowedVariables
+          ? 'This Filter Set includes disallowed variables and cannot be used for survival analysis.'
+          : '';
 
     filterSetOptions.push({
       label: isDisabled ? (
@@ -356,7 +356,7 @@ function ControlForm({ countByFilterSet, onSubmit }) {
               label={`${i + 1}. ${filterSet.name}`}
               onClose={() => {
                 setUsedFilterSetIds((ids) =>
-                  ids.filter((id) => id !== filterSet.id)
+                  ids.filter((id) => id !== filterSet.id),
                 );
                 setIsInputChanged(true);
               }}
@@ -385,9 +385,10 @@ ControlForm.propTypes = {
     PropTypes.exact({
       fitted: PropTypes.number,
       total: PropTypes.number,
-    })
+    }),
   ),
   onSubmit: PropTypes.func.isRequired,
 };
 
 export default ControlForm;
+export { ControlFormSelect };

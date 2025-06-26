@@ -6,8 +6,6 @@ This README provides instructions for testing the **"Explore In..."** feature wi
 
 ## 1. Create `config.json`
 
-Create two test files:
-
 Create a file at: `src/GuppyDataExplorer/ExplorerExploreExternalButton/config.json`
 
 Then paste in the contents of the `/analysis/tools/external/config` API response. For example:

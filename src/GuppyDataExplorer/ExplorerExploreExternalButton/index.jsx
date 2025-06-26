@@ -159,7 +159,17 @@ function ExplorerExploreExternalButton({ filter }) {
                 input={
                   <Select
                     inputId='explore-external-data-commons'
-                    options={[emptyOption, ...(externalConfig?.commons || [])]}
+                    options={[
+                      // Default is "empty" option at top of dropdown.
+                      emptyOption,
+                      // Add in only the commons entries that have matching metadata in commons_dict
+                      ...(
+                        externalConfig?.commons?.filter((entry) =>
+                          // Check that commons_dict exists and contains a key matching the entry's value (e.g., 'gdc', 'gmkf')
+                          externalConfig.commons_dict?.hasOwnProperty(entry.value)
+                        ) || [] // Fallback: if externalConfig or commons is missing, use an empty array
+                      ),
+                    ]}
                     value={selected}
                     autoFocus
                     isClearable={false}

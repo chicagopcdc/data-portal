@@ -6,6 +6,8 @@ This README provides instructions for testing the **"Explore In..."** feature wi
 
 ## 1. Create `config.json`
 
+Create two test files:
+
 Create a file at: `src/GuppyDataExplorer/ExplorerExploreExternalButton/config.json`
 
 Then paste in the contents of the `/analysis/tools/external/config` API response. For example:
@@ -28,6 +30,8 @@ Then paste in the contents of the `/analysis/tools/external/config` API response
     }
 }
 ````
+
+To test the display of options in the dropdown, remove an option from commons_dict. The code validates that `commons_dict.gdc` is an option from `commons.value.gdc`.
 
 ---
 
@@ -67,7 +71,28 @@ function handleFetchExternalConfig() {
 
 ---
 
-## 3. Avoid Committing Local Config
+## 3. Enable display  of explore button
+
+In your `/src/GuppyDataExplorer/ExplorerVisualization/index.jsx` file, update the React output:
+
+### Replace this:
+
+```
+{patientIdsConfig?.export && (
+  <ExplorerExploreExternalButton filter={filter} />
+)}
+```
+
+### With this:
+
+```
+{/* DO NOT COMMIT*/}
+<ExplorerExploreExternalButton filter={filter} />
+```
+
+---
+
+## 4. Avoid Committing Local Config
 
 To avoid accidentally committing local testing files or logic:
 

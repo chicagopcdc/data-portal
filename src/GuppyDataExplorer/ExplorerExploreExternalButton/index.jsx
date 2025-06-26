@@ -79,10 +79,21 @@ function ExplorerExploreExternalButton({ filter }) {
 
   // Determine if the top-level "Explore in..." button should be disabled
   function checkDataForExplore() {
-    if (externalConfig?.commons?.length > 0) {
-      setIsDisabled(false); // Enable otherwise
+    // Filter the commons list to only include entries that have a matching key in commons_dict.
+    // This ensures we only enable the button if there are actually usable commons.
+    const validCommons =
+      externalConfig?.commons?.filter((entry) =>
+        // Use optional chaining to safely check if commons_dict exists,
+        // and only include entries where a matching value exists (e.g., 'gdc', 'gmkf').
+        externalConfig.commons_dict?.hasOwnProperty(entry.value)
+      ) || []; // If externalConfig or commons is undefined, fall back to an empty array
+
+    // Enable the "Explore in..." button only if there's at least one valid commons entry
+    if (validCommons.length > 0) {
+      setIsDisabled(false);
     } else {
-      setIsDisabled(true); // Disable if commonsInfo is not available
+      // Disable the button if no valid commons are available
+      setIsDisabled(true);
     }
   }
 
@@ -159,7 +170,17 @@ function ExplorerExploreExternalButton({ filter }) {
                 input={
                   <Select
                     inputId='explore-external-data-commons'
-                    options={[emptyOption, ...(externalConfig?.commons || [])]}
+                    options={[
+                      // Default is "empty" option at top of dropdown.
+                      emptyOption,
+                      // Add in only the commons entries that have matching metadata in commons_dict
+                      ...(
+                        externalConfig?.commons?.filter((entry) =>
+                          // Check that commons_dict exists and contains a key matching the entry's value (e.g., 'gdc', 'gmkf')
+                          externalConfig.commons_dict?.hasOwnProperty(entry.value)
+                        ) || [] // Fallback: if externalConfig or commons is missing, use an empty array
+                      ),
+                    ]}
                     value={selected}
                     autoFocus
                     isClearable={false}

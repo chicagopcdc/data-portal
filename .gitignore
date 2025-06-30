@@ -23,6 +23,7 @@ data/graphvizLayout.json
 
 # Local-only mock data for dev testing
 /src/GuppyDataExplorer/ExplorerExploreExternalButton/config.json
+/src/GuppyDataExplorer/ExplorerExploreExternalButton/gdc.json
 
 # Storybook
 *storybook.log

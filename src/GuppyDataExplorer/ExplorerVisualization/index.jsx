@@ -14,6 +14,7 @@ import ExplorerExploreExternalButton from '../ExplorerExploreExternalButton';
 import ExplorerFilterSetWorkspace from '../ExplorerFilterSetWorkspace';
 import ExplorerTable from '../ExplorerTable';
 import ExplorerSurvivalAnalysis from '../ExplorerSurvivalAnalysis';
+import ExplorerTableOne from '../ExplorerTableOne';
 import ReduxExplorerButtonGroup from '../ExplorerButtonGroup/ReduxExplorerButtonGroup';
 import './ExplorerVisualization.css';
 import { FILTER_TYPE } from '../ExplorerFilterSetWorkspace/utils';
@@ -156,6 +157,7 @@ function openLink(link) {
  * @property {(type: string, filter: ExplorerFilter) => Promise} getTotalCountsByTypeAndFilter
  * @property {(args: { offset: number; size: number; sort: GqlSort }) => Promise} fetchAndUpdateRawData
  * @property {string} [className]
+ * @property {Object} [tabsOptions]
  */
 
 /** @param {ExplorerVisualizationProps} props */
@@ -174,6 +176,7 @@ function ExplorerVisualization({
   fetchAndUpdateRawData,
   getTotalCountsByTypeAndFilter,
   className = '',
+  tabsOptions,
 }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -189,6 +192,7 @@ function ExplorerVisualization({
     patientIdsConfig,
     survivalAnalysisConfig,
     tableConfig,
+    tableOneConfig,
   } = useAppSelector((state) => state.explorer.config);
 
   const nodeCountTitle =
@@ -197,6 +201,7 @@ function ExplorerVisualization({
   const explorerViews = ['summary view'];
   if (tableConfig.enabled) explorerViews.push('table view');
   if (survivalAnalysisConfig.enabled) explorerViews.push('survival analysis');
+  if (tableOneConfig.enabled) explorerViews.push('table one');
 
   const explorerView = searchParams.get('view') ?? explorerViews[0];
   function updateExplorerView(view) {
@@ -271,33 +276,44 @@ function ExplorerVisualization({
           ))}
         </div>
         <div className='explorer-visualization__button-group'>
-          {accessibleCount < totalCount && !hideGetAccessButton && (<>
-            <ExplorerRequestAccessButton
-              onClick={() => isDataRequestEnabled ? setRequestAccessModalOpen(true) : openLink(getAccessButtonLink) }
-              tooltipText={
-                accessibleCount === 0
-                  ? 'You do not have permissions to view line-level data.'
-                  : 'You have only limited access to line-level data.'
-              }
-            />
-            {isRequestAccessModalOpen && 
-              <Popup
-                onClose={() => setRequestAccessModalOpen(false)}
-                leftButtons={[{
-                  caption: 'Back to Explore',
-                  fn: () => setRequestAccessModalOpen(false)
-                }]}
-                rightButtons={[{
-                  caption: 'Continue to Request',
-                  fn: () => navigate('/requests/create')
-                }]}
-              >
-                <div className='explorer-visualization__request-access-modal'>
-                  Be sure to save the filter sets you want to use for your data request before continuing.
-                </div>
-              </Popup>
-            }
-          </>)}
+          {accessibleCount < totalCount && !hideGetAccessButton && (
+            <>
+              <ExplorerRequestAccessButton
+                onClick={() =>
+                  isDataRequestEnabled
+                    ? setRequestAccessModalOpen(true)
+                    : openLink(getAccessButtonLink)
+                }
+                tooltipText={
+                  accessibleCount === 0
+                    ? 'You do not have permissions to view line-level data.'
+                    : 'You have only limited access to line-level data.'
+                }
+              />
+              {isRequestAccessModalOpen && (
+                <Popup
+                  onClose={() => setRequestAccessModalOpen(false)}
+                  leftButtons={[
+                    {
+                      caption: 'Back to Explore',
+                      fn: () => setRequestAccessModalOpen(false),
+                    },
+                  ]}
+                  rightButtons={[
+                    {
+                      caption: 'Continue to Request',
+                      fn: () => navigate('/requests/create'),
+                    },
+                  ]}
+                >
+                  <div className='explorer-visualization__request-access-modal'>
+                    Be sure to save the filter sets you want to use for your
+                    data request before continuing.
+                  </div>
+                </Popup>
+              )}
+            </>
+          )}
           {patientIdsConfig?.export && (
             <ExplorerExploreExternalButton filter={filter} />
           )}
@@ -359,6 +375,11 @@ function ExplorerVisualization({
       {survivalAnalysisConfig.enabled && (
         <ViewContainer showIf={explorerView === 'survival analysis'}>
           <ExplorerSurvivalAnalysis />
+        </ViewContainer>
+      )}
+      {tableOneConfig.enabled && (
+        <ViewContainer showIf={explorerView === 'table one'}>
+          <ExplorerTableOne tabsOptions={tabsOptions} />
         </ViewContainer>
       )}
     </div>

@@ -9,6 +9,8 @@ import {
   updateFilterSet,
   updateSurvivalResult,
   fetchFederationQuery,
+  updateTableOneResult,
+  fetchTableOneConfig,
 } from './asyncThunks';
 import {
   checkIfFilterEmpty,
@@ -42,7 +44,7 @@ const initialExplorerFilter = dereferenceFilter(
   initialWorkspaces[initialExplorerId].all[
     initialWorkspaces[initialExplorerId].activeId
   ].filter,
-  initialWorkspaces[initialExplorerId]
+  initialWorkspaces[initialExplorerId],
 );
 
 const slice = createSlice({
@@ -67,6 +69,11 @@ const slice = createSlice({
       }),
       staleFilterSetIds: [],
       usedFilterSetIds: [],
+    },
+    tableOneResult: {
+      data: null,
+      error: null,
+      isPending: false,
     },
     workspaces: initialWorkspaces,
   }),
@@ -156,7 +163,7 @@ const slice = createSlice({
       prepare: () => ({ payload: crypto.randomUUID() }),
       /** @param {PayloadAction<string>} action */
       reducer: (state, action) => {
-        const { activeId, all } = state.workspaces[state.explorerId]
+        const { activeId, all } = state.workspaces[state.explorerId];
 
         delete state.workspaces[state.explorerId].all[activeId];
 
@@ -182,7 +189,7 @@ const slice = createSlice({
 
         const [firstEntry] = Object.entries(all);
         const [id, filterSet] = firstEntry ?? [action.payload, { filter: {} }];
- 
+
         state.workspaces[state.explorerId].activeId = id;
         state.workspaces[state.explorerId].all[id] = filterSet;
         updateFilterRefs(state.workspaces[state.explorerId]);
@@ -290,7 +297,7 @@ const slice = createSlice({
       })
       .addCase(deleteFilterSet.fulfilled, (state, action) => {
         const index = state.savedFilterSets.data.findIndex(
-          ({ id }) => id === action.payload
+          ({ id }) => id === action.payload,
         );
         if (index !== undefined) state.savedFilterSets.data.splice(index, 1);
       })
@@ -319,7 +326,7 @@ const slice = createSlice({
       .addCase(updateFilterSet.fulfilled, (state, action) => {
         const filterSet = action.payload;
         const index = state.savedFilterSets.data.findIndex(
-          ({ id }) => id === filterSet.id
+          ({ id }) => id === filterSet.id,
         );
         state.savedFilterSets.data[index] = filterSet;
 
@@ -367,6 +374,27 @@ const slice = createSlice({
           config,
           result: null,
         });
+      })
+      .addCase(updateTableOneResult.fulfilled, (state, action) => {
+        const data = action.payload?.data || action.payload;
+        state.tableOneResult.data = data;
+        state.tableOneResult.isPending = false;
+        state.tableOneResult.error = null;
+      })
+      .addCase(updateTableOneResult.pending, (state) => {
+        state.tableOneResult.isPending = true;
+        state.tableOneResult.error = null;
+      })
+      .addCase(updateTableOneResult.rejected, (state, action) => {
+        state.tableOneResult.data = null;
+        state.tableOneResult.isPending = false;
+        state.tableOneResult.error = action.payload;
+      })
+      .addCase(fetchTableOneConfig.fulfilled, (state, action) => {
+        const config = action.payload;
+        if (config === undefined) return;
+
+        state.config.tableOneConfig = config;
       });
   },
 });

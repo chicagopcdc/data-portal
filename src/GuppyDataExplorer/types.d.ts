@@ -70,13 +70,20 @@ export type TableConfig = {
   linkFields?: string[];
 };
 
+export type TableOneConfig = {
+  consortium?: string[];
+  excludedVariables?: any;
+  result?: {
+    enabled?: boolean;
+  };
+};
+
 export type PatientIdsConfig = {
   export?: boolean;
   filter?: boolean;
 };
 
 export type SurvivalAnalysisConfig = {
-  consortium?: string[];
   result?: {
     risktable?: boolean;
     survival?: boolean;

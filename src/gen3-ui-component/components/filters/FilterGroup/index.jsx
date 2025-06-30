@@ -87,7 +87,7 @@ function FilterGroup({
       title,
       // If there are any search fields, insert them at the top of each tab's fields.
       fields: searchFields ? searchFields.concat(fields) : fields,
-    }),
+    })
   );
 
   // pulls info about which range filters use what quantity (e.g. age or number) from pcdc.json
@@ -113,7 +113,7 @@ function FilterGroup({
     ? 'Collapse all'
     : 'Open all';
   const [expandedStatus, setExpandedStatus] = useState(
-    getExpandedStatus(filterTabs, false),
+    getExpandedStatus(filterTabs, false)
   );
 
   const [filterResults, setFilterResults] = useState(filter);
@@ -127,7 +127,7 @@ function FilterGroup({
       anchorConfig: filterConfig.anchor,
       filterResults: filter,
       filterTabs,
-    }),
+    })
   );
   const isInitialRenderRef = useRef(true);
   useEffect(() => {
@@ -186,7 +186,7 @@ function FilterGroup({
   function handleToggleCombineMode(
     sectionIndex,
     combineModeFieldName,
-    combineModeValue,
+    combineModeValue
   ) {
     const updated = updateCombineMode({
       filterStatus,
@@ -247,7 +247,7 @@ function FilterGroup({
     });
 
     setExcludedStatus(
-      getExcludedStatus(filterTabs, updated.filterResults, excludedStatus),
+      getExcludedStatus(filterTabs, updated.filterResults, excludedStatus)
     );
     setFilterResults(removeEmptyFilter(updated.filterResults));
     onFilterChange(removeEmptyFilter(updated.filterResults));
@@ -267,7 +267,7 @@ function FilterGroup({
     upperBound,
     minValue,
     maxValue,
-    rangeStep = 1,
+    rangeStep = 1
   ) {
     const updated = updateRangeValue({
       filterStatus,
@@ -333,7 +333,7 @@ function FilterGroup({
           <div
             key={index}
             className={'g3-filter-group__tab'.concat(
-              tabIndex === index ? ' g3-filter-group__tab--selected' : '',
+              tabIndex === index ? ' g3-filter-group__tab--selected' : ''
             )}
             onClick={() => setTabIndex(index)}
             onKeyPress={(e) => {
@@ -448,7 +448,7 @@ FilterGroup.propTypes = {
         title: PropTypes.string,
         fields: PropTypes.arrayOf(PropTypes.string),
         searchFields: PropTypes.arrayOf(PropTypes.string),
-      }),
+      })
     ),
   }).isRequired,
   hideZero: PropTypes.bool,

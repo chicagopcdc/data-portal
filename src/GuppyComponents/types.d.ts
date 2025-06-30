@@ -221,11 +221,11 @@ export type GuppyData = {
   downloadRawDataByTypeAndFilter: (
     type: string,
     filter: FilterState,
-    fields: string[],
+    fields: string[]
   ) => Promise<void>;
   getTotalCountsByTypeAndFilter: (
     type: string,
-    filter: FilterState,
+    filter: FilterState
   ) => Promise<void>;
   fetchAndUpdateRawData: (args: {
     offset: number;

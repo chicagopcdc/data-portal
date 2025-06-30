@@ -41,7 +41,7 @@ export function updateFilterRefs(workspace) {
     if ('refIds' in filter)
       for (const [index, refId] of [...filter.refIds].entries()) {
         const refIndex = filter.value.findIndex(
-          ({ __type, value }) => __type === 'REF' && value.id === refId,
+          ({ __type, value }) => __type === 'REF' && value.id === refId
         );
 
         if (refId in workspace.all) {

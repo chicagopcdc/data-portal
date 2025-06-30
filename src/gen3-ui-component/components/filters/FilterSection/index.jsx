@@ -138,7 +138,7 @@ function FilterSection({
       ...prevState,
       optionsVisibleStatus: getOptionsVisibleStatus(
         prevState.isShowingMoreOptions,
-        inputElem.current?.value,
+        inputElem.current?.value
       ),
     }));
   }, [options]);
@@ -149,7 +149,7 @@ function FilterSection({
       ...prevState,
       isSearchInputEmpty: true,
       optionsVisibleStatus: getOptionsVisibleStatus(
-        prevState.isShowingMoreOptions,
+        prevState.isShowingMoreOptions
       ),
     }));
   }
@@ -180,7 +180,7 @@ function FilterSection({
       isSearchInputEmpty: !currentInput || currentInput.length === 0,
       optionsVisibleStatus: getOptionsVisibleStatus(
         prevState.isShowingMoreOptions,
-        currentInput,
+        currentInput
       ),
     }));
   }
@@ -245,7 +245,7 @@ function FilterSection({
       ...prevState,
       isShowingMoreOptions: !prevState.isShowingMoreOptions,
       optionsVisibleStatus: getOptionsVisibleStatus(
-        !prevState.isShowingMoreOptions,
+        !prevState.isShowingMoreOptions
       ),
     }));
   }
@@ -284,7 +284,7 @@ function FilterSection({
               />
               {combineMode}
             </label>
-          ),
+          )
         )}
         <Tooltip
           arrowContent={<div className='rc-tooltip-arrow-inner' />}
@@ -466,7 +466,7 @@ function FilterSection({
                 onSelect={handleSelectSingleSelectFilter}
                 selected={filterStatus[option.text]}
               />
-            ),
+            )
         )}
       </>
     );
@@ -653,7 +653,7 @@ FilterSection.propTypes = {
       min: PropTypes.number,
       max: PropTypes.number,
       rangeStep: PropTypes.number, // by default 1
-    }),
+    })
   ),
   title: PropTypes.string,
   tooltip: PropTypes.string,

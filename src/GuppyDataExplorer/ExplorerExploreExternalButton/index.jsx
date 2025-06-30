@@ -57,10 +57,18 @@ function ExplorerExploreExternalButton({ filter }) {
   );
   const [isFileDownloaded, setIsFileDownloaded] = useState(false);
 
-  // Run on page load
-  // Determine if the top-level "Explore in..." button should be disabled
+  // Fetch config once on page load
   useEffect(() => {
     handleFetchExternalConfig();
+  }, []);
+
+  // Run check once on first mount
+  useEffect(() => {
+    checkDataForExplore();
+  }, []);
+
+  // Re-run check when external config changes
+  useEffect(() => {
     checkDataForExplore();
   }, [externalConfig]);
 

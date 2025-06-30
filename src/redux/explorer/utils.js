@@ -41,7 +41,7 @@ export function updateFilterRefs(workspace) {
     if ('refIds' in filter)
       for (const [index, refId] of [...filter.refIds].entries()) {
         const refIndex = filter.value.findIndex(
-          ({ __type, value }) => __type === 'REF' && value.id === refId
+          ({ __type, value }) => __type === 'REF' && value.id === refId,
         );
 
         if (refId in workspace.all) {
@@ -140,6 +140,7 @@ export function isSurvivalAnalysisEnabled(config) {
 /** @param {number} explorerId */
 export function getCurrentConfig(explorerId) {
   const config = explorerConfig.find(({ id }) => id === explorerId);
+  const UnitCalcConfig = explorerConfig[1].filters.unitCalcConfig;
   return {
     adminAppliedPreFilters: config.adminAppliedPreFilters,
     buttonConfig: {
@@ -153,6 +154,7 @@ export function getCurrentConfig(explorerId) {
     filterConfig: {
       ...config.filters,
       info: createFilterInfo(config.filters, config.guppyConfig.fieldMapping),
+      unitCalcConfig: UnitCalcConfig,
     },
     getAccessButtonLink: config.getAccessButtonLink,
     guppyConfig: config.guppyConfig,

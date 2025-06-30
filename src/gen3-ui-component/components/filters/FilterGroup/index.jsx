@@ -42,6 +42,13 @@ function findFilterElement(label) {
 /** @typedef {import('../types').StandardFilterState} StandardFilterState */
 
 /**
+ * @typedef {Object} UnitCalcParams
+ * @property {string} quantity
+ * @property {string} desiredUnit
+ * @property {Object<string, number>} selectUnits
+ */
+
+/**
  * @typedef {Object} FilterGroupProps
  * @property {string} [anchorValue]
  * @property {string} [className]
@@ -55,6 +62,7 @@ function findFilterElement(label) {
  * @property {(patientIds: string[]) => void} [onPatientIdsChange]
  * @property {string[]} [patientIds]
  * @property {FilterSectionConfig[][]} tabs
+ * @property {UnitCalcParams} [unitCalcConfig]
  */
 
 const defaultExplorerFilter = {};
@@ -79,8 +87,14 @@ function FilterGroup({
       title,
       // If there are any search fields, insert them at the top of each tab's fields.
       fields: searchFields ? searchFields.concat(fields) : fields,
-    })
+    }),
   );
+
+  // pulls info about which range filters use what quantity (e.g. age or number) from pcdc.json
+  // unitCalcTitles.age contains all titles with the age quantity, and unitCalcTitles.number
+  // contains all titles with the number quantity
+  const unitCalcTitles = filterConfig.unitCalcConfig.calculatorMapping;
+
   const [tabIndex, setTabIndex] = useState(0);
   const tabTitle = filterTabs[tabIndex].title;
   const showAnchorFilter =
@@ -99,13 +113,13 @@ function FilterGroup({
     ? 'Collapse all'
     : 'Open all';
   const [expandedStatus, setExpandedStatus] = useState(
-    getExpandedStatus(filterTabs, false)
+    getExpandedStatus(filterTabs, false),
   );
 
   const [filterResults, setFilterResults] = useState(filter);
 
   const [excludedStatus, setExcludedStatus] = useState(
-    getExcludedStatus(filterTabs, filterResults)
+    getExcludedStatus(filterTabs, filterResults),
   );
 
   const [filterStatus, setFilterStatus] = useState(
@@ -113,7 +127,7 @@ function FilterGroup({
       anchorConfig: filterConfig.anchor,
       filterResults: filter,
       filterTabs,
-    })
+    }),
   );
   const isInitialRenderRef = useRef(true);
   useEffect(() => {
@@ -172,7 +186,7 @@ function FilterGroup({
   function handleToggleCombineMode(
     sectionIndex,
     combineModeFieldName,
-    combineModeValue
+    combineModeValue,
   ) {
     const updated = updateCombineMode({
       filterStatus,
@@ -233,7 +247,7 @@ function FilterGroup({
     });
 
     setExcludedStatus(
-      getExcludedStatus(filterTabs, updated.filterResults, excludedStatus)
+      getExcludedStatus(filterTabs, updated.filterResults, excludedStatus),
     );
     setFilterResults(removeEmptyFilter(updated.filterResults));
     onFilterChange(removeEmptyFilter(updated.filterResults));
@@ -253,7 +267,7 @@ function FilterGroup({
     upperBound,
     minValue,
     maxValue,
-    rangeStep = 1
+    rangeStep = 1,
   ) {
     const updated = updateRangeValue({
       filterStatus,
@@ -319,7 +333,7 @@ function FilterGroup({
           <div
             key={index}
             className={'g3-filter-group__tab'.concat(
-              tabIndex === index ? ' g3-filter-group__tab--selected' : ''
+              tabIndex === index ? ' g3-filter-group__tab--selected' : '',
             )}
             onClick={() => setTabIndex(index)}
             onKeyPress={(e) => {
@@ -378,37 +392,40 @@ function FilterGroup({
             patientIds={patientIds}
           />
         )}
-        {tabs[tabIndex]
-          .map((section, index) => (
-            <FilterSection
-              key={section.title}
-              sectionTitle={section.title}
-              disabledTooltipMessage={disabledTooltipMessage}
-              excluded={excludedStatus[tabIndex][index]}
-              expanded={expandedStatus[tabIndex][index]}
-              filterStatus={filterTabStatus[index]}
-              hideZero={hideZero}
-              isArrayField={section.isArrayField}
-              isSearchFilter={section.isSearchFilter}
-              lockedTooltipMessage={lockedTooltipMessage}
-              onAfterDrag={(...args) => handleDrag(index, ...args)}
-              onClear={() => handleClearSection(index)}
-              onSearchFilterLoadOptions={section.onSearchFilterLoadOptions}
-              onSelect={(label, isExclusion) =>
-                handleSelect(index, label, isExclusion)
-              }
-              onToggle={(isExpanded) => handleToggleSection(index, isExpanded)}
-              onToggleCombineMode={(...args) =>
-                handleToggleCombineMode(index, ...args)
-              }
-              onToggleExclusion={(isExclusion) =>
-                handleToggleExclusion(index, isExclusion)
-              }
-              options={section.options}
-              title={section.title}
-              tooltip={section.tooltip}
-            />
-          ))}
+        {tabs[tabIndex].map((section, index) => (
+          <FilterSection
+            key={section.title}
+            sectionTitle={section.title}
+            disabledTooltipMessage={disabledTooltipMessage}
+            excluded={excludedStatus[tabIndex][index]}
+            expanded={expandedStatus[tabIndex][index]}
+            filterStatus={filterTabStatus[index]}
+            hideZero={hideZero}
+            isArrayField={section.isArrayField}
+            isSearchFilter={section.isSearchFilter}
+            lockedTooltipMessage={lockedTooltipMessage}
+            onAfterDrag={(...args) => handleDrag(index, ...args)}
+            onClear={() => handleClearSection(index)}
+            onSearchFilterLoadOptions={section.onSearchFilterLoadOptions}
+            onSelect={(label, isExclusion) =>
+              handleSelect(index, label, isExclusion)
+            }
+            onToggle={(isExpanded) => handleToggleSection(index, isExpanded)}
+            onToggleCombineMode={(...args) =>
+              handleToggleCombineMode(index, ...args)
+            }
+            onToggleExclusion={(isExclusion) =>
+              handleToggleExclusion(index, isExclusion)
+            }
+            options={section.options}
+            title={section.title}
+            tooltip={section.tooltip}
+            unitCalcType={
+              unitCalcTitles.age.includes(section.title) ? 'age' : 'number'
+            }
+            unitCalcConfig={filterConfig.unitCalcConfig.ageUnits}
+          />
+        ))}
       </div>
     </div>
   );
@@ -431,7 +448,7 @@ FilterGroup.propTypes = {
         title: PropTypes.string,
         fields: PropTypes.arrayOf(PropTypes.string),
         searchFields: PropTypes.arrayOf(PropTypes.string),
-      })
+      }),
     ),
   }).isRequired,
   hideZero: PropTypes.bool,

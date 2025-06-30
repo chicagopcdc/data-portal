@@ -47,6 +47,8 @@ function getNumValuesSelected(filterStatus) {
  * @property {(isExpanded: boolean) => void} [onToggle]
  * @property {(fieldName: string, value: string) => void} [onToggleCombineMode]
  * @property {(SingleSelectFilterOption[] | RangeFilterOption[])} options
+ * @property {string} [unitCalcType]
+ * @property {UnitCalcParams} [unitCalcConfig]
  * @property {string} [title]
  * @property {string} [tooltip]
  */
@@ -64,6 +66,13 @@ function getNumValuesSelected(filterStatus) {
  * @property {number} resetClickCounter
  */
 
+/**
+ * @typedef {Object} UnitCalcParams
+ * @property {string} quantity
+ * @property {string} desiredUnit
+ * @property {Object<string, number>} selectUnits
+ */
+
 const defaultOptions = [];
 
 /** @param {FilterSectionProps} props */
@@ -78,6 +87,8 @@ function FilterSection({
   isArrayField = false,
   isSearchFilter = false,
   lockedTooltipMessage = '',
+  unitCalcType,
+  unitCalcConfig,
   onAfterDrag,
   onClear = () => {},
   onSearchFilterLoadOptions,
@@ -127,7 +138,7 @@ function FilterSection({
       ...prevState,
       optionsVisibleStatus: getOptionsVisibleStatus(
         prevState.isShowingMoreOptions,
-        inputElem.current?.value
+        inputElem.current?.value,
       ),
     }));
   }, [options]);
@@ -138,7 +149,7 @@ function FilterSection({
       ...prevState,
       isSearchInputEmpty: true,
       optionsVisibleStatus: getOptionsVisibleStatus(
-        prevState.isShowingMoreOptions
+        prevState.isShowingMoreOptions,
       ),
     }));
   }
@@ -169,7 +180,7 @@ function FilterSection({
       isSearchInputEmpty: !currentInput || currentInput.length === 0,
       optionsVisibleStatus: getOptionsVisibleStatus(
         prevState.isShowingMoreOptions,
-        currentInput
+        currentInput,
       ),
     }));
   }
@@ -234,7 +245,7 @@ function FilterSection({
       ...prevState,
       isShowingMoreOptions: !prevState.isShowingMoreOptions,
       optionsVisibleStatus: getOptionsVisibleStatus(
-        !prevState.isShowingMoreOptions
+        !prevState.isShowingMoreOptions,
       ),
     }));
   }
@@ -273,7 +284,7 @@ function FilterSection({
               />
               {combineMode}
             </label>
-          )
+          ),
         )}
         <Tooltip
           arrowContent={<div className='rc-tooltip-arrow-inner' />}
@@ -410,6 +421,8 @@ function FilterSection({
           lowerBound={lowerBound}
           upperBound={upperBound}
           onAfterDrag={handleDragRangeFilter}
+          unitCalcType={unitCalcType}
+          unitCalcConfig={unitCalcConfig}
         />
       );
     });
@@ -453,7 +466,7 @@ function FilterSection({
                 onSelect={handleSelectSingleSelectFilter}
                 selected={filterStatus[option.text]}
               />
-            )
+            ),
         )}
       </>
     );
@@ -640,7 +653,7 @@ FilterSection.propTypes = {
       min: PropTypes.number,
       max: PropTypes.number,
       rangeStep: PropTypes.number, // by default 1
-    })
+    }),
   ),
   title: PropTypes.string,
   tooltip: PropTypes.string,

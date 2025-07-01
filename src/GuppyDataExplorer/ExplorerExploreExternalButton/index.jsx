@@ -13,14 +13,25 @@ import ExplorerFilterDisplay from '../ExplorerFilterDisplay';
 import './ExplorerExploreExternalButton.css';
 import Spinner from '../../components/Spinner';
 
+/** Static test config JSON for local development */
+import configData from './config.json';
 
 /** @typedef {import('../types').ExplorerFilter} ExplorerFilter */
-
 /** @typedef {import('./types').ExternalCommonsInfo} ExternalCommonsInfo */
-
 /** @typedef {import('./types').ExternalConfig} ExternalConfig */
 
 /**
+ * Helper to save manifest content as a file
+ * @param {string} savingStr
+ * @param {string} filename
+ */
+function saveToFile(savingStr, filename) {
+  const blob = new Blob([savingStr], { type: 'text/plain' });
+  FileSaver.saveAs(blob, filename);
+}
+
+/**
+ * Fetch commons information (e.g., manifest or redirect link)
  * @param {{ path: string; body: string }} payload
  * @returns {Promise<ExternalCommonsInfo>}
  */
@@ -30,81 +41,37 @@ async function fetchExternalCommonsInfo(payload) {
   return res.data;
 }
 
-function saveToFile(savingStr, filename) {
-  const blob = new Blob([savingStr], { type: 'text/plain' });
-  FileSaver.saveAs(blob, filename);
-}
-
 /**
+ * Main component for Explore External Button
  * @param {Object} props
  * @param {ExplorerFilter} props.filter
+ * @param {Array<{ resourceName: string, count: number }>} props.selectedCommonsCounts - Array of commons with their subject counts
  */
-function ExplorerExploreExternalButton({ filter }) {
+function ExplorerExploreExternalButton({ filter, selectedCommonsCounts }) {
   const emptyOption = {
     label: 'Select data commons',
     value: '',
   };
 
+  // State for popup UI
   const [selected, setSelected] = useState(emptyOption);
   const [show, setShow] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
-  const [commonsInfo, setCommonsInfo] = useState(
-    /** @type {ExternalCommonsInfo} */(null)
-  );
-  const [externalConfig, setExternalConfig] = useState(
-    /** @type {ExternalConfig} */(null)
-  );
   const [isFileDownloaded, setIsFileDownloaded] = useState(false);
 
-  // Fetch config once on page load
+  // State for external commons config and result data
+  const [commonsInfo, setCommonsInfo] = useState(/** @type {ExternalCommonsInfo} */(null));
+  const [externalConfig, setExternalConfig] = useState(/** @type {ExternalConfig} */(null));
+
+  // Load config on first mount
   useEffect(() => {
     handleFetchExternalConfig();
   }, []);
 
-  // Run check once on first mount
-  useEffect(() => {
-    checkDataForExplore();
-  }, []);
-
-  // Re-run check when external config changes
-  useEffect(() => {
-    checkDataForExplore();
-  }, [externalConfig]);
-
-  function openPopup() {
-    setShow(true);
-  }
-
-  function closePopup() {
-    setSelected(emptyOption);
-    setCommonsInfo(null);
-    setExternalConfig(null);
-    setShow(false);
-    setIsLoading(false);
-    setIsFileDownloaded(false);
-  }
-
-  // Determine if the top-level "Explore in..." button should be disabled
-  function checkDataForExplore() {
-    // Filter the commons list to only include entries that have a matching key in commons_dict.
-    // This ensures we only enable the button if there are actually usable commons.
-    const validCommons =
-      externalConfig?.commons?.filter((entry) =>
-        // Use optional chaining to safely check if commons_dict exists,
-        // and only include entries where a matching value exists (e.g., 'gdc', 'gmkf').
-        externalConfig.commons_dict?.hasOwnProperty(entry.value)
-      ) || []; // If externalConfig or commons is undefined, fall back to an empty array
-
-    // Enable the "Explore in..." button only if there's at least one valid commons entry
-    if (validCommons.length > 0) {
-      setIsDisabled(false);
-    } else {
-      // Disable the button if no valid commons are available
-      setIsDisabled(true);
-    }
-  }
-
+  /**
+   * Load the external commons config from local file (for testing)
+   */
   function handleFetchExternalConfig() {
     setIsLoading(true);
     fetchWithCreds({ path: '/analysis/tools/external/config' })
@@ -115,15 +82,53 @@ function ExplorerExploreExternalButton({ filter }) {
       .finally(() => setIsLoading(false));
   }
 
-  /** @param {typeof selected} newSelected */
+  // Available commons to check
+  const resourceCounts = Object.fromEntries(
+    selectedCommonsCounts.map((entry) => [entry.resourceName, entry.count])
+  );
+
+  // Filter commons options based on presence of corresponding subjects
+  const validCommonsOptions = externalConfig?.commons?.filter((entry) => {
+    if (!externalConfig.commons_dict?.hasOwnProperty(entry.value)) {
+      return false;
+    }
+
+    // Check if we have a count entry for this resource
+    const resourceName = externalConfig.commons_dict[entry.value];
+    const count = resourceCounts[resourceName];
+
+    return count > 0;
+  }) || [];
+
+  // Enable/disable Explore button based on valid options
+  useEffect(() => {
+    setIsDisabled(validCommonsOptions.length === 0);
+  }, [validCommonsOptions]);
+
+  // Handle opening the popup
+  function openPopup() {
+    setShow(true);
+  }
+
+  // Handle closing popup and resetting state
+  function closePopup() {
+    setSelected(emptyOption);
+    setCommonsInfo(null);
+    setShow(false);
+    setIsLoading(false);
+    setIsFileDownloaded(false);
+  }
+
+  /**
+   * Handle dropdown option selection
+   * @param {typeof selected} newSelected
+   */
   async function handleSelectExternalCommons(newSelected) {
     if (selected.value === newSelected.value) return;
     setCommonsInfo(null);
     setSelected(newSelected);
 
-    if (newSelected.value === '') {
-      return;
-    }
+    if (newSelected.value === '') return;
 
     try {
       setIsLoading(true);
@@ -133,18 +138,19 @@ function ExplorerExploreExternalButton({ filter }) {
       });
       setCommonsInfo(newCommonsInfo);
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.error(e);
     } finally {
       setIsLoading(false);
     }
   }
 
+  // Open commons link in new tab
   function handleOpenExternalCommons() {
     window.open(commonsInfo.link, '_blank');
     closePopup();
   }
 
+  // Download manifest file
   function handleDownloadManifest() {
     const dateString = new Date().toISOString().split('T')[0];
     const filename = `${dateString}-manifest-${selected.value}.txt`;
@@ -152,6 +158,7 @@ function ExplorerExploreExternalButton({ filter }) {
     setIsFileDownloaded(true);
   }
 
+  // Check if "Open in new tab" button should be enabled
   function isOpenInNewTabButtonEnabled() {
     if (!commonsInfo) return false;
     if (commonsInfo.type === 'file') return commonsInfo.data ? isFileDownloaded : false;
@@ -178,17 +185,7 @@ function ExplorerExploreExternalButton({ filter }) {
                 input={
                   <Select
                     inputId='explore-external-data-commons'
-                    options={[
-                      // Default is "empty" option at top of dropdown.
-                      emptyOption,
-                      // Add in only the commons entries that have matching metadata in commons_dict
-                      ...(
-                        externalConfig?.commons?.filter((entry) =>
-                          // Check that commons_dict exists and contains a key matching the entry's value (e.g., 'gdc', 'gmkf')
-                          externalConfig.commons_dict?.hasOwnProperty(entry.value)
-                        ) || [] // Fallback: if externalConfig or commons is missing, use an empty array
-                      ),
-                    ]}
+                    options={[emptyOption, ...validCommonsOptions]}
                     value={selected}
                     autoFocus
                     isClearable={false}
@@ -249,6 +246,12 @@ function ExplorerExploreExternalButton({ filter }) {
 
 ExplorerExploreExternalButton.propTypes = {
   filter: PropTypes.object.isRequired,
+  selectedCommonsCounts: PropTypes.arrayOf(
+    PropTypes.shape({
+      resourceName: PropTypes.string.isRequired,
+      count: PropTypes.number.isRequired,
+    })
+  ).isRequired,
 };
 
 export default ExplorerExploreExternalButton;

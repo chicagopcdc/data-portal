@@ -1,10 +1,12 @@
 # Local Testing: External Commons Config
 
-This README provides instructions for testing the **"Explore In..."** feature without relying on the backend resources. This setup allows developers to use a mock `config.json`, it could be extended for further testing.
+This README provides instructions for testing the **"Explore In..."** feature without relying on the backend resources.
 
 ---
 
-## 1. Create `config.json`
+## 1. Create config and test files
+
+### File: `config.json`
 
 Create a file at: `src/GuppyDataExplorer/ExplorerExploreExternalButton/config.json`
 
@@ -29,15 +31,15 @@ Then paste in the contents of the `/analysis/tools/external/config` API response
 }
 ````
 
-To test the display of options in the dropdown, remove an option from commons_dict. The code validates that `commons_dict.gdc` is an option from `commons.value.gdc`.
-
 ---
 
-## 2. Swap out the fetch logic
+## 2a. Swap out the following logics:
+
+### Fetch logic:
 
 In your `ExplorerExploreExternalButton.jsx` file, update the `handleFetchExternalConfig()` function for local testing:
 
-### Replace this:
+#### Replace this:
 
 ```
 function handleFetchExternalConfig() {
@@ -51,42 +53,85 @@ function handleFetchExternalConfig() {
 }
 ```
 
-### With this:
+#### With this:
 
 ```
-import configData from './config.json';
-
+/** Test Data */
 function handleFetchExternalConfig() {
-  setIsLoading(true);
-  Promise.resolve({ data: configData })
-    .then(({ data }) => {
-      setExternalConfig(data);
-    })
-    .catch(console.error)
-    .finally(() => setIsLoading(false));
+    setIsLoading(true);
+    Promise.resolve({ data: configData })
+        .then(({ data }) => {
+        setExternalConfig(data);
+        })
+        .catch(console.error)
+        .finally(() => setIsLoading(false));
 }
+/** End test Data */
 ```
 
 ---
 
-## 3. Enable display  of explore button
+## 2b. Enable display  of explore button
 
 In your `/src/GuppyDataExplorer/ExplorerVisualization/index.jsx` file, update the React output:
 
-### Replace this:
+#### Replace this:
 
 ```
 {patientIdsConfig?.export && (
-  <ExplorerExploreExternalButton filter={filter} />
+    <ExplorerExploreExternalButton
+        filter={filter}
+        selectedCommonsCounts={selectedCommonsCounts}
+    />
 )}
 ```
 
-### With this:
+#### With this:
 
 ```
-{/* DO NOT COMMIT*/}
-<ExplorerExploreExternalButton filter={filter} />
+{/* Test Data */}
+<ExplorerExploreExternalButton
+    filter={filter}
+    selectedCommonsCounts={selectedCommonsCounts}
+/>
+{/* End test Data */}
 ```
+
+---
+
+## 3. Setup local testing
+
+In your `/src/GuppyDataExplorer/ExplorerVisualization/index.jsx` file, update the const `selectedCommonsCounts`:
+
+#### Replace this:
+
+```
+const resourceNames = ['TARGET - GDC', 'GMKF']; // Add more commons as available
+
+  const selectedCommonsCounts = resourceNames.map((name) => {
+    const bucket = externalResourceData.find(b => b.key === name);
+    return {
+      resourceName: name,
+      count: bucket ? bucket.count : 0,
+    };
+  });
+```
+
+#### With this:
+
+```
+{/* Test Data */}
+const gdcCount = 0;
+const gmkfCount = 0;
+
+const selectedCommonsCounts = [
+    { resourceName: 'TARGET - GDC', count: gdcCount },
+    { resourceName: 'GMKF', count: gmkfCount },
+];
+{/* End test Data */}
+```
+
+Thenn simply adjust the count and see the explore button respond locally.
 
 ---
 
@@ -94,7 +139,7 @@ In your `/src/GuppyDataExplorer/ExplorerVisualization/index.jsx` file, update th
 
 To avoid accidentally committing local testing files or logic:
 
-* Revert changes to `handleFetchExternalConfig()` before committing.
+* Search for `test data` and revert changes before committing.
 
 ---
 
@@ -102,6 +147,7 @@ To avoid accidentally committing local testing files or logic:
 
 | Step | Action                                         |
 | ---- | ---------------------------------------------- |
-| 1    | Create `config.json` with backend response     |
-| 2    | Replace the fetch function in your component   |
-| 3    | Don't commit the mock config or modified fetch |
+| 1    | Create config and test files.                  |
+| 2    | Replace the logic for local testing.           |
+| 3    | Setup local testing.                           |
+| 4    | Don't commit changes from previous steps.      |

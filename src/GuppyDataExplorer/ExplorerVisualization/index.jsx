@@ -255,6 +255,20 @@ function ExplorerVisualization({
   };
   const isDataRequestEnabled = config.dataRequests?.enabled ?? false;
 
+  /* Explore button data (Histogram) for all commons */
+  const externalResourceData = aggsChartData['external_references.external_resource_name']?.histogram || [];
+
+  // Define the resource names we want to support
+  const resourceNames = ['TARGET - GDC', 'GMKF']; // Add more commons as available
+
+  const selectedCommonsCounts = resourceNames.map((name) => {
+    const bucket = externalResourceData.find(b => b.key === name);
+    return {
+      resourceName: name,
+      count: bucket ? bucket.count : 0,
+    };
+  });
+
   return (
     <div className={className}>
       <div className='explorer-visualization__top'>
@@ -273,14 +287,14 @@ function ExplorerVisualization({
         <div className='explorer-visualization__button-group'>
           {accessibleCount < totalCount && !hideGetAccessButton && (<>
             <ExplorerRequestAccessButton
-              onClick={() => isDataRequestEnabled ? setRequestAccessModalOpen(true) : openLink(getAccessButtonLink) }
+              onClick={() => isDataRequestEnabled ? setRequestAccessModalOpen(true) : openLink(getAccessButtonLink)}
               tooltipText={
                 accessibleCount === 0
                   ? 'You do not have permissions to view line-level data.'
                   : 'You have only limited access to line-level data.'
               }
             />
-            {isRequestAccessModalOpen && 
+            {isRequestAccessModalOpen &&
               <Popup
                 onClose={() => setRequestAccessModalOpen(false)}
                 leftButtons={[{
@@ -299,7 +313,10 @@ function ExplorerVisualization({
             }
           </>)}
           {patientIdsConfig?.export && (
-            <ExplorerExploreExternalButton filter={filter} />
+            <ExplorerExploreExternalButton
+              filter={filter}
+              selectedCommonsCounts={selectedCommonsCounts}
+            />
           )}
           <ReduxExplorerButtonGroup {...buttonGroupProps} />
         </div>

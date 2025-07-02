@@ -1,5 +1,5 @@
 import './Banner.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Banner() {
   const [showBanner, setShowBanner] = useState(true);
@@ -7,6 +7,26 @@ export default function Banner() {
   function handleExitBanner() {
     setShowBanner(false);
   }
+
+  useEffect(()=> {
+    fetch('/amanuensis/notifications', {
+      method: 'GET',
+      credentials: 'include',
+    })
+    .then((res)=> {
+      if (!res.ok) {
+        throw new Error('Failed to fetch notifications.')
+      }
+      return res.json();
+    })
+    .then((data) => {
+      console.log("Notifications: ", data)
+    })
+    .catch((error) => {
+      console.error("Fetch error:", error);
+    })
+  }, []) 
+
 
   const msg = 'THIS IS WHERE THE MESSAGE BANNER IS.';
 

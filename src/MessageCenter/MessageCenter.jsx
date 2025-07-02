@@ -35,24 +35,24 @@ function MessageCenter() {
     );
   }
 
-  // useEffect(() => {
-  //   fetch('/amanuensis/notifications/', {
-  //     method: 'GET',
-  //     credentials: 'include', 
-  //   })
-  //       .then((res) => {
-  //           if (!res.ok) {
-  //               throw new Error('Failed to fetch notifications');
-  //           }
-  //           return res.json();
-  //       })
-  //       .then(data => {
-  //         console.log('Notifications:', data);
-  //       })
-  //       .catch((error) => {
-  //           console.error("Fetch error:", error);
-  //       });
-  // }, []);
+  useEffect(() => {
+    fetch('/amanuensis/notifications/all ', {
+      method: 'GET',
+      credentials: 'include', 
+    })
+        .then((res) => {
+            if (!res.ok) {
+                throw new Error('Failed to fetch notifications');
+            }
+            return res.json();
+        })
+        .then(data => {
+          console.log('Notifications:', data);
+        })
+        .catch((error) => {
+            console.error("Fetch error:", error);
+        });
+  }, []);
 
 return (
     <div>

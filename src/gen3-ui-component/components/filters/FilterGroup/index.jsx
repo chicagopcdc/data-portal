@@ -93,7 +93,10 @@ function FilterGroup({
   // pulls info about which range filters use what quantity (e.g. age or number) from pcdc.json
   // unitCalcTitles.age contains all titles with the age quantity, and unitCalcTitles.number
   // contains all titles with the number quantity
-  const unitCalcTitles = filterConfig.unitCalcConfig.calculatorMapping;
+
+  // for backwards compatibility, if filterConfig.unitCalcConfig is undefined, 
+  // no unit calculator is shown on any range filter (all range filters are numeric)
+  const unitCalcTitles = (!filterConfig.unitCalcConfig) ? { number: [], age: [] } : filterConfig.unitCalcConfig.calculatorMapping;
 
   const [tabIndex, setTabIndex] = useState(0);
   const tabTitle = filterTabs[tabIndex].title;
@@ -423,7 +426,7 @@ function FilterGroup({
             unitCalcType={
               unitCalcTitles.age.includes(section.title) ? 'age' : 'number'
             }
-            unitCalcConfig={filterConfig.unitCalcConfig.ageUnits}
+            unitCalcConfig={filterConfig.unitCalcConfig ? filterConfig.unitCalcConfig.ageUnits: null}
           />
         ))}
       </div>

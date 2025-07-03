@@ -22,7 +22,7 @@ data/schema.json
 data/graphvizLayout.json
 
 # Local-only mock data for dev testing
-/src/GuppyDataExplorer/ExplorerExploreExternalButton/config.json
+/src/GuppyDataExplorer/ExplorerVisualization/config.json
 
 # Storybook
 *storybook.log

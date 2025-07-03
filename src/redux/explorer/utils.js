@@ -140,7 +140,12 @@ export function isSurvivalAnalysisEnabled(config) {
 /** @param {number} explorerId */
 export function getCurrentConfig(explorerId) {
   const config = explorerConfig.find(({ id }) => id === explorerId);
-  const unitCalcConfig = explorerConfig[1].filters.unitCalcConfig;
+  // for backwards compatibility, dynamically find unitCalcConfig
+  // make sure we don't get crashes, even if unitCalcConfig doesn't exist 
+  const configWithUnitCalc = explorerConfig.find((item) => (
+    item?.filters?.unitCalcConfig
+  ))
+  const unitCalcConfig = configWithUnitCalc?.filters?.unitCalcConfig
   return {
     adminAppliedPreFilters: config.adminAppliedPreFilters,
     buttonConfig: {

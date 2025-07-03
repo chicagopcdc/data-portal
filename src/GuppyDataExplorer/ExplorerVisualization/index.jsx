@@ -7,6 +7,7 @@ import Spinner from '../../components/Spinner';
 import { useAppSelector } from '../../redux/hooks';
 import { components, config } from '../../params';
 import { capitalizeFirstLetter } from '../../utils';
+import { fetchWithCreds } from '../../utils.fetch';
 import DataSummaryCardGroup from '../../components/cards/DataSummaryCardGroup';
 import ExplorerRequestAccessButton from '../ExplorerRequestAccessButton';
 import Popup from '../../components/Popup';
@@ -18,10 +19,13 @@ import ReduxExplorerButtonGroup from '../ExplorerButtonGroup/ReduxExplorerButton
 import './ExplorerVisualization.css';
 import { FILTER_TYPE } from '../ExplorerFilterSetWorkspace/utils';
 
+
 /** @typedef {import('../types').ChartConfig} ChartConfig */
 /** @typedef {import('../types').ExplorerFilter} ExplorerFilter */
 /** @typedef {import('../types').GqlSort} GqlSort */
 /** @typedef {import('../types').SimpleAggsData} SimpleAggsData */
+/** Import ExternalConfig type so we can use it for JSDoc hints in this file. */
+/** @typedef {import('../ExplorerExploreExternalButton/types').ExternalConfig} ExternalConfig */
 
 /**
  * @typedef {Object} ViewContainerProps
@@ -199,6 +203,22 @@ function ExplorerVisualization({
   if (survivalAnalysisConfig.enabled) explorerViews.push('survival analysis');
 
   const explorerView = searchParams.get('view') ?? explorerViews[0];
+  // State for external commons config and result data
+  const [externalConfig, setExternalConfig] = useState(/** @type {ExternalConfig} */(null));
+  // State for popup UI passing to child
+  const [isLoadingExploreButton, setIsLoadingExploreButton] = useState(false);
+
+  // Load the external commons config
+  function handleFetchExternalConfig() {
+    setIsLoadingExploreButton(true);
+    fetchWithCreds({ path: '/analysis/tools/external/config' })
+      .then(({ data }) => {
+        setExternalConfig(data);
+      })
+      .catch(console.error)
+      .finally(() => setIsLoadingExploreButton(false));
+  }
+
   function updateExplorerView(view) {
     const newSearchParams = new URLSearchParams(searchParams.toString());
     newSearchParams.set('view', view);
@@ -207,6 +227,9 @@ function ExplorerVisualization({
     });
   }
   useEffect(() => {
+    // Load config on first mount of parent, then pass to child.
+    handleFetchExternalConfig();
+
     if (!explorerViews.includes(explorerView))
       updateExplorerView(explorerViews[0]);
   }, []);
@@ -255,11 +278,13 @@ function ExplorerVisualization({
   };
   const isDataRequestEnabled = config.dataRequests?.enabled ?? false;
 
-  /* Explore button data (Histogram) for all commons */
+  // Explore button data (Histogram) for all commons
   const externalResourceData = aggsChartData['external_references.external_resource_name']?.histogram || [];
 
-  // Define the resource names we want to support
-  const resourceNames = ['TARGET - GDC', 'GMKF']; // Add more commons as available
+  // Grab from the config, and provide counts to determine the explorer button response
+  const resourceNames = externalConfig?.commons_dict
+    ? Object.values(externalConfig.commons_dict)
+    : [];
 
   const selectedCommonsCounts = resourceNames.map((name) => {
     const bucket = externalResourceData.find(b => b.key === name);
@@ -312,10 +337,15 @@ function ExplorerVisualization({
               </Popup>
             }
           </>)}
+
+          {/* Sending to the ExplorerExploreExternalButton Econfig and counts dynamically */}
           {patientIdsConfig?.export && (
             <ExplorerExploreExternalButton
               filter={filter}
               selectedCommonsCounts={selectedCommonsCounts}
+              externalConfig={externalConfig}
+              isLoading={isLoadingExploreButton}
+              setIsLoading={setIsLoadingExploreButton}
             />
           )}
           <ReduxExplorerButtonGroup {...buttonGroupProps} />

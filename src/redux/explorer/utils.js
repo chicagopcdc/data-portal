@@ -140,7 +140,7 @@ export function isSurvivalAnalysisEnabled(config) {
 /** @param {number} explorerId */
 export function getCurrentConfig(explorerId) {
   const config = explorerConfig.find(({ id }) => id === explorerId);
-  const UnitCalcConfig = explorerConfig[1].filters.unitCalcConfig;
+  const unitCalcConfig = explorerConfig[1].filters.unitCalcConfig;
   return {
     adminAppliedPreFilters: config.adminAppliedPreFilters,
     buttonConfig: {
@@ -154,7 +154,7 @@ export function getCurrentConfig(explorerId) {
     filterConfig: {
       ...config.filters,
       info: createFilterInfo(config.filters, config.guppyConfig.fieldMapping),
-      unitCalcConfig: UnitCalcConfig,
+      unitCalcConfig: unitCalcConfig,
     },
     getAccessButtonLink: config.getAccessButtonLink,
     guppyConfig: config.guppyConfig,

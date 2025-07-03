@@ -213,6 +213,7 @@ function FilterGroup({
     )
       onFilterChange(updated.filterResults);
   }
+  
 
   /**
    * @param {number} sectionIndex
@@ -424,7 +425,7 @@ function FilterGroup({
             title={section.title}
             tooltip={section.tooltip}
             unitCalcType={
-              unitCalcTitles.age.includes(section.title) ? 'age' : 'number'
+              unitCalcTitles.age.includes(filterTabs[tabIndex].fields[index]) ? 'age' : 'number'
             }
             unitCalcConfig={filterConfig.unitCalcConfig ? filterConfig.unitCalcConfig.ageUnits: null}
           />

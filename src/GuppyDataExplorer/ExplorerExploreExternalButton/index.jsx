@@ -13,9 +13,6 @@ import ExplorerFilterDisplay from '../ExplorerFilterDisplay';
 import './ExplorerExploreExternalButton.css';
 import Spinner from '../../components/Spinner';
 
-/** Static test config JSON for local development */
-import configData from './config.json';
-
 /** @typedef {import('../types').ExplorerFilter} ExplorerFilter */
 /** @typedef {import('./types').ExternalCommonsInfo} ExternalCommonsInfo */
 /** @typedef {import('./types').ExternalConfig} ExternalConfig */
@@ -44,10 +41,13 @@ async function fetchExternalCommonsInfo(payload) {
 /**
  * Main component for Explore External Button
  * @param {Object} props
- * @param {ExplorerFilter} props.filter
+ * @param {ExplorerFilter} props.filter - Current filter object for queries
  * @param {Array<{ resourceName: string, count: number }>} props.selectedCommonsCounts - Array of commons with their subject counts
+ * @param {ExternalConfig} props.externalConfig - External configuration object from commons config
+ * @param {boolean} props.isLoading - Loading state controlled by parent
+ * @param {function} props.setIsLoading - Function to update loading state from parent
  */
-function ExplorerExploreExternalButton({ filter, selectedCommonsCounts }) {
+function ExplorerExploreExternalButton({ filter, selectedCommonsCounts, externalConfig, isLoading, setIsLoading }) {
   const emptyOption = {
     label: 'Select data commons',
     value: '',
@@ -56,31 +56,11 @@ function ExplorerExploreExternalButton({ filter, selectedCommonsCounts }) {
   // State for popup UI
   const [selected, setSelected] = useState(emptyOption);
   const [show, setShow] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
   const [isFileDownloaded, setIsFileDownloaded] = useState(false);
 
   // State for external commons config and result data
   const [commonsInfo, setCommonsInfo] = useState(/** @type {ExternalCommonsInfo} */(null));
-  const [externalConfig, setExternalConfig] = useState(/** @type {ExternalConfig} */(null));
-
-  // Load config on first mount
-  useEffect(() => {
-    handleFetchExternalConfig();
-  }, []);
-
-  /**
-   * Load the external commons config from local file (for testing)
-   */
-  function handleFetchExternalConfig() {
-    setIsLoading(true);
-    fetchWithCreds({ path: '/analysis/tools/external/config' })
-      .then(({ data }) => {
-        setExternalConfig(data);
-      })
-      .catch(console.error)
-      .finally(() => setIsLoading(false));
-  }
 
   // Available commons to check
   const resourceCounts = Object.fromEntries(
@@ -252,6 +232,9 @@ ExplorerExploreExternalButton.propTypes = {
       count: PropTypes.number.isRequired,
     })
   ).isRequired,
+  externalConfig: PropTypes.object,
+  isLoading: PropTypes.bool.isRequired,
+  setIsLoading: PropTypes.func.isRequired,
 };
 
 export default ExplorerExploreExternalButton;

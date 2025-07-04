@@ -87,6 +87,7 @@ export default function UnitCalculator({
             className='full-width'
             value={unit}
             onChange={handleUnitChange}
+            key={unit}
           >
             <option value=''>select unit</option>
             {selectionOptions}

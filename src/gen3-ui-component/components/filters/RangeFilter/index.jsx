@@ -17,19 +17,30 @@ import UnitCalculator from './UnitCalculator/UnitCalculator';
 
 const RangeFilter = forwardRef(
   /**
-   * @param {Object} props
-   * @param {number} [props.count]
-   * @param {number} [props.decimalDigitsLen]
-   * @param {number} [props.hideValue]
-   * @param {boolean} [props.inactive]
-   * @param {string} [props.label]
-   * @param {number} [props.lowerBound]
-   * @param {number} props.max
-   * @param {number} props.min
-   * @param {AfterDragHandler} props.onAfterDrag
-   * @param {number} [props.upperBound]
-   * @param {number} [props.rangeStep]
-   * @param {React.Ref<any>} [ref]
+   * @typedef {Object} RangeFilterProps
+   * @property {number} [count]
+   * @property {number} [decimalDigitsLen]
+   * @property {number} [hideValue]
+   * @property {boolean} [inactive]
+   * @property {string} [label]
+   * @property {number} [lowerBound]
+   * @property {number} max
+   * @property {number} min
+   * @property {AfterDragHandler} onAfterDrag
+   * @property {number} [upperBound]
+   * @property {number} [rangeStep]
+   * @property {string} [unitCalcType]
+   * @property {UnitCalcParams} [unitCalcConfig]
+   */
+  /**
+   * @typedef {Object} UnitCalcParams
+   * @property {string} quantity
+   * @property {string} desiredUnit
+   * @property {Object<string, number>} selectUnits
+   */
+  /**
+   * @param {RangeFilterProps} props
+   * @param {React.Ref<any>} ref
    */
   // eslint-disable-next-line prefer-arrow-callback
   function RangeFilter(props, ref) {
@@ -45,6 +56,8 @@ const RangeFilter = forwardRef(
       onAfterDrag,
       upperBound,
       rangeStep = 1,
+      unitCalcType,
+      unitCalcConfig,
     } = props;
 
     const [range, setRange] = useState({
@@ -181,30 +194,29 @@ const RangeFilter = forwardRef(
         : Number.parseFloat(num.toFixed(decimalDigitsLen));
     }
 
-    const params = {
-      quantity: 'age',
-      desiredUnit: 'days',
-      selectUnits: { months: 30, years: 365 },
-    };
-
     return (
       <>
         <div className='g3-range-filter'>
-          <p>
-            Don’t know the {params.quantity} in {params.desiredUnit}?
-          </p>
-          <Button
-            onClick={() => setShowCalculator(true)}
-            label={`Compute ${params.quantity} (in ${params.desiredUnit})`}
-            buttonType='default'
-          />
+          {unitCalcType === 'age' && (
+            <div className='unit-calculator-container'>
+              <p>
+                Don’t know the {unitCalcConfig.quantity} in{' '}
+                {unitCalcConfig.desiredUnit}?
+              </p>
+              <Button
+                onClick={() => setShowCalculator(true)}
+                label={`Compute ${unitCalcConfig.quantity} (in ${unitCalcConfig.desiredUnit})`}
+                buttonType='default'
+              />
 
-          {showCalculator && (
-            <UnitCalculator
-              setShowCalculator={setShowCalculator}
-              parameters={params}
-              updateBound={updateBound}
-            />
+              {showCalculator && (
+                <UnitCalculator
+                  setShowCalculator={setShowCalculator}
+                  parameters={unitCalcConfig}
+                  updateBound={updateBound}
+                />
+              )}
+            </div>
           )}
 
           {label && <p className='g3-range-filter__title'>{label}</p>}

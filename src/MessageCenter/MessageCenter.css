@@ -1,8 +1,8 @@
 h2 {
   margin-left: 20px;
   margin-top: 20px;
-
 }
+
 .message_center_container {
   margin-left: 20px;
   margin-top: 20px;
@@ -28,9 +28,9 @@ th {
 }
 
 .row-content {
-cursor: pointer; 
-border-bottom: 1px solid #dedede;
-padding: 8px;
+  cursor: pointer;
+  border-bottom: 1px solid #dedede;
+  padding: 8px;
 }
 
 td {
@@ -40,8 +40,8 @@ td {
   font-size: 14px;
 }
 
-.row-content #title {
-  color:#155f82;
+.row-content #id {
+  color: #155f82;
 }
 
 .message-box {

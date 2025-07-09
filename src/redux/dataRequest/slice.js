@@ -76,7 +76,7 @@ const slice = createSlice({
           user_id: currentUserId,
           additional_info: { firstName, lastName, institution },
         },
-        data: { id, name, create_date: submitted_at },
+        data: { id, name, description, create_date: submitted_at },
       } = action.payload;
 
       const newProject = {
@@ -84,6 +84,8 @@ const slice = createSlice({
         has_access: false,
         id,
         name,
+        description,
+        approved_url_present: false,
         researcher: {
           first_name: firstName,
           last_name: lastName,

@@ -53,6 +53,8 @@ export type DataRequestProject = {
   researcher: ResearcherInfo;
   status: string;
   submitted_at: string;
+  description: string;
+  approved_url_present: boolean;
 };
 
 export type ProjectStateUpdateParams = {

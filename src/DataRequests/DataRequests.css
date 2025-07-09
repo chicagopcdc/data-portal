@@ -168,7 +168,8 @@
   margin-top: 40px;
 }
 
-.data-request__value-container, .data-request__link-container {
+.data-request__value-container,
+.data-request__link-container {
   position: relative;
   left: -10%;
   min-width: 400px;
@@ -238,4 +239,41 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+}
+
+.data-request__approved-url {
+  margin: 20px 0;
+  padding: 12px 16px;
+  background-color: #f8f9fa;
+  border-left: 4px solid #6c757d;
+  border-radius: 0 4px 4px 0;
+}
+
+.data-request__approved-url span {
+  color: #6c757d;
+  font-size: 14px;
+  font-weight: 400;
+  display: block;
+}
+
+/* When there IS an approved URL */
+.data-request__approved-url--has-url {
+  background-color: #e7f3ff;
+  border-left-color: var(--pcdc-color__primary);
+}
+
+.data-request__approved-url--has-url span {
+  color: var(--pcdc-color__primary);
+  font-weight: 500;
+}
+
+/* When there is NO approved URL */
+.data-request__approved-url--no-url {
+  background-color: #fff3cd;
+  border-left-color: #ffc107;
+}
+
+.data-request__approved-url--no-url span {
+  color: #856404;
+  font-style: italic;
 }

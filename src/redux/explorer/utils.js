@@ -148,6 +148,12 @@ export function isTableOneEnabled(config) {
 /** @param {number} explorerId */
 export function getCurrentConfig(explorerId) {
   const config = explorerConfig.find(({ id }) => id === explorerId);
+  // for backwards compatibility, dynamically find unitCalcConfig
+  // make sure we don't get crashes, even if unitCalcConfig doesn't exist 
+  const configWithUnitCalc = explorerConfig.find((item) => (
+    item?.filters?.unitCalcConfig
+  ))
+  const unitCalcConfig = configWithUnitCalc?.filters?.unitCalcConfig
   return {
     adminAppliedPreFilters: config.adminAppliedPreFilters,
     buttonConfig: {
@@ -161,6 +167,7 @@ export function getCurrentConfig(explorerId) {
     filterConfig: {
       ...config.filters,
       info: createFilterInfo(config.filters, config.guppyConfig.fieldMapping),
+      unitCalcConfig: unitCalcConfig,
     },
     getAccessButtonLink: config.getAccessButtonLink,
     guppyConfig: config.guppyConfig,

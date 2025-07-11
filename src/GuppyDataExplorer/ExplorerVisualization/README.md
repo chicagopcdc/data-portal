@@ -88,10 +88,13 @@ In your `/src/GuppyDataExplorer/ExplorerVisualization/index.jsx` file, update th
 
 ```
 {patientIdsConfig?.export && (
-    <ExplorerExploreExternalButton
-        filter={filter}
-        selectedCommonsCounts={selectedCommonsCounts}
-    />
+<ExplorerExploreExternalButton
+    filter={filter}
+    selectedCommonsCounts={selectedCommonsCounts}
+    externalConfig={externalConfig}
+    isLoading={isLoadingExploreButton}
+    setIsLoading={setIsLoadingExploreButton}
+/>
 )}
 ```
 
@@ -102,6 +105,9 @@ In your `/src/GuppyDataExplorer/ExplorerVisualization/index.jsx` file, update th
 <ExplorerExploreExternalButton
     filter={filter}
     selectedCommonsCounts={selectedCommonsCounts}
+    externalConfig={externalConfig}
+    isLoading={isLoadingExploreButton}
+    setIsLoading={setIsLoadingExploreButton}
 />
 {/* End test Data */}
 ```
@@ -110,40 +116,7 @@ In your `/src/GuppyDataExplorer/ExplorerVisualization/index.jsx` file, update th
 
 ## 3. Setup local testing
 
-In your `/src/GuppyDataExplorer/ExplorerVisualization/index.jsx` file, update the const `selectedCommonsCounts`:
-
-#### Replace this:
-```
-const selectedCommonsCounts = resourceNames.map((name) => {
-    const bucket = externalResourceData.find(b => b.key === name);
-    return {
-      resourceName: name,
-      count: bucket ? bucket.count : 0,
-    };
-  });
-```
-
-#### With this:
-```
-{/* Test Data */}
-const TEST_MODE = true;
-
-const selectedCommonsCounts = TEST_MODE
-? [
-    { resourceName: 'TARGET - GDC', count: 5 },
-    { resourceName: 'GMKF', count: 0 },
-]
-: resourceNames.map((name) => {
-    const bucket = externalResourceData.find(b => b.key === name);
-    return {
-    resourceName: name,
-    count: bucket ? bucket.count : 0,
-    };
-});
-{/* End test Data */}
-```
-
-Then simply adjust the count and see the explore button respond locally.
+Follow the steps outlined in this doc: https://pcdc.atlassian.net/wiki/x/AQAED
 
 ---
 

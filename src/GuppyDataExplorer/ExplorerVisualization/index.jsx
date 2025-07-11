@@ -349,15 +349,15 @@ function ExplorerVisualization({
           </>)}
 
           {/* Sending to the ExplorerExploreExternalButton Econfig and counts dynamically */}
-
-          <ExplorerExploreExternalButton
-            filter={filter}
-            selectedCommonsCounts={selectedCommonsCounts}
-            externalConfig={externalConfig}
-            isLoading={isLoadingExploreButton}
-            setIsLoading={setIsLoadingExploreButton}
-          />
-
+          {patientIdsConfig?.export && (
+            <ExplorerExploreExternalButton
+              filter={filter}
+              selectedCommonsCounts={selectedCommonsCounts}
+              externalConfig={externalConfig}
+              isLoading={isLoadingExploreButton}
+              setIsLoading={setIsLoadingExploreButton}
+            />
+          )}
           <ReduxExplorerButtonGroup {...buttonGroupProps} />
         </div>
       </div>

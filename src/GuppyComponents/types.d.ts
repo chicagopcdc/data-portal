@@ -120,6 +120,20 @@ export type FilterTabsOption = {
   searchFields?: string[];
 };
 
+export type UnitCalcParams = {
+  quantity: string;
+  desiredUnit: string;
+  selectUnits: { [unit: string]: number };
+};
+
+export type UnitCalcConfig = {
+  ageUnits: UnitCalcParams;
+  calculatorMapping: {
+    number: string[];
+    age: string[];
+  };
+};
+
 export type FilterConfig = {
   anchor?: AnchorConfig;
   info?: /* runtime only */ {
@@ -129,6 +143,7 @@ export type FilterConfig = {
     };
   };
   tabs: FilterTabsOption[];
+  unitCalcConfig?: UnitCalcConfig;
 };
 
 export type GuppyConfig = {

@@ -25,6 +25,7 @@ function DataDownloadButton({ project }) {
   const isButtonEnabled =
     (project.status === 'Data Available' ||
       project.status === 'Data Downloaded') &&
+    project.approved_url_present &&
     project.has_access;
   return (
     <div className='download-button'>

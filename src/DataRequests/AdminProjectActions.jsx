@@ -20,12 +20,10 @@ import {
 import '../GuppyDataExplorer/ExplorerFilterSetForms/ExplorerFilterSetForms.css';
 import UserAccessTable from './UserAccessTable';
 import DataRequestFilterSets from './DataRequestFilterSets';
+import DataRequestApprovedUrl from './DataRequestApprovedUrl';
 
 const dataAccessSchema = Yup.object().shape({
   email: Yup.string().email().required('Must be a valid email address'),
-});
-const updateUrlSchema = Yup.object().shape({
-  approved_url: Yup.string().url().required('Must be a valid URL'),
 });
 const addUsersSchema = Yup.object().shape({
   associated_users_emails: Yup.array()
@@ -93,71 +91,12 @@ export default function AdminProjectActions({
         switch (actionType) {
           case 'APPROVED_URL':
             return (
-              <Formik
-                validationSchema={updateUrlSchema}
-                initialValues={{
-                  approved_url: '',
-                }}
-                onSubmit={({ approved_url }) => {
-                  setActionPending(true);
-                  const actionRequest =
-                    /** @type {import("../redux/dataRequest/types").Request} */
-                    (
-                      dispatch(
-                        updateProjectApprovedUrl({
-                          approved_url,
-                          project_id: project.id,
-                        }),
-                      )
-                    );
-
-                  actionRequest.then((action) => {
-                    setActionPending(false);
-                    if (!action.payload.isError) {
-                      onAction?.(actionType);
-                      setActionType('ACTION_SUCCESS');
-                      return;
-                    }
-
-                    const { isError, message } = action.payload;
-                    setRequestactionError({ isError, message });
-                  });
-                }}
-              >
-                {({ errors, touched }) => (
-                  <Form className='data-request__form'>
-                    <div className='data-request__header'>
-                      <h2>Update Approved Data URL</h2>
-                    </div>
-                    <div className='data-request__fields'>
-                      <Field name='approved_url'>
-                        {({ field }) => (
-                          <SimpleInputField
-                            className='data-request__value-container'
-                            label='Approved Data URL'
-                            input={<input type='text' {...field} />}
-                            error={errorObjectForField(
-                              errors,
-                              touched,
-                              'approved_url',
-                            )}
-                          />
-                        )}
-                      </Field>
-                    </div>
-                    <Button
-                      submit
-                      className='data-request__submit'
-                      label='Submit'
-                    />
-                    {actionRequestError.isError && (
-                      <span className='data-request__request-error'>
-                        {actionRequestError.message}
-                      </span>
-                    )}
-                  </Form>
-                )}
-              </Formik>
+              <DataRequestApprovedUrl
+                projectId={project.id}
+                setActionType={setActionType}
+                errorObjectForField={errorObjectForField}
+                onAction={onAction}
+              />
             );
           case 'PROJECT_STATE':
             return (
@@ -445,7 +384,7 @@ export default function AdminProjectActions({
                 savedFilterSets={savedFilterSets}
                 onAction={onAction}
               />
-          );
+            );
           }
           case 'ACTION_SUCCESS':
             return (

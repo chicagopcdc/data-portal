@@ -19,9 +19,6 @@ import ReduxExplorerButtonGroup from '../ExplorerButtonGroup/ReduxExplorerButton
 import './ExplorerVisualization.css';
 import { FILTER_TYPE } from '../ExplorerFilterSetWorkspace/utils';
 
-/** Static test config JSON for local development */
-import configData from './config.json';
-
 /** @typedef {import('../types').ChartConfig} ChartConfig */
 /** @typedef {import('../types').ExplorerFilter} ExplorerFilter */
 /** @typedef {import('../types').GqlSort} GqlSort */
@@ -212,9 +209,8 @@ function ExplorerVisualization({
 
   // Load the external commons config
   function handleFetchExternalConfig() {
-    // console.log('Fetching external config...');
     setIsLoadingExploreButton(true);
-    Promise.resolve({ data: configData })
+    fetchWithCreds({ path: '/analysis/tools/external/config' })
       .then(({ data }) => {
         setExternalConfig(data);
       })
@@ -298,9 +294,6 @@ function ExplorerVisualization({
     // If a bucket is found, use its count; otherwise, set count to 0
     const count = bucket ? bucket.count : 0;
 
-    // Log resource name and count for debugging
-    console.log('Resource:', name, 'Count:', count);
-
     // Return an object with resourceName and count so frontend can use it
     return {
       resourceName: name,
@@ -354,13 +347,15 @@ function ExplorerVisualization({
 
           {/* Sending to the ExplorerExploreExternalButton Econfig and counts dynamically */}
 
-          <ExplorerExploreExternalButton
-            filter={filter}
-            selectedCommonsCounts={selectedCommonsCounts}
-            externalConfig={externalConfig}
-            isLoading={isLoadingExploreButton}
-            setIsLoading={setIsLoadingExploreButton}
-          />
+          {patientIdsConfig?.export && (
+            <ExplorerExploreExternalButton
+              filter={filter}
+              selectedCommonsCounts={selectedCommonsCounts}
+              externalConfig={externalConfig}
+              isLoading={isLoadingExploreButton}
+              setIsLoading={setIsLoadingExploreButton}
+            />
+          )}
 
           <ReduxExplorerButtonGroup {...buttonGroupProps} />
         </div>

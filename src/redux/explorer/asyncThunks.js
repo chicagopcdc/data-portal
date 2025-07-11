@@ -2,6 +2,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { getGQLFilter } from '../../GuppyComponents/Utils/queries';
 import * as filterSetsAPI from './filterSetsAPI';
 import * as survivalAnalysisAPI from './survivalAnalysisAPI';
+import * as tableOneAPI from './tableOneAPI';
 
 /** @typedef {import('../../GuppyDataExplorer/types').SavedExplorerFilterSet} SavedExplorerFilterSet */
 /** @typedef {import('../types').AppGetState} AppGetState */
@@ -129,7 +130,7 @@ export const fetchSurvivalConfig = createAsyncThunk(
 export const fetchTableOneConfig = createAsyncThunk(
   'explorer/fetchTableOneConfig',
   async () => {
-    return survivalAnalysisAPI.fetchTableOneConfig();
+    return tableOneAPI.fetchTableOneConfig();
   },
 );
 
@@ -143,7 +144,7 @@ export const updateTableOneResult = createAsyncThunk(
    */
   async (args, { rejectWithValue }) => {
     try {
-      return await survivalAnalysisAPI.fetchTableOneResult({
+      return await tableOneAPI.fetchTableOneResult({
         ...args,
       });
     } catch (e) {

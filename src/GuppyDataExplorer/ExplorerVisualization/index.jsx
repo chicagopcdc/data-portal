@@ -19,7 +19,6 @@ import ReduxExplorerButtonGroup from '../ExplorerButtonGroup/ReduxExplorerButton
 import './ExplorerVisualization.css';
 import { FILTER_TYPE } from '../ExplorerFilterSetWorkspace/utils';
 
-
 /** @typedef {import('../types').ChartConfig} ChartConfig */
 /** @typedef {import('../types').ExplorerFilter} ExplorerFilter */
 /** @typedef {import('../types').GqlSort} GqlSort */
@@ -278,19 +277,30 @@ function ExplorerVisualization({
   };
   const isDataRequestEnabled = config.dataRequests?.enabled ?? false;
 
-  // Explore button data (Histogram) for all commons
-  const externalResourceData = aggsChartData['external_references.external_resource_name']?.histogram || [];
+  // Capture counts for external_resources and pass on
+  // Get the histogram data for external resource names from aggsChartData
+  const externalResourceData = aggsChartData["external_references"]?.["external_resource_name"]?.histogram || [];
 
-  // Grab from the config, and provide counts to determine the explorer button response
+  // Get the list of resource names from the config file (commons_dict)
   const resourceNames = externalConfig?.commons_dict
     ? Object.values(externalConfig.commons_dict)
     : [];
 
+  // Loop through each resource name and match it with data from ES histogram
   const selectedCommonsCounts = resourceNames.map((name) => {
+    // Find the matching bucket from the histogram
     const bucket = externalResourceData.find(b => b.key === name);
+
+    // If a bucket is found, use its count; otherwise, set count to 0
+    const count = bucket ? bucket.count : 0;
+
+    // Log resource name and count for debugging
+    console.log('Resource:', name, 'Count:', count);
+
+    // Return an object with resourceName and count so frontend can use it
     return {
       resourceName: name,
-      count: bucket ? bucket.count : 0,
+      count,
     };
   });
 
@@ -339,15 +349,15 @@ function ExplorerVisualization({
           </>)}
 
           {/* Sending to the ExplorerExploreExternalButton Econfig and counts dynamically */}
-          {patientIdsConfig?.export && (
-            <ExplorerExploreExternalButton
-              filter={filter}
-              selectedCommonsCounts={selectedCommonsCounts}
-              externalConfig={externalConfig}
-              isLoading={isLoadingExploreButton}
-              setIsLoading={setIsLoadingExploreButton}
-            />
-          )}
+
+          <ExplorerExploreExternalButton
+            filter={filter}
+            selectedCommonsCounts={selectedCommonsCounts}
+            externalConfig={externalConfig}
+            isLoading={isLoadingExploreButton}
+            setIsLoading={setIsLoadingExploreButton}
+          />
+
           <ReduxExplorerButtonGroup {...buttonGroupProps} />
         </div>
       </div>

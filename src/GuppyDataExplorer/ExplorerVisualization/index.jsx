@@ -19,6 +19,9 @@ import ReduxExplorerButtonGroup from '../ExplorerButtonGroup/ReduxExplorerButton
 import './ExplorerVisualization.css';
 import { FILTER_TYPE } from '../ExplorerFilterSetWorkspace/utils';
 
+/** Static test config JSON for local development */
+import configData from './config.json';
+
 /** @typedef {import('../types').ChartConfig} ChartConfig */
 /** @typedef {import('../types').ExplorerFilter} ExplorerFilter */
 /** @typedef {import('../types').GqlSort} GqlSort */
@@ -209,8 +212,9 @@ function ExplorerVisualization({
 
   // Load the external commons config
   function handleFetchExternalConfig() {
+    // console.log('Fetching external config...');
     setIsLoadingExploreButton(true);
-    fetchWithCreds({ path: '/analysis/tools/external/config' })
+    Promise.resolve({ data: configData })
       .then(({ data }) => {
         setExternalConfig(data);
       })
@@ -349,15 +353,15 @@ function ExplorerVisualization({
           </>)}
 
           {/* Sending to the ExplorerExploreExternalButton Econfig and counts dynamically */}
-          {patientIdsConfig?.export && (
-            <ExplorerExploreExternalButton
-              filter={filter}
-              selectedCommonsCounts={selectedCommonsCounts}
-              externalConfig={externalConfig}
-              isLoading={isLoadingExploreButton}
-              setIsLoading={setIsLoadingExploreButton}
-            />
-          )}
+
+          <ExplorerExploreExternalButton
+            filter={filter}
+            selectedCommonsCounts={selectedCommonsCounts}
+            externalConfig={externalConfig}
+            isLoading={isLoadingExploreButton}
+            setIsLoading={setIsLoadingExploreButton}
+          />
+
           <ReduxExplorerButtonGroup {...buttonGroupProps} />
         </div>
       </div>

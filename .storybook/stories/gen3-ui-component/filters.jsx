@@ -201,6 +201,16 @@ const filterConfig = {
   ],
 };
 
+const [filterCounts, setFilterCounts] = useState({});
+
+const handleCountUpdate = (label, count) => {
+  setFilterCounts(prev => ({
+    ...prev,
+    [label]: count,
+  }));
+};
+
+
 storiesOf('Filters', module)
   .add('SingleSelectFilter', () => (
     <div>
@@ -209,47 +219,55 @@ storiesOf('Filters', module)
         onSelect={action('checked')}
         count={1}
         accessible
+        onCountUpdate={handleCountUpdate}
       />
       <SingleSelectFilter
         label='Female'
         onSelect={action('checked')}
         count={2}
         accessible
+        onCountUpdate={handleCountUpdate}
       />
       <SingleSelectFilter
         label='Option3'
         onSelect={action('checked')}
         count={-1}
         accessible
+        onCountUpdate={handleCountUpdate}
       />
       <SingleSelectFilter
         label='Option4'
         onSelect={action('checked')}
         count={4}
         accessible={false}
+        onCountUpdate={handleCountUpdate}
       />
       <SingleSelectFilter
         label='Option5'
         onSelect={action('checked')}
         count={-1}
         accessible={false}
+        onCountUpdate={handleCountUpdate}
       />
       <SingleSelectFilter
         label='Option6'
         onSelect={action('checked')}
         count={123456789}
         accessible
+        onCountUpdate={handleCountUpdate}
       />
       <SingleSelectFilter
         label='Option7'
         onSelect={action('checked')}
         count={-1}
         accessible
+        onCountUpdate={handleCountUpdate}
       />
       <SingleSelectFilter
         label='Option8'
         onSelect={action('checked')}
         count={123456789}
+        onCountUpdate={handleCountUpdate}
       />
     </div>
   ))
@@ -260,7 +278,7 @@ storiesOf('Filters', module)
         onAfterDrag={action('range change')}
         min={0}
         max={100}
-        
+
       />
       <RangeFilter
         label='Range slider from 0.00000000001 to 99.9999999999, with default fixed precision(2), and rangeStep=0.1'

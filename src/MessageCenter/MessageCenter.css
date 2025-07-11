@@ -3,10 +3,17 @@ h2 {
   margin-top: 20px;
 }
 
+#expire-message-hide {
+  position: relative;
+  top: 50px;
+  left: 1000px;
+  padding: 10px;
+}
+
 .message_center_container {
   margin-left: 20px;
   margin-top: 20px;
-  width: 97%;
+  width: 95%;
   border-collapse: collapse;
 }
 
@@ -24,13 +31,30 @@ th {
   color: black;
   text-align: left;
   padding: 8px;
+  padding-left: 20px;
   border-bottom: 2px solid black;
 }
 
 .row-content {
-  cursor: pointer;
   border-bottom: 1px solid #dedede;
-  padding: 8px;
+  padding: 30px;
+}
+
+.more-close-button {
+  color: #155f82;
+  border: none;
+  text-decoration: underline;
+  background: none !important;
+  cursor: pointer;
+}
+
+.more-close-button:focus,
+.more-close-button:active,
+.more-close-button:hover {
+  background: none;
+  border: none;
+  outline: none;
+  box-shadow: none;
 }
 
 td {
@@ -38,10 +62,6 @@ td {
   color: var(--g3-color__gray);
   height: 60px;
   font-size: 14px;
-}
-
-.row-content #id {
-  color: #155f82;
 }
 
 .message-box {

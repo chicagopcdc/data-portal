@@ -1,51 +1,34 @@
 import './Banner.css';
 import { useState, useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { fetchBannerMessage } from '../../redux/messageBanner/asyncThunks';
 
 export default function Banner() {
+  const dispatch = useAppDispatch();
   const [showBanner, setShowBanner] = useState(true);
-  const [bannerData, setBannerData] = useState([]);
+  const { messages, status } = useAppSelector((state) => state.messageBanner);
 
-  function handleExitBanner() {
-    setShowBanner(false);
-  }
-
+  // use fetchBannerMessage thunk to dispatch
   useEffect(() => {
-    fetch('/amanuensis/notifications', {
-      method: 'GET',
-      credentials: 'include',
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error('Failed to fetch notifications.');
-        }
-        return res.json();
-      })
-      .then((data) => {
-        console.log('Notifications: ', data);
-        setBannerData(data);
-      })
-      .catch((error) => {
-        console.error('Fetch error:', error);
-      });
-  }, []);
+    dispatch(fetchBannerMessage());
+  }, [dispatch]);
 
   // set the message shown on the banner to be the first one received
   // from array given by API endpoint '/amanuensis/notifications' (unread notifications)
   // if that array is empty, then no banner is shown
-  let msg;
+  let msg = null;
   function setMsg() {
-    if (bannerData.length === 0) {
-      msg = null;
+    if (messages.length === 0) {
       setShowBanner(false);
     } else {
-      msg = bannerData[0];
+      msg = messages[0];
     }
   }
-  useEffect(setMsg, [bannerData]);
+  useEffect(setMsg, [messages]);
 
   return (
     <>
-      {showBanner && (
+      {showBanner && status === 'successful' && (
         <div className='message-banner'>
           <div className='banner-text'>
             <p> {msg} </p>
@@ -54,7 +37,12 @@ export default function Banner() {
               Message Center).
             </p>
           </div>
-          <button className='exit-button' onClick={handleExitBanner}>
+          <button
+            className='exit-button'
+            onClick={() => {
+              setShowBanner(false);
+            }}
+          >
             X
           </button>
         </div>

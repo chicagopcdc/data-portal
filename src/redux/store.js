@@ -17,6 +17,7 @@ import userAccessReducer from './userAccess/slice';
 import userProfileReducer from './userProfile/slice';
 import versionInfoReducer from './versionInfo/slice';
 import messageCenterReducer from './messageCenter/slice';
+import messageBannerReducer from './messageBanner/slice';
 
 const preloadedState = {
   user:
@@ -51,6 +52,7 @@ const store = configureStore({
     userProfile: userProfileReducer,
     versionInfo: versionInfoReducer,
     messageCenter: messageCenterReducer,
+    messageBanner: messageBannerReducer,
   },
   devTools: process.env.NODE_ENV !== 'production',
   preloadedState,

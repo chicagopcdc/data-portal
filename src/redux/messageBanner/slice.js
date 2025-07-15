@@ -20,7 +20,7 @@ const slice = createSlice({
         state.messages = action.payload;
       })
       .addCase(fetchBannerMessage.rejected, (state) => {
-        state.status = 'loading';
+        state.status = 'failed';
       });
   },
 });

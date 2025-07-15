@@ -13,7 +13,7 @@ export const fetchMessages = createAsyncThunk(
       });
 
       if (status !== 200) {
-        console.error(`fetchMessages failed to with status ${status}`);
+        console.error(`fetchMessages failed with status ${status}`);
         return rejectWithValue('Failed to fetch messages');
       }
       return data;

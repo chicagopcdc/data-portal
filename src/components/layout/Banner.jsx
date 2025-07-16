@@ -6,6 +6,7 @@ import { fetchBannerMessage } from '../../redux/messageBanner/asyncThunks';
 export default function Banner() {
   const dispatch = useAppDispatch();
   const [showBanner, setShowBanner] = useState(true);
+  const [msg, setMsg] = useState(null);
   const { messages, status } = useAppSelector((state) => state.messageBanner);
 
   // use fetchBannerMessage thunk to dispatch
@@ -16,15 +17,14 @@ export default function Banner() {
   // set the message shown on the banner to be the first one received
   // from array given by API endpoint '/amanuensis/notifications' (unread notifications)
   // if that array is empty, then no banner is shown
-  let msg = null;
-  function setMsg() {
+  function assignMsg() {
     if (messages.length === 0) {
       setShowBanner(false);
     } else {
-      msg = messages[0];
+      setMsg(messages[0]);
     }
   }
-  useEffect(setMsg, [messages]);
+  useEffect(assignMsg, [messages]);
 
   return (
     <>

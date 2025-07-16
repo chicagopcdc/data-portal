@@ -22,6 +22,7 @@ export default function Banner() {
       setShowBanner(false);
     } else {
       setMsg(messages[0].message);
+      setShowBanner(true);
     }
   }
   useEffect(assignMsg, [messages]);

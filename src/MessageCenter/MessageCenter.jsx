@@ -46,24 +46,29 @@ function MessageCenter() {
   }
 
   return (
-    <div>
+    <div className='message_center_container'>
       <h2>Your Message Center</h2>
-      <Button
-        className=' g3-button g3-button--primary'
-        id='expire-message-hide'
-        label={
-          showExpiredMsgs ? 'Hide expired messages' : 'Show expired messages'
-        }
-        onClick={handleExpMsgClick}
-      />
-
-      <table className='message_center_container'>
+      <table className='table-container'>
         <thead>
           <tr>
-            {tableHeader.map((header, idx) => (
-              <th key={idx}>{header}</th>
-            ))}
+            <th>{tableHeader[0]}</th>
+            <th>{tableHeader[1]}</th>
+            <th className='message-header'>
+              <span>{tableHeader[2]}</span>
+              <Button
+                className=' g3-button g3-button--primary'
+                id='expire-message-hide'
+                label={
+                  showExpiredMsgs
+                    ? 'Hide expired messages'
+                    : 'Show expired messages'
+                }
+                onClick={handleExpMsgClick}
+              />
+            </th>
           </tr>
+        </thead>
+        <tbody>
           {notifData.length === 0 && status === 'succeeded' && (
             <tr>
               <td colSpan={tableHeader.length}>
@@ -71,9 +76,7 @@ function MessageCenter() {
               </td>
             </tr>
           )}
-        </thead>
 
-        <tbody>
           {notifData.map((msg, index) => {
             const isLong = msg.message.length > LONG_MESSAGE_LEN;
             const isSelected = msgIdx === index;
@@ -83,11 +86,9 @@ function MessageCenter() {
             return (
               <React.Fragment key={index}>
                 <tr className='row-content'>
-                  <td className='row-content'>{formattedDate}</td>
-                  <td className='row-content'>
-                    {msg.active ? 'False' : 'True'}
-                  </td>
-                  <td className='row-content'>
+                  <td>{formattedDate}</td>
+                  <td>{msg.active ? 'False' : 'True'}</td>
+                  <td>
                     {!isLong && msg.message}
                     {isLong && (
                       <>

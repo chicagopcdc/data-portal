@@ -2,7 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import { fetchBannerMessage } from './asyncThunks';
 
 const initialState = {
-  messages: '',
+  messages: [],
   status: 'idle',
 };
 

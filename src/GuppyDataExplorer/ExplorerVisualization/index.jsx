@@ -166,6 +166,7 @@ function ExplorerVisualization({
   accessibleCount = 0,
   totalCount = 0,
   aggsChartData = {},
+  aggsExternalData = [],
   rawData = [],
   allFields = [],
   filter = {},
@@ -278,8 +279,7 @@ function ExplorerVisualization({
   const isDataRequestEnabled = config.dataRequests?.enabled ?? false;
 
   // Capture counts for external_resources and pass on
-  // Get the histogram data for external resource names from aggsChartData
-  const externalResourceData = aggsChartData["external_references"]?.["external_resource_name"]?.histogram || [];
+  const externalResourceData = aggsExternalData || [];
 
   // Get the list of resource names from the config file (commons_dict)
   const resourceNames = externalConfig?.commons_dict
@@ -293,6 +293,8 @@ function ExplorerVisualization({
 
     // If a bucket is found, use its count; otherwise, set count to 0
     const count = bucket ? bucket.count : 0;
+
+
 
     // Return an object with resourceName and count so frontend can use it
     return {
@@ -425,6 +427,7 @@ ExplorerVisualization.propTypes = {
   accessibleCount: PropTypes.number, // inherited from GuppyWrapper
   totalCount: PropTypes.number, // inherited from GuppyWrapper
   aggsChartData: PropTypes.object, // inherited from GuppyWrapper
+  aggsExternalData: PropTypes.array, // inherited from GuppyWrapper
   rawData: PropTypes.array, // inherited from GuppyWrapper
   allFields: PropTypes.array, // inherited from GuppyWrapper
   filter: PropTypes.object, // inherited from GuppyWrapper

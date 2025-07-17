@@ -294,8 +294,6 @@ function ExplorerVisualization({
     // If a bucket is found, use its count; otherwise, set count to 0
     const count = bucket ? bucket.count : 0;
 
-
-
     // Return an object with resourceName and count so frontend can use it
     return {
       resourceName: name,

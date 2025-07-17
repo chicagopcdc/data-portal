@@ -72,24 +72,24 @@ export type GqlNestedAnchoredFilter = {
   nested: {
     path: string;
     AND:
-      | [GqlInFilter]
-      | [GqlInFilter, { AND: GqlFilter[] } | { OR: GqlFilter[] }];
+    | [GqlInFilter]
+    | [GqlInFilter, { AND: GqlFilter[] } | { OR: GqlFilter[] }];
   };
 };
 
 export type GqlNestedFilter =
   | GqlNestedAnchoredFilter
   | {
-      nested:
-        | {
-            path: string;
-            AND: GqlFilter[];
-          }
-        | {
-            path: string;
-            OR: GqlFilter[];
-          };
+    nested:
+    | {
+      path: string;
+      AND: GqlFilter[];
+    }
+    | {
+      path: string;
+      OR: GqlFilter[];
     };
+  };
 
 export type GqlSearchFilter = {
   search: {
@@ -192,10 +192,10 @@ export type SimpleAggsData = {
 
 export type AggsData = {
   [x: string]:
-    | {
-        histogram: AggsCount[];
-      }
-    | SimpleAggsData;
+  | {
+    histogram: AggsCount[];
+  }
+  | SimpleAggsData;
 };
 
 export type FilterChangeHandler = (filter: FilterState) => void;
@@ -204,6 +204,7 @@ export type GuppyData = {
   accessibleCount: number;
   aggsChartData: SimpleAggsData;
   aggsData: AggsData;
+  aggsExternalData: { key: string; count: number }[];
   allFields: string[];
   anchorValue: string;
   filter: FilterState;

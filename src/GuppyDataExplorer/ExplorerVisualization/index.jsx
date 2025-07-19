@@ -168,6 +168,7 @@ function ExplorerVisualization({
   accessibleCount = 0,
   totalCount = 0,
   aggsChartData = {},
+  aggsExternalData = [],
   rawData = [],
   allFields = [],
   filter = {},
@@ -284,21 +285,26 @@ function ExplorerVisualization({
   };
   const isDataRequestEnabled = config.dataRequests?.enabled ?? false;
 
-  // Explore button data (Histogram) for all commons
-  const externalResourceData =
-    aggsChartData['external_references.external_resource_name']?.histogram ||
-    [];
+  // Capture counts for external_resources and pass on
+  const externalResourceData = aggsExternalData || [];
 
-  // Grab from the config, and provide counts to determine the explorer button response
+  // Get the list of resource names from the config file (commons_dict)
   const resourceNames = externalConfig?.commons_dict
     ? Object.values(externalConfig.commons_dict)
     : [];
 
+  // Loop through each resource name and match it with data from ES histogram
   const selectedCommonsCounts = resourceNames.map((name) => {
-    const bucket = externalResourceData.find((b) => b.key === name);
+    // Find the matching bucket from the histogram
+    const bucket = externalResourceData.find(b => b.key === name);
+
+    // If a bucket is found, use its count; otherwise, set count to 0
+    const count = bucket ? bucket.count : 0;
+
+    // Return an object with resourceName and count so frontend can use it
     return {
       resourceName: name,
-      count: bucket ? bucket.count : 0,
+      count,
     };
   });
 
@@ -358,6 +364,7 @@ function ExplorerVisualization({
           )}
 
           {/* Sending to the ExplorerExploreExternalButton Econfig and counts dynamically */}
+
           {patientIdsConfig?.export && (
             <ExplorerExploreExternalButton
               filter={filter}
@@ -367,6 +374,7 @@ function ExplorerVisualization({
               setIsLoading={setIsLoadingExploreButton}
             />
           )}
+
           <ReduxExplorerButtonGroup {...buttonGroupProps} />
         </div>
       </div>
@@ -440,6 +448,7 @@ ExplorerVisualization.propTypes = {
   accessibleCount: PropTypes.number, // inherited from GuppyWrapper
   totalCount: PropTypes.number, // inherited from GuppyWrapper
   aggsChartData: PropTypes.object, // inherited from GuppyWrapper
+  aggsExternalData: PropTypes.array, // inherited from GuppyWrapper
   rawData: PropTypes.array, // inherited from GuppyWrapper
   allFields: PropTypes.array, // inherited from GuppyWrapper
   filter: PropTypes.object, // inherited from GuppyWrapper

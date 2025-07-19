@@ -67,6 +67,7 @@ const ReduxQueryNode = lazy(() => import('./QueryNode/ReduxQueryNode'));
 const SubmissionPage = lazy(() => import('./Submission/page'));
 const ResourceBrowser = lazy(() => import('./ResourceBrowser'));
 const UserProfile = lazy(() => import('./UserProfile/ReduxUserProfile'));
+const MessageCenter = lazy(() => import('./MessageCenter/MessageCenter.jsx'));
 // const CoreMetadataPage = lazy(() => import('./CoreMetadata/page'));
 // const ErrorWorkspacePlaceholder = lazy(() =>
 //   import('./Workspace/ErrorWorkspacePlaceholder')
@@ -307,6 +308,14 @@ function App() {
             }
           />
         </Route>
+        <Route
+          path='messages'
+          element={
+            <ProtectedContent preload={() => dispatch(fetchAccess())}>
+              <MessageCenter />
+            </ProtectedContent>
+          }
+        />
         <Route path='*' element={<Navigate to='' replace />} />
         {/* <Route
             path='/indexing'

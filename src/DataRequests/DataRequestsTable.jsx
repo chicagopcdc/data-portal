@@ -10,6 +10,8 @@ import { useAppSelector } from '../redux/hooks';
 import DataDownloadButton from './DataDownloadButton';
 import './DataRequests.css';
 import Spinner from '../gen3-ui-component/components/Spinner/Spinner';
+import Tooltip from 'rc-tooltip';
+import 'rc-tooltip/assets/bootstrap_white.css';
 
 /** @typedef {import("../redux/types").RootState} RootState */
 /** @typedef {import("../redux/dataRequest/types").ResearcherInfo} ResearcherInfo */
@@ -18,6 +20,7 @@ import Spinner from '../gen3-ui-component/components/Spinner/Spinner';
 const tableHeader = [
   'ID',
   'Research Title',
+  'Description',
   'Researcher',
   'Submitted Date',
   'Status',
@@ -43,14 +46,9 @@ function parseResearcherInfo(researcher) {
  * @param {function} args.rowAction
  * @param {boolean} args.isAdminActive
  */
-function parseTableData({
-  projects,
-  userId,
-  rowAction,
-  isAdminActive,
-}) {
+function parseTableData({ projects, userId, rowAction, isAdminActive }) {
   // projects are coming from props and are readonly. Have to make a shallow copy to sort them
-  const copiedProjects = projects? [...projects]: [];
+  const copiedProjects = projects ? [...projects] : [];
   return copiedProjects
     .sort((a, b) => {
       const dateA = Date.parse(a.submitted_at);
@@ -64,9 +62,24 @@ function parseTableData({
       return 0;
     })
     .map((project) => {
+      const descriptionContent =
+        project.description && project.description.length > 100 ? (
+          <Tooltip
+            placement='right'
+            arrowContent={<div className='rc-tooltip-arrow-inner' />}
+            overlay={<span>{project.description}</span>}
+            trigger={['hover', 'focus']}
+          >
+            <span>{project.description.slice(0, 100) + '…'}</span>
+          </Tooltip>
+        ) : (
+          project.description || ''
+        );
+
       const row = [
         project.id,
         project.name,
+        descriptionContent,
         project.researcher?.id === userId
           ? 'Me'
           : parseResearcherInfo(project.researcher),
@@ -206,28 +219,33 @@ function DataRequestsTable({
             </div>
           </Popup>
         )}
-          {isVerifyPopupOpen && (
-            <Popup
-              title='Verify Person Or Entity Using The Consolidated Screening List'
-              onClose={() => {
-                setVerifyPopupOpen(false);
-              }}
-            >
-              <VerifyPersonOrEntityUsingCSL />
-            </Popup>
-          )}
-          {projectDisplayOptions && (
-            <Popup
+        {isVerifyPopupOpen && (
+          <Popup
+            title='Verify Person Or Entity Using The Consolidated Screening List'
+            onClose={() => {
+              setVerifyPopupOpen(false);
+            }}
+          >
+            <VerifyPersonOrEntityUsingCSL />
+          </Popup>
+        )}
+        {projectDisplayOptions && (
+          <Popup
             hideFooter
             title={`Edit "${projectDisplayOptions.name}"`}
             onClose={closeProjectActionPopup}
-            >
+          >
             <AdminProjectActions
               project={projectDisplayOptions}
               projectStates={projectStates}
               savedFilterSets={savedFilterSets}
               onAction={(type) => {
-                if (type === 'PROJECT_STATE' || type === 'DELETE_REQUEST' || type === 'SUCCESSFUL_FILTER_SET_CHANGE') {
+                if (
+                  type === 'PROJECT_STATE' ||
+                  type === 'DELETE_REQUEST' ||
+                  type === 'SUCCESSFUL_FILTER_SET_CHANGE' ||
+                  type === 'SUCCESSFUL_APPROVED_URL_CHANGE'
+                ) {
                   shouldReloadProjectsOnActionClose = true;
                 }
               }}

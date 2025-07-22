@@ -30,9 +30,9 @@ const statusEndpoint = `${GUPPY_URL}/_status`;
 function jsonToFormat(json, format) {
   return format in FILE_DELIMITERS
     ? papaparse.unparse(
-        Object.values(json).map((value) => flat(value, { delimiter: '_' })),
-        { delimiter: FILE_DELIMITERS[format] },
-      )
+      Object.values(json).map((value) => flat(value, { delimiter: '_' })),
+      { delimiter: FILE_DELIMITERS[format] },
+    )
     : json;
 }
 
@@ -225,7 +225,7 @@ export function getQueryInfoForAggregationOptionsData({
               );
               if (found === undefined) {
                 filters.push(
-                  /** @type {GqlNestedAnchoredFilter} */ ({
+                  /** @type {GqlNestedAnchoredFilter} */({
                     nested: { path, AND: [anchorFilterPiece] },
                   }),
                 );
@@ -275,11 +275,10 @@ export function buildQueryForAggregationOptionsData({
     ? main.map(buildHistogramQueryStrForField).join('\n')
     : '';
   const mainQueryFragment = hasMainFields
-    ? `main: ${type} ${
-        isFilterEmpty
-          ? '(accessibility: all)'
-          : `(filter: $filter_main, filterSelf: ${filterSelf}, accessibility: all)`
-      } {
+    ? `main: ${type} ${isFilterEmpty
+      ? '(accessibility: all)'
+      : `(filter: $filter_main, filterSelf: ${filterSelf}, accessibility: all)`
+    } {
       ${mainHistogramQueryFragment}
     }`
     : '';
@@ -299,9 +298,8 @@ export function buildQueryForAggregationOptionsData({
       }
     `);
 
-  return `query ${
-    queryVariables.length > 0 ? `(${queryVariables.join(', ')})` : ''
-  } {
+  return `query ${queryVariables.length > 0 ? `(${queryVariables.join(', ')})` : ''
+    } {
     _aggregation {
       ${mainQueryFragment}
       ${unfilteredQueryFragment}
@@ -355,6 +353,65 @@ export function queryGuppyForAggregationOptionsData({
       ...headers,
     },
     body: JSON.stringify({ query, variables }),
+    signal,
+  }).then((response) => response.json());
+}
+
+/**
+ * Sends a query to Guppy to get histogram counts for external references.
+ * This specifically targets the `external_references.external_resource_name` field,
+ * which is used to count how many subjects are linked to each external data source
+ * (like "TARGET - GDC", "GMKF", etc).
+ *
+ * This is used for features like enabling/disabling the Explore button based
+ * on how many matching records exist for each external source.
+ *
+ * @param {object} args
+ * @param {string} args.type - The data type to query (usually "subject")
+ * @param {GqlFilter} [args.gqlFilter] - Optional filters
+ * @param {AbortSignal} [args.signal] - Optional abort controller signal
+ * @returns {Promise<object>} A promise that resolves with the raw response
+ */
+export function queryGuppyForExternalResourceAggs({ type, gqlFilter, signal }) {
+  const query = (
+    gqlFilter !== undefined
+      ? `query ($filter: JSON) {
+        _aggregation {
+          ${type} (filter: $filter, accessibility: all) {
+            external_references {
+              external_resource_name {
+                histogram {
+                  key
+                  count
+                }
+              }
+            }
+          }
+        }
+      }`
+      : `query {
+        _aggregation {
+          ${type} (accessibility: all) {
+            external_references {
+              external_resource_name {
+                histogram {
+                  key
+                  count
+                }
+              }
+            }
+          }
+        }
+      }`
+  ).replace(/\s+/g, ' ');
+
+  return fetch(graphqlEndpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers,
+    },
+    body: JSON.stringify({ query, variables: { filter: gqlFilter } }),
     signal,
   }).then((response) => response.json());
 }
@@ -416,12 +473,12 @@ export function queryGuppyForSubAggregationData({
       ? `query ($filter: JSON, $nestedAggFields: JSON) {
         _aggregation {
             ${type} (filter: $filter, filterSelf: ${checkFilterSelf(
-              gqlFilter,
-            )}, nestedAggFields: $nestedAggFields, accessibility: all) {
+        gqlFilter,
+      )}, nestedAggFields: $nestedAggFields, accessibility: all) {
               ${nestedHistogramQueryStrForEachField(
-                mainField,
-                numericAggAsText,
-              )}
+        mainField,
+        numericAggAsText,
+      )}
             }
           }
         }`
@@ -598,10 +655,10 @@ function parseSimpleFilter(fieldName, filterValues) {
       }
       return __combineMode === 'AND'
         ? {
-            AND: selectedValues.map((selectedValue) => ({
-              IN: { [fieldName]: [selectedValue] },
-            })),
-          }
+          AND: selectedValues.map((selectedValue) => ({
+            IN: { [fieldName]: [selectedValue] },
+          })),
+        }
         : { IN: { [fieldName]: selectedValues } };
     }
     if (__combineMode !== undefined) {
@@ -642,7 +699,7 @@ function parseAnchoredFilters(anchorName, anchoredFilterState, combineMode) {
       if (!(path in nestedFilterIndices)) {
         nestedFilterIndices[path] = nestedFilterIndex;
         nestedFilters.push(
-          /** @type {GqlNestedAnchoredFilter} */ ({
+          /** @type {GqlNestedAnchoredFilter} */({
             nested: { path, AND: [anchorFilter, { [combineMode]: [] }] },
           }),
         );
@@ -699,7 +756,7 @@ export function getGQLFilter(filterState) {
         if (!(nested.path in nestedFilterIndices)) {
           nestedFilterIndices[nested.path] = nestedFilterIndex;
           nestedFilters.push(
-            /** @type {GqlNestedFilter} */ ({
+            /** @type {GqlNestedFilter} */({
               nested: { path: nested.path, [combineMode]: [] },
             }),
           );
@@ -720,7 +777,7 @@ export function getGQLFilter(filterState) {
           if (!(path in nestedFilterIndices)) {
             nestedFilterIndices[path] = nestedFilterIndex;
             nestedFilters.push(
-              /** @type {GqlNestedFilter} */ ({
+              /** @type {GqlNestedFilter} */({
                 nested: { path, [combineMode]: [] },
               }),
             );
@@ -750,22 +807,22 @@ export function getFilterState(gqlFilter) {
   const filterValues = gqlFilter[combinator];
 
   if (
-    gqlFilter === undefined || 
+    gqlFilter === undefined ||
     Object.keys(gqlFilter[combinator]).length === 0
   )
     return undefined;
-  
+
   if (combinator === 'AND' || combinator === 'OR') {
     /** @type {import('../types').BaseFilter} */
     let values = {};
     for (const filterValue of filterValues) {
       const valueCombinator = Object.keys(filterValue)[0];
       const value = filterValue[valueCombinator];
-  
+
       if (valueCombinator === 'IN') {
         const option = {};
         const optionFields = Object.keys(value);
-        
+
         for (let field of optionFields) {
           option[field] = {
             __type: 'OPTION',
@@ -775,13 +832,13 @@ export function getFilterState(gqlFilter) {
         }
 
         values = { ...option, ...values };
-      } 
+      }
       // else if (valueCombinator === '!=') {
-        // TODO: handle not filter here
+      // TODO: handle not filter here
       // } else if (valueCombinator === 'GTE' || valueCombinator === 'LTE') {
-        // TODO: handle range filter here
+      // TODO: handle range filter here
       // } else if (valueCombinator === 'AND' || valueCombinator === 'OR') {
-        // TODO: handle anchor filter here
+      // TODO: handle anchor filter here
       // }
     }
 

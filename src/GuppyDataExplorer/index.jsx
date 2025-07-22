@@ -161,6 +161,7 @@ function ExplorerDashboard() {
               <ExplorerVisualization
                 accessibleCount={data.accessibleCount}
                 aggsChartData={data.aggsChartData}
+                aggsExternalData={data.aggsExternalData}
                 allFields={data.allFields}
                 filter={data.filter}
                 isLoadingAggsData={data.isLoadingAggsData}
@@ -176,6 +177,7 @@ function ExplorerDashboard() {
                 getTotalCountsByTypeAndFilter={
                   data.getTotalCountsByTypeAndFilter
                 }
+                tabsOptions={data.tabsOptions}
               />
             </Dashboard.Main>
           </Dashboard>

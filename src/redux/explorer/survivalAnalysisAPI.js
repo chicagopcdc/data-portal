@@ -1,5 +1,5 @@
 import { fetchWithCreds } from '../utils.fetch';
-import { isSurvivalAnalysisEnabled } from './utils';
+import { isSurvivalAnalysisEnabled, isTableOneEnabled } from './utils';
 
 /** @typedef {import('../../GuppyComponents/types').GqlFilter} GqlFilter */
 /** @typedef {import('./types').ExplorerConfig} ExplorerConfig */

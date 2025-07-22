@@ -225,3 +225,64 @@ Below is an example, with inline comments describing what each JSON block config
 If you are looking to copy/paste configuration as a start, please use something in the Github repo as the inline comments below will become an issue.
 
 See [this page](./multi_tab_explorer.md) for further information on `explorerConfig` configuration option.
+
+## Configuring units for range filters in pcdc.json 
+
+Information in `pcdc.json` allows the configuration of the filters in the explorer. 
+
+Range filters (filters with a min and max) can be configured according to their specific context. For example, age filters like 'Age at Censor Status' is configured to contain a Unit Calculator (which converts months/years to days) while numerical filters like 'Year at Initial Diagnoses' don't have a Unit Calculator. Currently, all Unit Calculators convert months/years to days. [More on how to change this below](#to-add-further-configurations). 
+
+All unit calculator configurations can be adjusted in `pcdc.json`, by adding a new block in "filters" called "unitCalcConfig". 
+
+unitCalcConfig contains two fields (they must be named exactly this): `ageUnits` and `calculatorMapping`. 
+1. `ageUnits` allows changes to the `quantity`, `desiredUnit`, and `selectUnits` that are used in the Unit Calculator itself.
+2. `calculatorMapping` separates filters into 2 types: "number" filters and "age" filters, such that all "age" filters render a Unit Calculator, while "number" filters don't. 
+
+A working configuration of `unitCalcConfig` in `pcdc.json` can be placed after "filters"->"tabs":
+```
+  ...
+    "filters": {
+      "anchor": {...},
+      "tabs": [...],
+      "unitCalcConfig": {
+          "ageUnits": {
+            "quantity": "age",
+            "desiredUnit": "days",
+            "selectUnits": { "months": 30, "years": 365 }
+          },
+          "calculatorMapping": {
+            "number": [
+              "year_at_disease_phase",
+              "tumor_assessments.longest_diam_dim1",
+              "radiation_therapies.rt_dose",
+              "tumor_assessments.necrosis_pct",
+              "labs.lab_result_numeric" 
+            ],
+            "age": [
+              "age_at_censor_status",
+              "tumor_assessments.age_at_tumor_assessment",
+              "molecular_analysis.age_at_molecular_analysis",
+              "secondary_malignant_neoplasm.age_at_smn"
+            ]
+          }
+        }
+      },
+    }
+...
+```
+
+For example, to add configurations for an existing range filter with the field name "year_of_birth" as a numerical range filter (one without a Unit Calculator), we append "year_of_birth" as another element in the list "unitCalcConfig"-> "calculatorMapping" -> "number". 
+
+This setup is currently not able to accommodate any other age units apart from `ageUnits`. See the section below for how to add further configurations to change this. 
+
+### To add further configurations 
+
+The information in `ageUnits` and `calculatorMapping` is imported in `src/gen3-ui-component/components/filters/FilterGroup/index.jsx` as `unitCalcTitles` (filterConfig.unitCalcConfig.calculatorMapping) and `unitCalcConfig` (filterConfig.unitCalcConfig.ageUnits). They can then be used to configure the filters and be passed down as props to other files.
+
+For example, `unitCalcConfig` is passed as a prop from `~FilterGroup/index.jsx` to `~/FilterSection/index.jsx`, and used in `~/RangeFilter/index.jsx` and `~RangeFilter/UnitCalculator/UnitCalculator.jsx`. 
+
+To add other available age units, add another block `myNewUnits` with the fields "quantity", "desiredUnit", and "selectUnits" (similar to `ageUnits`) to "unitCalcConfig" in `pcdc.json`. Then, it can be imported accordingly as `filterConfig.unitCalcConfig.myNewUnits` in `src/gen3-ui-component/components/filters/FilterGroup/index.jsx`, and can be used to configure the filters or passed down as props to other files. 
+
+
+
+

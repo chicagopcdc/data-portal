@@ -255,6 +255,8 @@ const slice = createSlice({
           ...getCurrentConfig(explorerId),
           // keep survival config
           survivalAnalysisConfig: state.config.survivalAnalysisConfig,
+          // keep table one config
+          tableOneConfig: state.config.tableOneConfig,
         };
         state.explorerId = explorerId;
 

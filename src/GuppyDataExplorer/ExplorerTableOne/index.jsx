@@ -199,15 +199,6 @@ function ExplorerTableOne(tabsOptions) {
                             ))}
                           </tbody>
                         </table>
-
-                        {/* <div className='summary'>
-                          <p>Total Count: {result.data.totalCount}</p>
-                          <p>User submitted Cohort: {result.data.trueCount}</p>
-                          <p>
-                            All Cohort Minus User submitted:{' '}
-                            {result.data.totalCount - result.data.trueCount}
-                          </p>
-                        </div> */}
                       </div>
                     )}
                   </>

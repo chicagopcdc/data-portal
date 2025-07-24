@@ -1,6 +1,7 @@
 /* eslint-disable no-shadow */
 import { FILTER_TYPE } from '../ExplorerFilterSetWorkspace/utils';
-
+import { getGQLFilter } from '../../GuppyComponents/Utils/queries';
+import { getConsortiumList } from '../../redux/explorer/survivalAnalysisAPI.js';
 /** @typedef {import('./types').RisktableData} RisktableData */
 
 /** @typedef {import('./types').SurvivalData} SurvivalData */
@@ -9,26 +10,31 @@ import { FILTER_TYPE } from '../ExplorerFilterSetWorkspace/utils';
  * @param {string[]} consortiums
  * @param {import('../types').ExplorerFilter} filter
  */
-export function checkIfFilterInScope(consortiums, filter) {
+export async function checkIfFilterInScope(consortiums, filter) {
   if (consortiums.length === 0) return true;
 
   if (filter.__type === FILTER_TYPE.COMPOSED)
-    return filter.value.every((f) => checkIfFilterInScope(consortiums, f));
+    return filter.value.every(
+      async (f) => await checkIfFilterInScope(consortiums, f),
+    );
 
-  const entries = Object.entries(filter.value ?? {});
-  const consortiumEntry = entries.find(([key]) => key === 'consortium');
+  for (const [key, val] of Object.entries(filter.value ?? {}))
+    if (
+      key === 'consortium' &&
+      val.__type === FILTER_TYPE.OPTION &&
+      val.selectedValues.some((v) => !consortiums.includes(v))
+    )
+      return false;
 
-  // If 'consortium' is not present as a key, return false
-  if (!consortiumEntry) return false;
-
-  const [, val] = consortiumEntry;
-  if (
-    val.__type === FILTER_TYPE.OPTION &&
-    val.selectedValues.some((v) => !consortiums.includes(v))
-  )
+  let consortiumList = await getConsortiumList(getGQLFilter(filter));
+  // check that every value in consortiums is included in the input consortiums
+  if (consortiumList.length > 0) {
+    return consortiumList.every((consortium) =>
+      consortiums.includes(consortium),
+    );
+  } else {
     return false;
-
-  return true;
+  }
 }
 
 /**

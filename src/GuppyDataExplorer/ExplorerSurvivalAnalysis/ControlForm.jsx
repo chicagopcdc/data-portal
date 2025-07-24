@@ -119,27 +119,58 @@ function ControlForm({ countByFilterSet, onSubmit }) {
   const [survivalType, setSurvivalType] = useState(survivalTypeOptions[0]);
   const [selectFilterSet, setSelectFilterSet] = useState(null);
   const [usedFilterSetIds, setUsedFilterSetIds] = useState(emptyFilterSetIds);
+  const [filterSetsConsortiumScope, setFilterSetsConsortiumScope] = useState(
+    {},
+  );
+
+  // Add effect to check scope when filter sets change
+  useEffect(() => {
+    const checkFilterSetScopes = async () => {
+      const newScopes = { ...filterSetsConsortiumScope };
+
+      for (const filterSet of [defaultFilterSet, ...savedFilterSets]) {
+        if (
+          usedFilterSetIds.includes(filterSet.id) &&
+          !(filterSet.id in newScopes)
+        ) {
+          try {
+            const inScope = await checkIfFilterInScope(
+              consortiums,
+              filterSet.filter,
+            );
+            newScopes[filterSet.id] = inScope;
+          } catch (error) {
+            console.error('Error checking filter scope:', error);
+            newScopes[filterSet.id] = false; // Default to false on error
+          }
+        }
+      }
+
+      setFilterSetsConsortiumScope(newScopes);
+    };
+
+    if (usedFilterSetIds.length > 0) {
+      checkFilterSetScopes();
+    }
+  }, [usedFilterSetIds, consortiums, savedFilterSets]);
 
   const filterSetOptions = [];
   const usedFilterSets = [];
   for (const filterSet of [defaultFilterSet, ...savedFilterSets]) {
     const { name: label, id: value } = filterSet;
     const isUsed = usedFilterSetIds.includes(value);
-    const isOutOfScope = !checkIfFilterInScope(consortiums, filterSet.filter);
     const isDisallowedVariables = checkIfFilterHasDisallowedVariables(
       disallowedVariables,
       filterSet.filter,
     );
 
-    const isDisabled = isUsed || isOutOfScope || isDisallowedVariables;
+    const isDisabled = isUsed || isDisallowedVariables;
 
     const disabledOverlay = isUsed
       ? 'This Filter Set is already in use.'
-      : isOutOfScope
-        ? 'This Filter Set includes out of scope consortia.'
-        : isDisallowedVariables
-          ? 'This Filter Set includes disallowed variables and cannot be used for survival analysis.'
-          : '';
+      : isDisallowedVariables
+        ? 'This Filter Set includes disallowed variables and cannot be used for survival analysis.'
+        : '';
 
     filterSetOptions.push({
       label: isDisabled ? (
@@ -160,7 +191,11 @@ function ControlForm({ countByFilterSet, onSubmit }) {
 
     if (isUsed) {
       const isStale = staleFilterSetIdSet.has(value);
-      usedFilterSets.push({ ...filterSet, isStale });
+      usedFilterSets.push({
+        ...filterSet,
+        isStale,
+        inScope: filterSetsConsortiumScope[value] ?? null, // null indicates loading
+      });
     }
   }
 
@@ -188,6 +223,7 @@ function ControlForm({ countByFilterSet, onSubmit }) {
     setSurvivalType(survivalTypeOptions[0]);
     setUsedFilterSetIds([]);
     setIsInputChanged(false);
+    setFilterSetsConsortiumScope({});
   };
 
   return (
@@ -366,15 +402,33 @@ function ControlForm({ countByFilterSet, onSubmit }) {
       </div>
       <div className='explorer-survival-analysis__button-group'>
         <Button label='Reset' buttonType='default' onClick={resetUserInput} />
-        <Button
-          label='Apply'
-          buttonType='primary'
-          onClick={submitUserInput}
-          enabled={
-            usedFilterSets.length > 0 &&
-            (isInputChanged || staleFilterSetIdSet.size > 0)
-          }
-        />
+        {usedFilterSets.length > 0 &&
+        usedFilterSets.every((filterSet) => filterSet.inScope === true) &&
+        (isInputChanged || staleFilterSetIdSet.size > 0) ? (
+          <span>
+            <Button
+              label='Apply'
+              buttonType='primary'
+              onClick={submitUserInput}
+              enabled={true}
+            />
+          </span>
+        ) : (
+          <Tooltip
+            arrowContent={<div className='rc-tooltip-arrow-inner' />}
+            mouseLeaveDelay={0}
+            overlay={
+              !usedFilterSets.every((filterSet) => filterSet.inScope === true)
+                ? 'Your filter-set is out of scope'
+                : 'You are missing some required fields'
+            }
+            placement='right'
+          >
+            <span>
+              <Button label='Add' buttonType='default' enabled={false} />
+            </span>
+          </Tooltip>
+        )}
       </div>
     </form>
   );

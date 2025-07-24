@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Tooltip from 'rc-tooltip';
 import 'rc-tooltip/assets/bootstrap_white.css';
 import Select from 'react-select';
@@ -48,26 +48,56 @@ function CovarForm({ onSubmit, options }) {
   const [usedFilterSetIds, setUsedFilterSetIds] = useState(emptyFilterSetIds);
   const [selectedCovariatesList, setCovariatesList] = useState([]);
   const [selectedCovariates, setSelectedCovariates] = useState(new Set());
+  const [filterSetsConsortiumScope, setFilterSetsConsortiumScope] = useState(
+    {},
+  );
 
+  // Add effect to check scope when filter sets change
+  useEffect(() => {
+    const checkFilterSetScopes = async () => {
+      const newScopes = { ...filterSetsConsortiumScope };
+
+      for (const filterSet of [defaultFilterSet, ...savedFilterSets]) {
+        if (
+          usedFilterSetIds.includes(filterSet.id) &&
+          !(filterSet.id in newScopes)
+        ) {
+          try {
+            const inScope = await checkIfFilterInScope(
+              consortiums,
+              filterSet.filter,
+            );
+            newScopes[filterSet.id] = inScope;
+          } catch (error) {
+            console.error('Error checking filter scope:', error);
+            newScopes[filterSet.id] = false; // Default to false on error
+          }
+        }
+      }
+
+      setFilterSetsConsortiumScope(newScopes);
+    };
+
+    if (usedFilterSetIds.length > 0) {
+      checkFilterSetScopes();
+    }
+  }, [usedFilterSetIds, consortiums, savedFilterSets]);
   const filterSetOptions = [];
   const usedFilterSets = [];
   for (const filterSet of [defaultFilterSet, ...savedFilterSets]) {
     const { name: label, id: value } = filterSet;
     const isUsed = usedFilterSetIds.includes(value);
-    const isOutOfScope = !checkIfFilterInScope(consortiums, filterSet.filter);
     const isDisallowedVariables = checkIfFilterHasDisallowedVariables(
       disallowedVariables,
       filterSet.filter,
     );
-    const isDisabled = isUsed || isOutOfScope || isDisallowedVariables;
+    const isDisabled = isUsed || isDisallowedVariables;
 
     const disabledOverlay = isUsed
       ? 'This Filter Set is already in use.'
-      : isOutOfScope
-        ? 'This Filter Set includes out of scope consortia.'
-        : isDisallowedVariables
-          ? 'This Filter Set includes disallowed variables and cannot be used for survival analysis.'
-          : '';
+      : isDisallowedVariables
+        ? 'This Filter Set includes disallowed variables and cannot be used for survival analysis.'
+        : '';
 
     filterSetOptions.push({
       label: isDisabled ? (
@@ -88,7 +118,12 @@ function CovarForm({ onSubmit, options }) {
 
     if (isUsed) {
       const isStale = staleFilterSetIdSet.has(value);
-      usedFilterSets.push({ ...filterSet, isStale });
+      // check if value is in filterSetsConsortiumScope and if not, update the state value with the new value key
+      usedFilterSets.push({
+        ...filterSet,
+        isStale,
+        inScope: filterSetsConsortiumScope[value] ?? null, // null indicates loading
+      });
     }
   }
 
@@ -129,6 +164,7 @@ function CovarForm({ onSubmit, options }) {
     setSelectedCovariates(new Set());
     setUsedFilterSetIds([]);
     setIsInputChanged(false);
+    setFilterSetsConsortiumScope({});
   };
 
   return (
@@ -262,25 +298,48 @@ function CovarForm({ onSubmit, options }) {
         );
       })}
 
-      <div className='explorer-survival-analysis__button-group'>
+      <div className='explorer-table-one__button-group'>
         <Button
           label='Add Variable'
           buttonType='default'
           onClick={() => setCovariatesList((prev) => [...prev, {}])}
         />
       </div>
-      <div className='explorer-survival-analysis__button-group'>
+      <div className='explorer-table-one__button-group'>
         <Button label='Reset' buttonType='default' onClick={resetUserInput} />
-        <Button
-          label='Apply'
-          buttonType='primary'
-          onClick={submitUserInput}
-          enabled={
-            usedFilterSets.length > 0 &&
-            selectedCovariatesList.length > 0 &&
-            Array.from(selectedCovariates).length > 0
-          }
-        />
+        {usedFilterSets.length > 0 &&
+        selectedCovariatesList.length > 0 &&
+        Array.from(selectedCovariates).length > 0 &&
+        selectedCovariatesList.every(
+          (covariate) =>
+            covariate.type !== 'categorical' ||
+            (covariate.selectedKeys && covariate.selectedKeys.length > 0),
+        ) &&
+        usedFilterSets.every((filterSet) => filterSet.inScope === true) ? (
+          <span>
+            <Button
+              label='Apply'
+              buttonType='primary'
+              onClick={submitUserInput}
+              enabled={true}
+            />
+          </span>
+        ) : (
+          <Tooltip
+            arrowContent={<div className='rc-tooltip-arrow-inner' />}
+            mouseLeaveDelay={0}
+            overlay={
+              !usedFilterSets.every((filterSet) => filterSet.inScope === true)
+                ? 'Your filter-set is out of scope'
+                : 'You are missing some required fields'
+            }
+            placement='right'
+          >
+            <span>
+              <Button label='Add' buttonType='default' enabled={false} />
+            </span>
+          </Tooltip>
+        )}
       </div>
     </form>
   );

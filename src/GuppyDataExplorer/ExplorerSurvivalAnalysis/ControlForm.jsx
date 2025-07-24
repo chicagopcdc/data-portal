@@ -419,7 +419,7 @@ function ControlForm({ countByFilterSet, onSubmit }) {
             mouseLeaveDelay={0}
             overlay={
               !usedFilterSets.every((filterSet) => filterSet.inScope === true)
-                ? 'Your filter-set is out of scope'
+                ? 'Your filter-set contains out of scope consortia'
                 : 'You are missing some required fields'
             }
             placement='right'

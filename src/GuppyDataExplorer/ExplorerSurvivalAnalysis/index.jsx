@@ -18,7 +18,7 @@ import { DEFAULT_END_YEAR, DEFAULT_INTERVAL } from './const';
 function ExplorerSurvivalAnalysis() {
   const dispatch = useAppDispatch();
   const result = useAppSelector(
-    (state) => state.explorer.survivalAnalysisResult
+    (state) => state.explorer.survivalAnalysisResult,
   );
 
   const [isUserCompliant, setIsUserCompliant] = useState(checkUserAgreement());
@@ -41,7 +41,7 @@ function ExplorerSurvivalAnalysis() {
         efsFlag: input.efsFlag,
         shouldRefetch,
         usedFilterSets: input.usedFilterSets,
-      })
+      }),
     );
   };
 

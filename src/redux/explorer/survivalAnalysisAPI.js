@@ -43,3 +43,16 @@ export function fetchConfig() {
     return { ...data, enabled: isSurvivalAnalysisEnabled(data) };
   });
 }
+
+export function getConsortiumList(filter) {
+  return fetchWithCreds({
+    path: '/analysis/tools/stats/consortiums',
+    method: 'POST',
+    body: JSON.stringify({ filter }),
+  }).then(({ response, data, status }) => {
+    if (status !== 200) {
+      throw response.statusText;
+    }
+    return data;
+  });
+}

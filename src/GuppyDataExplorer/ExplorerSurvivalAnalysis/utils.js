@@ -15,18 +15,13 @@ export function checkIfFilterInScope(consortiums, filter) {
   if (filter.__type === FILTER_TYPE.COMPOSED)
     return filter.value.every((f) => checkIfFilterInScope(consortiums, f));
 
-  const entries = Object.entries(filter.value ?? {});
-  const consortiumEntry = entries.find(([key]) => key === 'consortium');
-
-  // If 'consortium' is not present as a key, return false
-  if (!consortiumEntry) return false;
-
-  const [, val] = consortiumEntry;
-  if (
-    val.__type === FILTER_TYPE.OPTION &&
-    val.selectedValues.some((v) => !consortiums.includes(v))
-  )
-    return false;
+  for (const [key, val] of Object.entries(filter.value ?? {}))
+    if (
+      key === 'consortium' &&
+      val.__type === FILTER_TYPE.OPTION &&
+      val.selectedValues.some((v) => !consortiums.includes(v))
+    )
+      return false;
 
   return true;
 }

@@ -20,26 +20,26 @@ Below is an example, with inline comments describing what each JSON block config
         // human readable name of field
         "name": "Case",
         // human readable plural name of field
-        "plural": "Cases"
+        "plural": "Cases",
       },
       {
         "graphql": "_study_count",
         "name": "Study",
-        "plural": "Studies"
-      }
+        "plural": "Studies",
+      },
     ],
     "chartCounts": [
       {
         "graphql": "_case_count",
-        "name": "Case"
+        "name": "Case",
       },
       {
         "graphql": "_study_count",
-        "name": "Study"
-      }
+        "name": "Study",
+      },
     ],
     // which JSON block above to use for displaying aggregate properties on the submission page (/submission)
-    "projectDetails": "boardCounts"
+    "projectDetails": "boardCounts",
   },
   "components": {
     // title of commons that appears on the homepage
@@ -53,7 +53,7 @@ Below is an example, with inline comments describing what each JSON block config
         // optional; text of homepage
         "text": "This is an example Gen3 Data Commons",
         // optional; link for button underneath the text
-        "link": "/submission"
+        "link": "/submission",
       },
       // optional; button “cards” displayed on the bottom of the homepage
       "buttons": [
@@ -67,15 +67,15 @@ Below is an example, with inline comments describing what each JSON block config
           // link for button
           "link": "/DD",
           // label for button
-          "label": "Learn more"
+          "label": "Learn more",
         },
         {
           "name": "Explore Data",
           "icon": "explore",
           "body": "Explore data interactively.",
           "link": "/explorer",
-          "label": "Explore data"
-        }
+          "label": "Explore data",
+        },
       ],
       // optional; the charts on the homepage will be available to the public
       "homepageChartNodes": [
@@ -83,13 +83,13 @@ Below is an example, with inline comments describing what each JSON block config
           // GraphQL field name of node to show a chart for
           "node": "case",
           // plural human readable name of node
-          "name": "Cases"
+          "name": "Cases",
         },
         {
           "node": "study",
-          "name": "Studies"
-        }
-      ]
+          "name": "Studies",
+        },
+      ],
     },
     // details what should be in the navigation bar
     "navigation": {
@@ -99,21 +99,21 @@ Below is an example, with inline comments describing what each JSON block config
           "link": "/DD", // button link
           "name": "Dictionary", // button label
           "icon": "dictionary", // icon from /img/icons for the button
-          "color": "#a2a2a2" // icon hex color
+          "color": "#a2a2a2", // icon hex color
         },
         {
           "icon": "exploration",
           "link": "/explorer",
           "color": "#a2a2a2",
-          "name": "Exploration"
+          "name": "Exploration",
         },
         {
           "icon": "profile",
           "link": "/identity",
           "color": "#a2a2a2",
-          "name": "Profile"
-        }
-      ]
+          "name": "Profile",
+        },
+      ],
     },
     // optional
     "topBar": {
@@ -121,26 +121,26 @@ Below is an example, with inline comments describing what each JSON block config
         {
           "icon": "upload",
           "link": "/submission",
-          "name": "Submit Data"
+          "name": "Submit Data",
         },
         {
           "leftOrientation": true, // optional; puts the link on the left side of the top bar
           "link": "https://gen3.org/resources/user/",
-          "name": "Documentation"
-        }
+          "name": "Documentation",
+        },
       ],
       "menuItems": [
         {
           "icon": "external-link",
           "link": "https://path.to.privacy.policy",
-          "name": "Privacy Policy"
+          "name": "Privacy Policy",
         },
         {
           "icon": "external-link",
           "link": "https://path.to.terms.and.conditions",
-          "name": "Terms & Conditions"
-        }
-      ]
+          "name": "Terms & Conditions",
+        },
+      ],
     },
     // what to display on the login page (/login)
     "login": {
@@ -153,7 +153,7 @@ Below is an example, with inline comments describing what each JSON block config
       // optional; text for the contact section of the login page
       "contact": "If you have any questions about access or the registration process, please contact ",
       // optional; email for contact
-      "email": "support@datacommons.io"
+      "email": "support@datacommons.io",
     },
     // see docs/multi_tab_explorer.md for more information
     "explorerConfig": [],
@@ -165,13 +165,13 @@ Below is an example, with inline comments describing what each JSON block config
         // link for image
         "href": "https://ctds.uchicago.edu/gen3",
         // alternate text if image won’t load
-        "alt": "Gen3 Data Commons"
+        "alt": "Gen3 Data Commons",
       },
       {
         "src": "/src/img/createdby.png",
         "href": "https://ctds.uchicago.edu/",
-        "alt": "Center for Translational Data Science at the University of Chicago"
-      }
+        "alt": "Center for Translational Data Science at the University of Chicago",
+      },
     ],
     // optional; colors for the graphs both on the homepage and on the explorer page (will be used in order)
     "categorical9Colors": [
@@ -183,10 +183,10 @@ Below is an example, with inline comments describing what each JSON block config
       "#FFA630",
       "#AE8799",
       "#1A535C",
-      "#462255"
+      "#462255",
     ],
     // optional; colors for the graphs when there are only 2 colors (bar and pie graphs usually)
-    "categorical2Colors": ["#6d6e70", "#c02f42"]
+    "categorical2Colors": ["#6d6e70", "#c02f42"],
   },
   // optional; do users need to take a quiz or agree to something before they can access the site?
   "requiredCerts": [],
@@ -201,27 +201,78 @@ Below is an example, with inline comments describing what each JSON block config
       // ABAC fields defining permissions required to see this component
       "resource": "/workspace",
       "method": "access",
-      "service": "jupyterhub"
+      "service": "jupyterhub",
     },
     "Analyze Data": {
       "resource": "/workspace",
       "method": "access",
-      "service": "jupyterhub"
+      "service": "jupyterhub",
     },
     "Query": {
       "resource": "/query_page",
       "method": "access",
-      "service": "query_page"
+      "service": "query_page",
     },
     "Query Data": {
       "resource": "/query_page",
       "method": "access",
-      "service": "query_page"
-    }
-  }
+      "service": "query_page",
+    },
+  },
 }
 ```
 
 If you are looking to copy/paste configuration as a start, please use something in the Github repo as the inline comments below will become an issue.
 
 See [this page](./multi_tab_explorer.md) for further information on `explorerConfig` configuration option.
+
+## Configure filterDependencies in pcdc.json
+
+Information in `pcdc.json` allows for the configuration of the filter dependencies in the explorer. Filter dependencies are shown like this: on the selection of certain filters, a message appears informing users about other filters dependent on them ('This filter is associated with another filter. Please be sure to select ...').
+
+All configurations can be adjusted in `pcdc.json`, in `filters` -> `filterDependencyConfig`. `filterDependencyConfig` has 2 required subsections, `relations` and `filterToRelation` (they must be named exactly this).
+
+`relations` maps the names of relationships to an array of filter names that are dependent on each other. the name of a relation (e.g. "molecular_abnormality") is entirely arbitrary, but only have to correspond to the names used in
+`filterToRelation` (see paragraph below).
+
+`filterToRelation` maps filter names to the names of relationships. For example, since "molecular_analysis.molecular_abnormality" and "molecular_analysis.molecular_abnormality_result" are both in a relation called "molecular_abnormality" in `relations`, `filterToRelation` contains the lines:
+
+```
+"molecular_analysis.molecular_abnormality": "molecular_abnormality",
+"molecular_analysis.molecular_abnormality_result": "molecular_abnormality"
+```
+
+To add more dependencies using `filterDependencyConfig`, add new mappings in `relations` and `filterToRelation`, following the structure below:
+
+```
+        "filterDependencyConfig": {
+          "relations": {
+            "molecular_abnormality": [
+              "molecular_analysis.molecular_abnormality",
+              "molecular_analysis.molecular_abnormality_result"
+            ],
+            "tumor_site_state": [
+              "tumor_assessments.tumor_state",
+              "tumor_assessments.tumor_site"
+            ],
+            "stage": ["stagings.stage_system", "stagings.stage"],
+            "mrd_result": [
+              "minimal_residual_diseases.mrd_result_numeric",
+              "minimal_residual_diseases.mrd_result_unit"
+            ],
+            "lab_result": ["labs.lab_result_numeric", "labs.lab_result_unit"],
+          },
+          "filterToRelation": {
+            "molecular_analysis.molecular_abnormality": "molecular_abnormality",
+            "molecular_analysis.molecular_abnormality_result": "molecular_abnormality",
+            "tumor_assessments.tumor_state": "tumor_site_state",
+            "tumor_assessments.tumor_site": "tumor_site_state",
+            "stagings.stage_system": "stage",
+            "stagings.stage": "stage",
+            "minimal_residual_diseases.mrd_result_numeric": "mrd_result",
+            "minimal_residual_diseases.mrd_result_unit": "mrd_result",
+            "labs.lab_result_numeric": "lab_result",
+            "labs.lab_result_unit": "lab_result",
+          }
+        }
+```

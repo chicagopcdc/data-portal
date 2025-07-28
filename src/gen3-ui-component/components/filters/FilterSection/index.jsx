@@ -88,6 +88,7 @@ function FilterSection({
   options = defaultOptions,
   title = '',
   tooltip,
+  dependentFilters,
 }) {
   /**
    * @param {boolean} isShowingMoreOptions
@@ -127,7 +128,7 @@ function FilterSection({
       ...prevState,
       optionsVisibleStatus: getOptionsVisibleStatus(
         prevState.isShowingMoreOptions,
-        inputElem.current?.value
+        inputElem.current?.value,
       ),
     }));
   }, [options]);
@@ -138,7 +139,7 @@ function FilterSection({
       ...prevState,
       isSearchInputEmpty: true,
       optionsVisibleStatus: getOptionsVisibleStatus(
-        prevState.isShowingMoreOptions
+        prevState.isShowingMoreOptions,
       ),
     }));
   }
@@ -169,7 +170,7 @@ function FilterSection({
       isSearchInputEmpty: !currentInput || currentInput.length === 0,
       optionsVisibleStatus: getOptionsVisibleStatus(
         prevState.isShowingMoreOptions,
-        currentInput
+        currentInput,
       ),
     }));
   }
@@ -234,7 +235,7 @@ function FilterSection({
       ...prevState,
       isShowingMoreOptions: !prevState.isShowingMoreOptions,
       optionsVisibleStatus: getOptionsVisibleStatus(
-        !prevState.isShowingMoreOptions
+        !prevState.isShowingMoreOptions,
       ),
     }));
   }
@@ -273,7 +274,7 @@ function FilterSection({
               />
               {combineMode}
             </label>
-          )
+          ),
         )}
         <Tooltip
           arrowContent={<div className='rc-tooltip-arrow-inner' />}
@@ -350,7 +351,6 @@ function FilterSection({
       </div>
     );
   }
-
   function renderShowMoreButton() {
     let totalCount = 0;
     for (const o of options)
@@ -453,7 +453,7 @@ function FilterSection({
                 onSelect={handleSelectSingleSelectFilter}
                 selected={filterStatus[option.text]}
               />
-            )
+            ),
         )}
       </>
     );
@@ -577,6 +577,29 @@ function FilterSection({
     </div>
   );
 
+  function createDependentFiltersMessage(dependentFilters) {
+    const multipleDependencies = dependentFilters.length >= 2;
+    if (multipleDependencies) {
+      return (
+        <p className='requirement-message'>
+          This filter is associated with other filters. Please be sure to select
+          its dependent filters:
+          <ul>
+            {dependentFilters.map((filterName) => (
+              <li> {filterName} </li>
+            ))}
+          </ul>
+        </p>
+      );
+    }
+    return (
+      <p className='requirement-message'>
+        This filter is associated with another filter. Please be sure to select{' '}
+        {dependentFilters}.
+      </p>
+    );
+  }
+
   return options.length ? (
     <div className='g3-filter-section'>
       {tooltip ? (
@@ -596,6 +619,12 @@ function FilterSection({
       {isSearchFilter && renderSearchFilter()}
       {state.isExpanded && (
         <div className='g3-filter-section__options'>
+          {dependentFilters.length !== 0 &&
+            Object.keys(filterStatus).length !== 0 && (
+              <div className='filter-dependency-container'>
+                {createDependentFiltersMessage(dependentFilters)}
+              </div>
+            )}
           {(isTextFilter || isSearchFilter) &&
             renderTextFilter(/** @type {OptionFilterStatus} */ (filterStatus))}
           {isRangeFilter &&
@@ -640,7 +669,7 @@ FilterSection.propTypes = {
       min: PropTypes.number,
       max: PropTypes.number,
       rangeStep: PropTypes.number, // by default 1
-    })
+    }),
   ),
   title: PropTypes.string,
   tooltip: PropTypes.string,

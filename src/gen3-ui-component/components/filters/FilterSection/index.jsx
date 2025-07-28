@@ -632,12 +632,11 @@ function FilterSection({
       {isSearchFilter && renderSearchFilter()}
       {state.isExpanded && (
         <div className='g3-filter-section__options'>
-          {dependentFilters.length !== 0 &&
-            Object.keys(filterStatus).length !== 0 && (
-              <div className='filter-dependency-container'>
-                {createDependentFiltersMessage(dependentFilters)}
-              </div>
-            )}
+          {dependentFilters && Object.keys(filterStatus).length !== 0 && (
+            <div className='filter-dependency-container'>
+              {createDependentFiltersMessage(dependentFilters)}
+            </div>
+          )}
           {(isTextFilter || isSearchFilter) &&
             renderTextFilter(/** @type {OptionFilterStatus} */ (filterStatus))}
           {isRangeFilter &&

@@ -168,13 +168,17 @@ function ControlForm({ countByFilterSet, onSubmit }) {
 
     const isDisabled = isUsed || isDisallowedVariables || inScope;
 
-    const disabledOverlay = isUsed
-      ? 'This Filter Set is already in use.'
-      : inScope
-        ? 'This Filter Set contains out of scope consortia.'
-        : isDisallowedVariables
-          ? 'This Filter Set includes disallowed variables and cannot be used for survival analysis.'
-          : '';
+    let disabledOverlay;
+    if (isUsed) {
+      disabledOverlay = 'This Filter Set is already in use.';
+    } else if (inScope) {
+      disabledOverlay = 'This Filter Set contains out of scope consortia.';
+    } else if (isDisallowedVariables) {
+      disabledOverlay =
+        'This Filter Set includes disallowed variables and cannot be used for survival analysis.';
+    } else {
+      disabledOverlay = '';
+    }
 
     filterSetOptions.push({
       label: isDisabled ? (

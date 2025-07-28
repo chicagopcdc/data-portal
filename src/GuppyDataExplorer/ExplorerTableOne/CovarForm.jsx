@@ -95,13 +95,17 @@ function CovarForm({ onSubmit, options }) {
       value in filterSetsConsortiumScope && !filterSetsConsortiumScope[value];
     const isDisabled = isUsed || isDisallowedVariables || inScope;
 
-    const disabledOverlay = isUsed
-      ? 'This Filter Set is already in use.'
-      : inScope
-        ? 'This Filter Set contains out of scope consortia.'
-        : isDisallowedVariables
-          ? 'This Filter Set includes disallowed variables and cannot be used for survival analysis.'
-          : '';
+    let disabledOverlay;
+    if (isUsed) {
+      disabledOverlay = 'This Filter Set is already in use.';
+    } else if (inScope) {
+      disabledOverlay = 'This Filter Set contains out of scope consortia.';
+    } else if (isDisallowedVariables) {
+      disabledOverlay =
+        'This Filter Set includes disallowed variables and cannot be used for survival analysis.';
+    } else {
+      disabledOverlay = '';
+    }
 
     filterSetOptions.push({
       label: isDisabled ? (
@@ -170,6 +174,17 @@ function CovarForm({ onSubmit, options }) {
     setIsInputChanged(false);
     setFilterSetsConsortiumScope({});
   };
+
+  const enableApplyButton =
+    usedFilterSets.length > 0 &&
+    selectedCovariatesList.length > 0 &&
+    Array.from(selectedCovariates).length > 0 &&
+    selectedCovariatesList.every(
+      (covariate) =>
+        Object.keys(covariate).length > 0 &&
+        (covariate.type !== 'categorical' ||
+          (covariate.selectedKeys && covariate.selectedKeys.length > 0)),
+    );
 
   return (
     <form className='explorer-survival-analysis__control-form'>
@@ -315,14 +330,7 @@ function CovarForm({ onSubmit, options }) {
       </div>
       <div className='explorer-table-one__button-group'>
         <Button label='Reset' buttonType='default' onClick={resetUserInput} />
-        {usedFilterSets.length > 0 &&
-        selectedCovariatesList.length > 0 &&
-        Array.from(selectedCovariates).length > 0 &&
-        selectedCovariatesList.every(
-          (covariate) =>
-            covariate.type !== 'categorical' ||
-            (covariate.selectedKeys && covariate.selectedKeys.length > 0),
-        ) ? (
+        {enableApplyButton ? (
           <span>
             <Button
               label='Apply'

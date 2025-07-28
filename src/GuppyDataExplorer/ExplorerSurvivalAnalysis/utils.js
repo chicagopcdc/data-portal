@@ -13,10 +13,13 @@ import { getConsortiumList } from '../../redux/explorer/survivalAnalysisAPI.js';
 export async function checkIfFilterInScope(consortiums, filter) {
   if (consortiums.length === 0) return true;
 
-  if (filter.__type === FILTER_TYPE.COMPOSED)
-    return filter.value.every(
-      async (f) => await checkIfFilterInScope(consortiums, f),
+  if (filter.__type === FILTER_TYPE.COMPOSED) {
+    // For async operations with every(), you need Promise.all()
+    const results = await Promise.all(
+      filter.value.map(async (f) => await checkIfFilterInScope(consortiums, f)),
     );
+    return results.every((result) => result === true);
+  }
 
   for (const [key, val] of Object.entries(filter.value ?? {}))
     if (

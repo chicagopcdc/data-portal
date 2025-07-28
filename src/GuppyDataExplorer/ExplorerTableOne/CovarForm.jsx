@@ -48,56 +48,60 @@ function CovarForm({ onSubmit, options }) {
   const [usedFilterSetIds, setUsedFilterSetIds] = useState(emptyFilterSetIds);
   const [selectedCovariatesList, setCovariatesList] = useState([]);
   const [selectedCovariates, setSelectedCovariates] = useState(new Set());
+  const [isCheckingScope, setIsCheckingScope] = useState(false);
   const [filterSetsConsortiumScope, setFilterSetsConsortiumScope] = useState(
     {},
   );
 
   // Add effect to check scope when filter sets change
   useEffect(() => {
-    const checkFilterSetScopes = async () => {
-      const newScopes = { ...filterSetsConsortiumScope };
-
-      for (const filterSet of [defaultFilterSet, ...savedFilterSets]) {
-        if (
-          usedFilterSetIds.includes(filterSet.id) &&
-          !(filterSet.id in newScopes)
-        ) {
-          try {
-            const inScope = await checkIfFilterInScope(
-              consortiums,
-              filterSet.filter,
-            );
-            newScopes[filterSet.id] = inScope;
-          } catch (error) {
-            console.error('Error checking filter scope:', error);
-            newScopes[filterSet.id] = false; // Default to false on error
-          }
-        }
-      }
-
-      setFilterSetsConsortiumScope(newScopes);
-    };
-
-    if (usedFilterSetIds.length > 0) {
-      checkFilterSetScopes();
+    if (!selectedFilterSet) {
+      return;
     }
-  }, [usedFilterSetIds, consortiums, savedFilterSets]);
+    const checkFilterSetScopes = async () => {
+      setIsCheckingScope(true);
+      const scopes = { ...filterSetsConsortiumScope };
+      try {
+        if (selectedFilterSet.value in scopes) return;
+
+        const inScope = await checkIfFilterInScope(
+          consortiums,
+          selectedFilterSet.filter,
+        );
+        scopes[selectedFilterSet.value] = inScope;
+      } catch (error) {
+        console.error('Error checking filter scope:', error);
+        scopes[selectedFilterSet.value] = false;
+      } finally {
+        if (scopes[selectedFilterSet.value] === false) {
+          setSelectedFilterSet(null);
+        }
+        setFilterSetsConsortiumScope(scopes);
+        setIsCheckingScope(false);
+      }
+    };
+    checkFilterSetScopes();
+  }, [selectedFilterSet, consortiums]);
   const filterSetOptions = [];
   const usedFilterSets = [];
   for (const filterSet of [defaultFilterSet, ...savedFilterSets]) {
-    const { name: label, id: value } = filterSet;
+    const { filter, name: label, id: value } = filterSet;
     const isUsed = usedFilterSetIds.includes(value);
     const isDisallowedVariables = checkIfFilterHasDisallowedVariables(
       disallowedVariables,
       filterSet.filter,
     );
-    const isDisabled = isUsed || isDisallowedVariables;
+    const inScope =
+      value in filterSetsConsortiumScope && !filterSetsConsortiumScope[value];
+    const isDisabled = isUsed || isDisallowedVariables || inScope;
 
     const disabledOverlay = isUsed
       ? 'This Filter Set is already in use.'
-      : isDisallowedVariables
-        ? 'This Filter Set includes disallowed variables and cannot be used for survival analysis.'
-        : '';
+      : inScope
+        ? 'This Filter Set contains out of scope consortia.'
+        : isDisallowedVariables
+          ? 'This Filter Set includes disallowed variables and cannot be used for survival analysis.'
+          : '';
 
     filterSetOptions.push({
       label: isDisabled ? (
@@ -113,6 +117,7 @@ function CovarForm({ onSubmit, options }) {
         label
       ),
       value,
+      filter,
       isDisabled,
     });
 
@@ -122,7 +127,6 @@ function CovarForm({ onSubmit, options }) {
       usedFilterSets.push({
         ...filterSet,
         isStale,
-        inScope: filterSetsConsortiumScope[value] ?? null, // null indicates loading
       });
     }
   }
@@ -251,8 +255,12 @@ function CovarForm({ onSubmit, options }) {
               <Button
                 label='Add'
                 buttonType='default'
+                isPending={isCheckingScope}
                 enabled={
-                  selectedFilterSet !== null && usedFilterSetIds.length < 1
+                  !isCheckingScope &&
+                  selectedFilterSet !== null &&
+                  usedFilterSetIds.length < 1 &&
+                  filterSetsConsortiumScope[selectedFilterSet.value]
                 }
                 onClick={() => {
                   setUsedFilterSetIds((ids) => [
@@ -314,8 +322,7 @@ function CovarForm({ onSubmit, options }) {
           (covariate) =>
             covariate.type !== 'categorical' ||
             (covariate.selectedKeys && covariate.selectedKeys.length > 0),
-        ) &&
-        usedFilterSets.every((filterSet) => filterSet.inScope === true) ? (
+        ) ? (
           <span>
             <Button
               label='Apply'
@@ -328,11 +335,7 @@ function CovarForm({ onSubmit, options }) {
           <Tooltip
             arrowContent={<div className='rc-tooltip-arrow-inner' />}
             mouseLeaveDelay={0}
-            overlay={
-              !usedFilterSets.every((filterSet) => filterSet.inScope === true)
-                ? 'Your filter-set is out of scope'
-                : 'You are missing some required fields'
-            }
+            overlay={'You are missing some required fields'}
             placement='right'
           >
             <span>

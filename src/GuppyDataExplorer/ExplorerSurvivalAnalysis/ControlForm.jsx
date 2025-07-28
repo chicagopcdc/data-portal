@@ -119,58 +119,62 @@ function ControlForm({ countByFilterSet, onSubmit }) {
   const [survivalType, setSurvivalType] = useState(survivalTypeOptions[0]);
   const [selectFilterSet, setSelectFilterSet] = useState(null);
   const [usedFilterSetIds, setUsedFilterSetIds] = useState(emptyFilterSetIds);
+  const [isCheckingScope, setIsCheckingScope] = useState(false);
   const [filterSetsConsortiumScope, setFilterSetsConsortiumScope] = useState(
     {},
   );
 
   // Add effect to check scope when filter sets change
   useEffect(() => {
-    const checkFilterSetScopes = async () => {
-      const newScopes = { ...filterSetsConsortiumScope };
-
-      for (const filterSet of [defaultFilterSet, ...savedFilterSets]) {
-        if (
-          usedFilterSetIds.includes(filterSet.id) &&
-          !(filterSet.id in newScopes)
-        ) {
-          try {
-            const inScope = await checkIfFilterInScope(
-              consortiums,
-              filterSet.filter,
-            );
-            newScopes[filterSet.id] = inScope;
-          } catch (error) {
-            console.error('Error checking filter scope:', error);
-            newScopes[filterSet.id] = false; // Default to false on error
-          }
-        }
-      }
-
-      setFilterSetsConsortiumScope(newScopes);
-    };
-
-    if (usedFilterSetIds.length > 0) {
-      checkFilterSetScopes();
+    if (!selectFilterSet) {
+      return;
     }
-  }, [usedFilterSetIds, consortiums, savedFilterSets]);
+    const checkFilterSetScopes = async () => {
+      setIsCheckingScope(true);
+      const scopes = { ...filterSetsConsortiumScope };
+      try {
+        if (selectFilterSet.value in scopes) return;
+
+        const inScope = await checkIfFilterInScope(
+          consortiums,
+          selectFilterSet.filter,
+        );
+        scopes[selectFilterSet.value] = inScope;
+      } catch (error) {
+        console.error('Error checking filter scope:', error);
+        scopes[selectFilterSet.value] = false;
+      } finally {
+        if (scopes[selectFilterSet.value] === false) {
+          setSelectFilterSet(null);
+        }
+        setFilterSetsConsortiumScope(scopes);
+        setIsCheckingScope(false);
+      }
+    };
+    checkFilterSetScopes();
+  }, [selectFilterSet, consortiums]);
 
   const filterSetOptions = [];
   const usedFilterSets = [];
   for (const filterSet of [defaultFilterSet, ...savedFilterSets]) {
-    const { name: label, id: value } = filterSet;
+    const { filter, name: label, id: value } = filterSet;
     const isUsed = usedFilterSetIds.includes(value);
     const isDisallowedVariables = checkIfFilterHasDisallowedVariables(
       disallowedVariables,
       filterSet.filter,
     );
+    const inScope =
+      value in filterSetsConsortiumScope && !filterSetsConsortiumScope[value];
 
-    const isDisabled = isUsed || isDisallowedVariables;
+    const isDisabled = isUsed || isDisallowedVariables || inScope;
 
     const disabledOverlay = isUsed
       ? 'This Filter Set is already in use.'
-      : isDisallowedVariables
-        ? 'This Filter Set includes disallowed variables and cannot be used for survival analysis.'
-        : '';
+      : inScope
+        ? 'This Filter Set contains out of scope consortia.'
+        : isDisallowedVariables
+          ? 'This Filter Set includes disallowed variables and cannot be used for survival analysis.'
+          : '';
 
     filterSetOptions.push({
       label: isDisabled ? (
@@ -186,6 +190,7 @@ function ControlForm({ countByFilterSet, onSubmit }) {
         label
       ),
       value,
+      filter,
       isDisabled,
     });
 
@@ -194,7 +199,6 @@ function ControlForm({ countByFilterSet, onSubmit }) {
       usedFilterSets.push({
         ...filterSet,
         isStale,
-        inScope: filterSetsConsortiumScope[value] ?? null, // null indicates loading
       });
     }
   }
@@ -369,8 +373,13 @@ function ControlForm({ countByFilterSet, onSubmit }) {
           />
           <Button
             label='Add'
-            buttonType='default'
-            enabled={selectFilterSet !== null}
+            buttonType='primary'
+            isPending={isCheckingScope} // Use the built-in isPending prop instead of conditional rendering
+            enabled={
+              !isCheckingScope &&
+              selectFilterSet !== null &&
+              filterSetsConsortiumScope[selectFilterSet.value]
+            }
             onClick={() => {
               setUsedFilterSetIds((ids) => [...ids, selectFilterSet.value]);
               setSelectFilterSet(null);
@@ -402,33 +411,15 @@ function ControlForm({ countByFilterSet, onSubmit }) {
       </div>
       <div className='explorer-survival-analysis__button-group'>
         <Button label='Reset' buttonType='default' onClick={resetUserInput} />
-        {usedFilterSets.length > 0 &&
-        usedFilterSets.every((filterSet) => filterSet.inScope === true) &&
-        (isInputChanged || staleFilterSetIdSet.size > 0) ? (
-          <span>
-            <Button
-              label='Apply'
-              buttonType='primary'
-              onClick={submitUserInput}
-              enabled={true}
-            />
-          </span>
-        ) : (
-          <Tooltip
-            arrowContent={<div className='rc-tooltip-arrow-inner' />}
-            mouseLeaveDelay={0}
-            overlay={
-              !usedFilterSets.every((filterSet) => filterSet.inScope === true)
-                ? 'Your filter-set contains out of scope consortia'
-                : 'You are missing some required fields'
-            }
-            placement='right'
-          >
-            <span>
-              <Button label='Add' buttonType='default' enabled={false} />
-            </span>
-          </Tooltip>
-        )}
+        <Button
+          label='Apply'
+          buttonType='secondary'
+          onClick={submitUserInput}
+          enabled={
+            usedFilterSets.length > 0 &&
+            (isInputChanged || staleFilterSetIdSet.size > 0)
+          }
+        />
       </div>
     </form>
   );

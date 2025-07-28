@@ -1,0 +1,139 @@
+.covar_card_check {
+  display: block;
+}
+
+.covar_card_form_controls {
+  display: grid;
+  gap: 16px;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.table-container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+.data-table th {
+  background-color: #f4f4f4;
+  padding: 12px;
+  border: 1px solid #ddd;
+  text-align: left;
+  font-weight: bold;
+}
+
+.data-table td {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  vertical-align: top;
+}
+
+.data-table tbody tr:nth-child(odd) {
+  background-color: #f9f9f9;
+}
+
+.data-table tbody tr:hover {
+  background-color: #f0f8ff;
+}
+
+.summary {
+  margin-top: 16px;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.summary p {
+  margin: 4px 0;
+}
+
+.explorer-table-one__filter-group-variable {
+  background-color: var(--g3-color__bg-cloud);
+  padding: 1rem;
+}
+
+.covar_card_check_group {
+  margin: 16px 0;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fafafa;
+}
+.covar_card_check_label {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.covar_card_check_list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.covar_card_check_item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.covar_card_check_item:hover {
+  background-color: #f5f5f5;
+  border-color: #007bff;
+}
+
+.covar_card_checkbox {
+  margin-right: 10px;
+  transform: scale(1.1);
+}
+
+.covar_card_check_text {
+  color: #555;
+  font-size: 14px;
+  user-select: none;
+}
+
+.covar_card_check_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.covar_card_toggle_button {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  font-size: 12px;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.covar_card_toggle_button:hover {
+  color: #0056b3;
+}
+
+.g3-filter-group {
+  display: flex;
+  flex-flow: column;
+}
+
+.g3-filter-group__filter-finder {
+  margin-bottom: 1rem;
+}

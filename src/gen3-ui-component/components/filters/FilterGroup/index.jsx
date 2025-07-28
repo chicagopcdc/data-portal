@@ -43,6 +43,13 @@ function findFilterElement(label) {
 /** @typedef {import('../types').StandardFilterState} StandardFilterState */
 
 /**
+ * @typedef {Object} UnitCalcParams
+ * @property {string} quantity
+ * @property {string} desiredUnit
+ * @property {Object<string, number>} selectUnits
+ */
+
+/**
  * @typedef {Object} FilterGroupProps
  * @property {string} [anchorValue]
  * @property {string} [className]
@@ -56,6 +63,7 @@ function findFilterElement(label) {
  * @property {(patientIds: string[]) => void} [onPatientIdsChange]
  * @property {string[]} [patientIds]
  * @property {FilterSectionConfig[][]} tabs
+ * @property {UnitCalcParams} [unitCalcConfig]
  */
 
 const defaultExplorerFilter = {};
@@ -82,6 +90,15 @@ function FilterGroup({
       fields: searchFields ? searchFields.concat(fields) : fields,
     }),
   );
+
+  // pulls info about which range filters use what quantity (e.g. age or number) from pcdc.json
+  // unitCalcTitles.age contains all titles with the age quantity, and unitCalcTitles.number
+  // contains all titles with the number quantity
+
+  // for backwards compatibility, if filterConfig.unitCalcConfig is undefined, 
+  // no unit calculator is shown on any range filter (all range filters are numeric)
+  const unitCalcTitles = (!filterConfig.unitCalcConfig) ? { number: [], age: [] } : filterConfig.unitCalcConfig.calculatorMapping;
+
   const [tabIndex, setTabIndex] = useState(0);
   const tabTitle = filterTabs[tabIndex].title;
   const showAnchorFilter =
@@ -217,6 +234,7 @@ function FilterGroup({
     )
       onFilterChange(updated.filterResults);
   }
+  
 
   /**
    * @param {number} sectionIndex
@@ -451,6 +469,10 @@ function FilterGroup({
                     )
                   : false
               }
+              unitCalcType={
+              unitCalcTitles.age.includes(filterTabs[tabIndex].fields[index]) ? 'age' : 'number'
+            }
+            unitCalcConfig={filterConfig.unitCalcConfig ? filterConfig.unitCalcConfig.ageUnits: null}
             />
           );
         })}

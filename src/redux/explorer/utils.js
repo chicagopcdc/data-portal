@@ -9,6 +9,7 @@ import { getGQLFilter } from '../../GuppyComponents/Utils/queries';
 /** @typedef {import('../../GuppyDataExplorer/types').ExplorerFilterSetDTO} ExplorerFilterSetDTO */
 /** @typedef {import('../../GuppyDataExplorer/types').RefFilterState} RefFilterState */
 /** @typedef {import('../../GuppyDataExplorer/types').SurvivalAnalysisConfig} SurvivalAnalysisConfig */
+/** @typedef {import('../../GuppyDataExplorer/types').TableOneConfig} TableOneConfig */
 /** @typedef {import('../../GuppyDataExplorer/types').SavedExplorerFilterSet} SavedExplorerFilterSet */
 /** @typedef {import('./types').ExplorerState} ExplorerState */
 /** @typedef {import('./types').ExplorerWorkspace} ExplorerWorkspace */
@@ -41,7 +42,7 @@ export function updateFilterRefs(workspace) {
     if ('refIds' in filter)
       for (const [index, refId] of [...filter.refIds].entries()) {
         const refIndex = filter.value.findIndex(
-          ({ __type, value }) => __type === 'REF' && value.id === refId
+          ({ __type, value }) => __type === 'REF' && value.id === refId,
         );
 
         if (refId in workspace.all) {
@@ -137,9 +138,22 @@ export function isSurvivalAnalysisEnabled(config) {
   return false;
 }
 
+/** @param {TableOneConfig} config */
+export function isTableOneEnabled(config) {
+  if (config?.result !== undefined)
+    if (config.result.enabled !== undefined) return config.result.enabled;
+  return false;
+}
+
 /** @param {number} explorerId */
 export function getCurrentConfig(explorerId) {
   const config = explorerConfig.find(({ id }) => id === explorerId);
+  // for backwards compatibility, dynamically find unitCalcConfig
+  // make sure we don't get crashes, even if unitCalcConfig doesn't exist 
+  const configWithUnitCalc = explorerConfig.find((item) => (
+    item?.filters?.unitCalcConfig
+  ))
+  const unitCalcConfig = configWithUnitCalc?.filters?.unitCalcConfig
   return {
     adminAppliedPreFilters: config.adminAppliedPreFilters,
     buttonConfig: {
@@ -153,6 +167,7 @@ export function getCurrentConfig(explorerId) {
     filterConfig: {
       ...config.filters,
       info: createFilterInfo(config.filters, config.guppyConfig.fieldMapping),
+      unitCalcConfig: unitCalcConfig,
     },
     getAccessButtonLink: config.getAccessButtonLink,
     guppyConfig: config.guppyConfig,
@@ -160,6 +175,7 @@ export function getCurrentConfig(explorerId) {
     patientIdsConfig: config.patientIds,
     survivalAnalysisConfig: { enabled: false },
     tableConfig: config.table,
+    tableOneConfig: config.tableOneConfig,
   };
 }
 

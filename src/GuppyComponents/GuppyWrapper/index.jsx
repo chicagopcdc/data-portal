@@ -4,9 +4,10 @@ import {
   queryGuppyForAggregationChartData,
   queryGuppyForAggregationCountData,
   queryGuppyForAggregationOptionsData,
+  queryGuppyForExternalResourceAggs,
+  queryGuppyForTotalCounts,
   queryGuppyForRawData,
   queryGuppyForSubAggregationData,
-  queryGuppyForTotalCounts,
   downloadDataFromGuppy,
   getAllFieldsFromGuppy,
   getGQLFilter,
@@ -47,6 +48,7 @@ import {
  * @property {number} accessibleCount
  * @property {AggsData} aggsData
  * @property {SimpleAggsData} aggsChartData
+ * @property {{ key: string, count: number }[]} aggsExternalData
  * @property {string[]} allFields
  * @property {SimpleAggsData} [initialTabsOptions]
  * @property {boolean} isLoadingAggsData
@@ -64,7 +66,7 @@ function GuppyWrapper({
   explorerFilter = {},
   filterConfig,
   guppyConfig,
-  onFilterChange = () => {},
+  onFilterChange = () => { },
   patientIds,
   rawDataFields: rawDataFieldsConfig = [],
 }) {
@@ -75,6 +77,7 @@ function GuppyWrapper({
     allFields: [],
     aggsData: {},
     aggsChartData: {},
+    aggsExternalData: [],
     initialTabsOptions: undefined,
     isLoadingAggsData: false,
     isLoadingRawData: false,
@@ -109,8 +112,8 @@ function GuppyWrapper({
   function augmentFilter(filter) {
     return patientIds?.length > 0
       ? mergeFilters(filter, {
-          subject_submitter_id: { selectedValues: patientIds },
-        })
+        subject_submitter_id: { selectedValues: patientIds },
+      })
       : filter;
   }
 
@@ -124,8 +127,7 @@ function GuppyWrapper({
     }).then(({ data, errors }) => {
       if (data === undefined)
         throw new Error(
-          `error querying guppy${
-            errors?.length > 0 ? `: ${errors[0].message}` : ''
+          `error querying guppy${errors?.length > 0 ? `: ${errors[0].message}` : ''
           }`
         );
 
@@ -149,8 +151,7 @@ function GuppyWrapper({
     }).then(({ data, errors }) => {
       if (data === undefined)
         throw new Error(
-          `error querying guppy${
-            errors?.length > 0 ? `: ${errors[0].message}` : ''
+          `error querying guppy${errors?.length > 0 ? `: ${errors[0].message}` : ''
           }`
         );
 
@@ -190,8 +191,7 @@ function GuppyWrapper({
     }).then(({ data, errors }) => {
       if (data === undefined)
         throw new Error(
-          `error querying guppy${
-            errors?.length > 0 ? `: ${errors[0].message}` : ''
+          `error querying guppy${errors?.length > 0 ? `: ${errors[0].message}` : ''
           }`
         );
 
@@ -216,6 +216,39 @@ function GuppyWrapper({
     });
   }
 
+
+  /**
+   * Fetches external resource aggregation data from Guppy/Elasticsearch.
+   * This is used to populate the counts for each external resource in the UI
+   * (e.g. "TARGET - GDC", "GMKF") so we can enable/disable the Explore button.
+   *
+   * @param {FilterState} filter - The current applied filters from the UI
+   * @returns {Promise<{ aggsExternalData: { key: string; count: number }[] }>}
+   */
+  function fetchAggsExternalDataFromGuppy(filter) {
+    // Send a query using guppyConfig.dataType
+    return queryGuppyForExternalResourceAggs({
+      type: guppyConfig.dataType, // e.g., "subject"
+      gqlFilter: getGQLFilter(augmentFilter(filter)), // apply any filters
+      signal: controller.current.signal, // attach an AbortSignal for cancellation if needed
+    }).then(({ data, errors }) => {
+      // If data is missing, throw an error with optional error message from response
+      if (!data)
+        throw new Error(
+          `error querying external aggs from guppy${errors?.length > 0 ? `: ${errors[0].message}` : ''
+          }`
+        );
+
+      // Return only the histogram array for external_resource_name - This could be expanded in the future, or just add another function
+      // This array will look like: [{ key: 'GMKF', count: 5 }, { key: 'TARGET - GDC', count: 3 }]
+      return {
+        aggsExternalData:
+          data?._aggregation?.[guppyConfig.dataType]?.external_references
+            ?.external_resource_name?.histogram ?? [],
+      };
+    });
+  }
+
   /** @param {FilterState} filter */
   function fetchAggsDataFromGuppy(filter) {
     if (isMounted.current)
@@ -228,17 +261,20 @@ function GuppyWrapper({
         anchorValue: state.anchorValue,
         filter,
       }),
+      fetchAggsExternalDataFromGuppy(filter),
     ]).then(
       ([
         { aggsChartData },
         { accessibleCount, totalCount },
         { aggsData, initialTabsOptions, tabsOptions },
+        { aggsExternalData },
       ]) => {
         if (isMounted.current) {
           setState((prevState) => ({
             ...prevState,
             accessibleCount,
             aggsChartData,
+            aggsExternalData,
             aggsData,
             initialTabsOptions,
             isLoadingAggsData: false,

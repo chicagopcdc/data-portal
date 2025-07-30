@@ -62,6 +62,7 @@ function errorObjectForField(errors, touched, fieldName) {
 }
 
 function DataRequestCreate({ isCreatePending }) {
+  const [successMessage, setSuccessMessage] = useState('');
   const dispatch = useAppDispatch();
   const { getAccessButtonLink } = useAppSelector(
     (state) => state.explorer.config,
@@ -132,14 +133,15 @@ function DataRequestCreate({ isCreatePending }) {
 
           createRequest.then((action) => {
             if (!action.payload.isError) {
-              const handle = window.open(
-                getAccessButtonLink,
-                '_blank',
-                'popup',
-              );
-              handle.blur();
+
+              const handle = window.open(getAccessButtonLink, '_blank', 'popup');
+              handle?.blur();
               window.focus();
-              navigate('/requests');
+              navigate('/requests', {
+                // Set success message
+                state: { successMessage: 'Data request created successfully!' },
+              });
+
               return;
             }
 

@@ -137,3 +137,16 @@
 .g3-filter-group__filter-finder {
   margin-bottom: 1rem;
 }
+
+.explorer-table-one__button-group {
+  background-color: var(--g3-color__white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem 2rem;
+  gap: 10px;
+}
+
+.explorer-table-one__button-group > button {
+  margin-left: 1rem;
+}

@@ -95,9 +95,11 @@ function FilterGroup({
   // unitCalcTitles.age contains all titles with the age quantity, and unitCalcTitles.number
   // contains all titles with the number quantity
 
-  // for backwards compatibility, if filterConfig.unitCalcConfig is undefined, 
+  // for backwards compatibility, if filterConfig.unitCalcConfig is undefined,
   // no unit calculator is shown on any range filter (all range filters are numeric)
-  const unitCalcTitles = (!filterConfig.unitCalcConfig) ? { number: [], age: [] } : filterConfig.unitCalcConfig.calculatorMapping;
+  const unitCalcTitles = !filterConfig.unitCalcConfig
+    ? { number: [], age: [] }
+    : filterConfig.unitCalcConfig.calculatorMapping;
 
   const [tabIndex, setTabIndex] = useState(0);
   const tabTitle = filterTabs[tabIndex].title;
@@ -234,7 +236,6 @@ function FilterGroup({
     )
       onFilterChange(updated.filterResults);
   }
-  
 
   /**
    * @param {number} sectionIndex
@@ -343,6 +344,17 @@ function FilterGroup({
     }
   }
 
+  /** Returns a list of display names for filters, to be used for configuring dependentFilters */
+  function createDependentFiltersArr(origfilterNames, currentFilterName) {
+    const newfilterNames = [];
+    for (const filterName of origfilterNames) {
+      if (filterName != currentFilterName) {
+        newfilterNames.push(toDisplayName(filterName));
+      }
+    }
+    return newfilterNames;
+  }
+
   return (
     <div className={`g3-filter-group ${className}`}>
       <Select
@@ -421,18 +433,6 @@ function FilterGroup({
           const filterName = filterTabs[tabIndex].fields[index];
           const relationName = filterToRelation[filterName];
           const depFilters = Object.keys(filterToRelation);
-          function createDependentFiltersArr(
-            origfilterNames,
-            currentFilterName,
-          ) {
-            const newfilterNames = [];
-            for (const filterName of origfilterNames) {
-              if (filterName != currentFilterName) {
-                newfilterNames.push(toDisplayName(filterName));
-              }
-            }
-            return newfilterNames;
-          }
           return (
             <FilterSection
               key={section.title}
@@ -470,9 +470,15 @@ function FilterGroup({
                   : false
               }
               unitCalcType={
-              unitCalcTitles.age.includes(filterTabs[tabIndex].fields[index]) ? 'age' : 'number'
-            }
-            unitCalcConfig={filterConfig.unitCalcConfig ? filterConfig.unitCalcConfig.ageUnits: null}
+                unitCalcTitles.age.includes(filterTabs[tabIndex].fields[index])
+                  ? 'age'
+                  : 'number'
+              }
+              unitCalcConfig={
+                filterConfig.unitCalcConfig
+                  ? filterConfig.unitCalcConfig.ageUnits
+                  : null
+              }
             />
           );
         })}

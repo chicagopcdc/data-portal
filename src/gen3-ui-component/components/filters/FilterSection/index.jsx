@@ -8,6 +8,7 @@ import SingleSelectFilter from '../SingleSelectFilter';
 import Chip from '../Chip';
 import RangeFilter from '../RangeFilter';
 import './FilterSection.css';
+import DependentFilterMessage from './DependentFilterMessage';
 
 /** @typedef {import('react-select-async-paginate').Response<any, null, null>} PaginateResponse */
 /** @typedef {import('../types').OptionFilterStatus} OptionFilterStatus */
@@ -590,29 +591,6 @@ function FilterSection({
     </div>
   );
 
-  function createDependentFiltersMessage(dependentFilters) {
-    const multipleDependencies = dependentFilters.length >= 2;
-    if (multipleDependencies) {
-      return (
-        <p className='requirement-message'>
-          This filter is associated with other filters. Please be sure to select
-          its dependent filters:
-          <ul>
-            {dependentFilters.map((filterName) => (
-              <li> {filterName} </li>
-            ))}
-          </ul>
-        </p>
-      );
-    }
-    return (
-      <p className='requirement-message'>
-        This filter is associated with another filter. Please be sure to select{' '}
-        {dependentFilters}.
-      </p>
-    );
-  }
-
   return options.length ? (
     <div className='g3-filter-section'>
       {tooltip ? (
@@ -634,7 +612,7 @@ function FilterSection({
         <div className='g3-filter-section__options'>
           {dependentFilters && Object.keys(filterStatus).length !== 0 && (
             <div className='filter-dependency-container'>
-              {createDependentFiltersMessage(dependentFilters)}
+              <DependentFilterMessage dependentFilters={dependentFilters} />
             </div>
           )}
           {(isTextFilter || isSearchFilter) &&

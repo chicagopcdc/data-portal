@@ -138,7 +138,7 @@ function ExplorerExploreExternalButton({ filter, selectedCommonsCounts, external
     setIsFileDownloaded(true);
   }
 
-  // Download instructions
+  // View instructions in new tab
   function handleOpenInstructions() {
     const url = 'https://docs.pedscommons.org/DataPortalUserGuide/#explore-in-an-external-data-commons';
     window.open(url, '_blank', 'noopener,noreferrer');

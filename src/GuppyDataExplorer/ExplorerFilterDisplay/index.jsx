@@ -11,7 +11,10 @@ import './ExplorerFilterDisplay.css';
  */
 function ExplorerFilterDisplay({ filter, title = 'Filters', manual = false }) {
   const filterInfo = useAppSelector(
-    (state) => state.explorer.config.filterConfig.info
+    (state) => state.explorer.config.filterConfig.info,
+  );
+  const patientIdsConfig = useAppSelector(
+    (state) => state.explorer.config.patientIdsConfig,
   );
   return (
     <div className='explorer-filter-display'>
@@ -19,7 +22,12 @@ function ExplorerFilterDisplay({ filter, title = 'Filters', manual = false }) {
         <>
           <header>{title}</header>
           <main>
-            <FilterDisplay filter={filter} filterInfo={filterInfo} manual={manual} />
+            <FilterDisplay
+              filter={filter}
+              filterInfo={filterInfo}
+              patientIdsConfig={patientIdsConfig}
+              manual={manual}
+            />
           </main>
         </>
       ) : (

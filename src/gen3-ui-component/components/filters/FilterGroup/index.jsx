@@ -38,8 +38,10 @@ function findFilterElement(label) {
 /** @typedef {import('../types').EmptyFilter} EmptyFilter */
 /** @typedef {import('../types').FilterChangeHandler} FilterChangeHandler */
 /** @typedef {import('../types').FilterConfig} FilterConfig */
+/** @typedef {import('../../../../GuppyDataExplorer/types').PatientIdsConfig} PatientIdsConfig */
 /** @typedef {import('../types').FilterSectionConfig} FilterSectionConfig */
 /** @typedef {import('../types').StandardFilterState} StandardFilterState */
+/** @typedef {import('../types').OptionFilter} OptionFilter */
 
 /**
  * @typedef {Object} UnitCalcParams
@@ -55,12 +57,11 @@ function findFilterElement(label) {
  * @property {string} [disabledTooltipMessage]
  * @property {EmptyFilter | StandardFilterState} [filter]
  * @property {FilterConfig} filterConfig
+ * @property {PatientIdsConfig} patientIdsConfig
  * @property {boolean} [hideZero]
  * @property {string} [lockedTooltipMessage]
  * @property {(anchorValue: string) => void} [onAnchorValueChange]
  * @property {FilterChangeHandler} [onFilterChange]
- * @property {(patientIds: string[]) => void} [onPatientIdsChange]
- * @property {string[]} [patientIds]
  * @property {FilterSectionConfig[][]} tabs
  * @property {UnitCalcParams} [unitCalcConfig]
  */
@@ -73,13 +74,12 @@ function FilterGroup({
   className = '',
   disabledTooltipMessage,
   filterConfig,
+  patientIdsConfig,
   hideZero = true,
   filter = defaultExplorerFilter,
   lockedTooltipMessage,
   onAnchorValueChange = () => {},
   onFilterChange = () => {},
-  onPatientIdsChange,
-  patientIds,
   tabs,
 }) {
   const filterTabs = filterConfig.tabs.map(
@@ -87,16 +87,18 @@ function FilterGroup({
       title,
       // If there are any search fields, insert them at the top of each tab's fields.
       fields: searchFields ? searchFields.concat(fields) : fields,
-    })
+    }),
   );
 
   // pulls info about which range filters use what quantity (e.g. age or number) from pcdc.json
   // unitCalcTitles.age contains all titles with the age quantity, and unitCalcTitles.number
   // contains all titles with the number quantity
 
-  // for backwards compatibility, if filterConfig.unitCalcConfig is undefined, 
+  // for backwards compatibility, if filterConfig.unitCalcConfig is undefined,
   // no unit calculator is shown on any range filter (all range filters are numeric)
-  const unitCalcTitles = (!filterConfig.unitCalcConfig) ? { number: [], age: [] } : filterConfig.unitCalcConfig.calculatorMapping;
+  const unitCalcTitles = !filterConfig.unitCalcConfig
+    ? { number: [], age: [] }
+    : filterConfig.unitCalcConfig.calculatorMapping;
 
   const [tabIndex, setTabIndex] = useState(0);
   const tabTitle = filterTabs[tabIndex].title;
@@ -104,7 +106,7 @@ function FilterGroup({
     filterConfig.anchor !== undefined &&
     filterConfig.anchor.tabs.includes(tabTitle);
   const showPatientIdsFilter =
-    patientIds !== undefined && tabTitle === 'Subject';
+    patientIdsConfig?.filter === true && tabTitle === 'Subject';
 
   const anchorLabel =
     filterConfig.anchor !== undefined && anchorValue !== '' && showAnchorFilter
@@ -116,7 +118,7 @@ function FilterGroup({
     ? 'Collapse all'
     : 'Open all';
   const [expandedStatus, setExpandedStatus] = useState(
-    getExpandedStatus(filterTabs, false)
+    getExpandedStatus(filterTabs, false),
   );
 
   const [filterResults, setFilterResults] = useState(filter);
@@ -130,7 +132,7 @@ function FilterGroup({
       anchorConfig: filterConfig.anchor,
       filterResults: filter,
       filterTabs,
-    })
+    }),
   );
   const isInitialRenderRef = useRef(true);
   useEffect(() => {
@@ -189,7 +191,7 @@ function FilterGroup({
   function handleToggleCombineMode(
     sectionIndex,
     combineModeFieldName,
-    combineModeValue
+    combineModeValue,
   ) {
     const updated = updateCombineMode({
       filterStatus,
@@ -213,7 +215,6 @@ function FilterGroup({
     )
       onFilterChange(updated.filterResults);
   }
-  
 
   /**
    * @param {number} sectionIndex
@@ -237,6 +238,52 @@ function FilterGroup({
   }
 
   /**
+   * Handles a list of patient IDs.
+   * @param {string[]} inputPatientIds - Array of patient ID strings.
+   */
+  function handlePatientIdsChange(inputPatientIds) {
+    let newFilterResults = cloneDeep(filterResults);
+    if (!('value' in newFilterResults)) {
+      newFilterResults = { value: {} };
+    }
+    /** @type {OptionFilter} */
+    newFilterResults.value['subject_submitter_id'] = {
+      selectedValues: inputPatientIds,
+      __type: 'OPTION',
+      isExclusion: false,
+    };
+    setFilterResults(newFilterResults);
+    onFilterChange(newFilterResults);
+  }
+
+  function retrieveFilterPatientIds() {
+    if (!('value' in filterResults)) {
+      return [];
+    }
+    if (
+      'subject_submitter_id' in filterResults.value &&
+      filterResults.value['subject_submitter_id']?.__type === 'OPTION'
+    ) {
+      const patientIds =
+        filterResults.value['subject_submitter_id'].selectedValues || [];
+      return patientIds;
+    }
+    return [];
+  }
+
+  function handleClearPatientIds() {
+    let newFilterResults = cloneDeep(filterResults);
+    if (!('value' in newFilterResults)) {
+      newFilterResults = { value: {} };
+    }
+    if ('subject_submitter_id' in newFilterResults.value) {
+      delete newFilterResults.value['subject_submitter_id'];
+    }
+    setFilterResults(newFilterResults);
+    onFilterChange(newFilterResults);
+  }
+
+  /**
    * @param {number} sectionIndex
    * @param {boolean} isExclusion
    */
@@ -251,7 +298,7 @@ function FilterGroup({
     });
 
     setExcludedStatus(
-      getExcludedStatus(filterTabs, updated.filterResults, excludedStatus)
+      getExcludedStatus(filterTabs, updated.filterResults, excludedStatus),
     );
     setFilterResults(removeEmptyFilter(updated.filterResults));
     onFilterChange(removeEmptyFilter(updated.filterResults));
@@ -271,7 +318,7 @@ function FilterGroup({
     upperBound,
     minValue,
     maxValue,
-    rangeStep = 1
+    rangeStep = 1,
   ) {
     const updated = updateRangeValue({
       filterStatus,
@@ -337,7 +384,7 @@ function FilterGroup({
           <div
             key={index}
             className={'g3-filter-group__tab'.concat(
-              tabIndex === index ? ' g3-filter-group__tab--selected' : ''
+              tabIndex === index ? ' g3-filter-group__tab--selected' : '',
             )}
             onClick={() => setTabIndex(index)}
             onKeyPress={(e) => {
@@ -392,8 +439,9 @@ function FilterGroup({
         )}
         {showPatientIdsFilter && (
           <PatientIdFilter
-            onPatientIdsChange={onPatientIdsChange}
-            patientIds={patientIds}
+            getPatientIds={retrieveFilterPatientIds}
+            handlePatientIdsChange={handlePatientIdsChange}
+            handleClearPatientIds={handleClearPatientIds}
           />
         )}
         {tabs[tabIndex].map((section, index) => (
@@ -425,9 +473,15 @@ function FilterGroup({
             title={section.title}
             tooltip={section.tooltip}
             unitCalcType={
-              unitCalcTitles.age.includes(filterTabs[tabIndex].fields[index]) ? 'age' : 'number'
+              unitCalcTitles.age.includes(filterTabs[tabIndex].fields[index])
+                ? 'age'
+                : 'number'
             }
-            unitCalcConfig={filterConfig.unitCalcConfig ? filterConfig.unitCalcConfig.ageUnits: null}
+            unitCalcConfig={
+              filterConfig.unitCalcConfig
+                ? filterConfig.unitCalcConfig.ageUnits
+                : null
+            }
           />
         ))}
       </div>
@@ -452,15 +506,13 @@ FilterGroup.propTypes = {
         title: PropTypes.string,
         fields: PropTypes.arrayOf(PropTypes.string),
         searchFields: PropTypes.arrayOf(PropTypes.string),
-      })
+      }),
     ),
   }).isRequired,
   hideZero: PropTypes.bool,
   lockedTooltipMessage: PropTypes.string,
   onAnchorValueChange: PropTypes.func,
   onFilterChange: PropTypes.func,
-  onPatientIdsChange: PropTypes.func,
-  patientIds: PropTypes.arrayOf(PropTypes.string),
   tabs: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.object)).isRequired,
 };
 

@@ -8,7 +8,7 @@ export const GuppyConfigType = PropTypes.exact({
       field: PropTypes.string,
       name: PropTypes.string,
       tooltip: PropTypes.string,
-    })
+    }),
   ),
   manifestMapping: PropTypes.exact({
     resourceIndexType: PropTypes.string,
@@ -36,7 +36,7 @@ export const FilterConfigType = PropTypes.shape({
     PropTypes.shape({
       title: PropTypes.string,
       fields: PropTypes.arrayOf(PropTypes.string),
-    })
+    }),
   ),
 });
 
@@ -57,12 +57,12 @@ export const ButtonConfigType = PropTypes.exact({
       fileName: PropTypes.string,
       dropdownId: PropTypes.string,
       tooltipText: PropTypes.string,
-    })
+    }),
   ),
   dropdowns: PropTypes.objectOf(
     PropTypes.exact({
       title: PropTypes.string,
-    })
+    }),
   ),
   terraExportURL: PropTypes.string,
   terraTemplate: PropTypes.arrayOf(PropTypes.string),
@@ -77,7 +77,7 @@ export const SurvivalAnalysisConfigType = PropTypes.shape({
     PropTypes.shape({
       field: PropTypes.string,
       label: PropTypes.string,
-    })
+    }),
   ),
   result: PropTypes.shape({
     risktable: PropTypes.bool,
@@ -88,4 +88,6 @@ export const SurvivalAnalysisConfigType = PropTypes.shape({
 export const PatientIdsConfigType = PropTypes.shape({
   filter: PropTypes.bool,
   export: PropTypes.bool,
+  filterName: PropTypes.string,
+  displayName: PropTypes.string,
 });

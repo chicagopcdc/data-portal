@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import Tooltip from 'rc-tooltip';
 import 'rc-tooltip/assets/bootstrap_white.css';
 import { FILTER_TYPE } from '../GuppyComponents/Utils/const';
-import Pill from "./Pill";
+import Pill from './Pill';
 import './FilterDisplay.css';
 
 /**
@@ -16,8 +16,9 @@ import './FilterDisplay.css';
  * @param {{ anchorField?: string; anchorValue?: string; field: string }} payload
  */
 
-
 /** @typedef {import('../GuppyComponents/types').FilterConfig} FilterConfig */
+
+/** @typedef {import('../GuppyDataExplorer/types').PatientIdsConfig} PatientIdsConfig */
 
 /** @typedef {import('../GuppyDataExplorer/types').ExplorerFilterSet} ExplorerFilterSet */
 
@@ -27,6 +28,7 @@ import './FilterDisplay.css';
  * @param {'AND' | 'OR'} [props.combineMode]
  * @param {ExplorerFilterSet['filter']} props.filter
  * @param {FilterConfig['info']} props.filterInfo
+ * @param {PatientIdsConfig} props.patientIdsConfig
  * @param {boolean} [props.manual]
  * @param {ClickCombineModeHandler} [props.onClickCombineMode]
  * @param {ClickFilterHandler} [props.onClickFilter]
@@ -37,6 +39,7 @@ function FilterDisplay({
   combineMode,
   filter,
   filterInfo,
+  patientIdsConfig,
   manual = false,
   onClickCombineMode,
   onClickFilter,
@@ -51,7 +54,11 @@ function FilterDisplay({
               <Pill>{__filter.value.label}</Pill>
             ) : (
               <span className='pill-container'>
-                <FilterDisplay filter={__filter} filterInfo={filterInfo} />
+                <FilterDisplay
+                  filter={__filter}
+                  filterInfo={filterInfo}
+                  patientIdsConfig={patientIdsConfig}
+                />
               </span>
             )}
             {i < filter.value.length - 1 && <Pill>{filter.__combineMode}</Pill>}
@@ -95,8 +102,13 @@ function FilterDisplay({
       filterElements.push(
         <Pill key={key}>
           <span className='token field'>
-            With <code>{manual ? (filterInfo[anchorField]?.label ?? anchorField) : filterInfo[anchorField].label}</code> of{' '}
-            <code>{`"${anchorValue}"`}</code>
+            With{' '}
+            <code>
+              {manual
+                ? (filterInfo[anchorField]?.label ?? anchorField)
+                : filterInfo[anchorField].label}
+            </code>{' '}
+            of <code>{`"${anchorValue}"`}</code>
           </span>
           <span className='token'>
             ({' '}
@@ -106,13 +118,14 @@ function FilterDisplay({
               filter={value}
               filterInfo={filterInfo}
               combineMode={__combineMode}
+              patientIdsConfig={patientIdsConfig}
               onClickCombineMode={onClickCombineMode}
               onClickFilter={onClickFilter}
               onCloseFilter={onCloseFilter}
             />{' '}
             )
           </span>
-        </Pill>
+        </Pill>,
       );
     } else if (value.__type === FILTER_TYPE.OPTION) {
       filterElements.push(
@@ -123,7 +136,13 @@ function FilterDisplay({
           filterKey={key}
         >
           <span className='token'>
-          <code>{manual ? (filterInfo[key]?.label ?? key) : filterInfo[key].label}</code>{' '}
+            <code>
+              {patientIdsConfig?.filter && key === patientIdsConfig?.filterName
+                ? patientIdsConfig.displayName
+                : manual
+                  ? (filterInfo[key]?.label ?? key)
+                  : filterInfo[key].label}
+            </code>{' '}
             {value.selectedValues.length > 1
               ? `is ${value.isExclusion ? 'not' : ''} any of `
               : `is ${value.isExclusion ? 'not' : ''} `}
@@ -132,9 +151,19 @@ function FilterDisplay({
             {value.selectedValues.length > 1 ? (
               <Tooltip
                 arrowContent={<div className='rc-tooltip-arrow-inner' />}
-                overlay={value.selectedValues.map((v) => `"${v}"`).join(', ')}
-                placement='bottom'
+                overlay={
+                  <div className='filter-values-tooltip'>
+                    {value.selectedValues.map((v) => `"${v}"`).join(', ')}
+                  </div>
+                }
+                placement='bottomLeft'
                 trigger={['hover', 'focus']}
+                getTooltipContainer={() => document.body}
+                overlayStyle={{
+                  maxWidth: 480,
+                  whiteSpace: 'normal',
+                  overflowWrap: 'anywhere',
+                }}
               >
                 <span>
                   <code>{`"${value.selectedValues[0]}"`}</code>, ...
@@ -144,7 +173,7 @@ function FilterDisplay({
               <code>{`"${value.selectedValues[0]}"`}</code>
             )}
           </span>
-        </Pill>
+        </Pill>,
       );
     } else if (value.__type === FILTER_TYPE.RANGE) {
       filterElements.push(
@@ -155,7 +184,9 @@ function FilterDisplay({
           filterKey={key}
         >
           <span className='token'>
-          <code>{manual ? (filterInfo[key]?.label ?? key) : filterInfo[key].label}</code>
+            <code>
+              {manual ? (filterInfo[key]?.label ?? key) : filterInfo[key].label}
+            </code>
             {' is between '}
           </span>
           <span className='token'>
@@ -163,7 +194,7 @@ function FilterDisplay({
               ({value.lowerBound}, {value.upperBound})
             </code>
           </span>
-        </Pill>
+        </Pill>,
       );
     }
 
@@ -188,8 +219,9 @@ FilterDisplay.propTypes = {
   filterInfo: PropTypes.objectOf(
     PropTypes.shape({
       label: PropTypes.string.isRequired,
-    })
+    }),
   ),
+  patientIdsConfig: PropTypes.object,
   manual: PropTypes.bool,
   onClickCombineMode: PropTypes.func,
   onClickFilter: PropTypes.func,

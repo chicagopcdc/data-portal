@@ -36,9 +36,6 @@ const explorerIds = [];
 for (const { id } of explorerConfig) explorerIds.push(id);
 const initialExplorerId = explorerIds[0];
 const initialConfig = getCurrentConfig(initialExplorerId);
-const initialPatientIds = initialConfig.patientIdsConfig?.filter
-  ? []
-  : undefined;
 const initialWorkspaces = initializeWorkspaces(initialExplorerId);
 const initialExplorerFilter = dereferenceFilter(
   initialWorkspaces[initialExplorerId].all[
@@ -54,7 +51,6 @@ const slice = createSlice({
     explorerFilter: initialExplorerFilter,
     explorerId: initialExplorerId,
     explorerIds,
-    patientIds: initialPatientIds,
     savedFilterSets: {
       data: [],
       isError: false,
@@ -231,11 +227,6 @@ const slice = createSlice({
       const { activeId } = state.workspaces[state.explorerId];
       state.workspaces[state.explorerId].all[activeId].filter = newFilter;
     },
-    /** @param {PayloadAction<ExplorerState['patientIds']>} action */
-    updatePatientIds(state, action) {
-      if (state.config.patientIdsConfig?.filter !== undefined)
-        state.patientIds = action.payload;
-    },
     useExplorerById: {
       /** @param {ExplorerState['explorerId']} explorerId */
       prepare: (explorerId) => {
@@ -409,7 +400,6 @@ export const {
   loadWorkspaceFilterSet,
   removeWorkspaceFilterSet,
   updateExplorerFilter,
-  updatePatientIds,
   useExplorerById,
   useWorkspaceFilterSet,
 } = slice.actions;

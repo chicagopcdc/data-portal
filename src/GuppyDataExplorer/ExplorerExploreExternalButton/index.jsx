@@ -138,6 +138,13 @@ function ExplorerExploreExternalButton({ filter, selectedCommonsCounts, external
     setIsFileDownloaded(true);
   }
 
+  // View instructions in new tab
+  function handleOpenInstructions() {
+    const url = 'https://docs.pedscommons.org/DataPortalUserGuide/#explore-in-an-external-data-commons';
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+
   // Check if "Open in new tab" button should be enabled
   function isOpenInNewTabButtonEnabled() {
     if (!commonsInfo) return false;
@@ -201,6 +208,18 @@ function ExplorerExploreExternalButton({ filter, selectedCommonsCounts, external
                 <Button
                   label='Download manifest'
                   onClick={handleDownloadManifest}
+                />
+                <p>
+                  <FontAwesomeIcon
+                    icon='circle-info'
+                    color='var(--pcdc-color__secondary)'
+                  />
+                  &nbsp;Click to view documentation on how and where to load the manifest for the current cohort.
+                </p>
+                <Button
+                  label='Open Documentation'
+                  rightIcon='external-link'
+                  onClick={handleOpenInstructions}
                 />
               </div>
             )}

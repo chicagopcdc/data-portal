@@ -20,6 +20,7 @@ import {
   updateSelectedValue,
   removeEmptyFilter,
 } from './utils';
+import { capitalizeFirstLetter } from '../../../../utils';
 import './FilterGroup.css';
 
 /** @param {string} label */
@@ -126,6 +127,26 @@ function FilterGroup({
   const [excludedStatus, setExcludedStatus] = useState(
     getExcludedStatus(filterTabs, filterResults),
   );
+
+  /** Takes in a filter's filter name and returns its display name
+   * @returns {string} newFilterName - the display name of the filter, with capitals
+   */
+  function toDisplayName(filter) {
+    for (const key in Object.keys(filterConfig.info)) {
+      if (filter === key) {
+        return filterConfig.info[key].label;
+      }
+    }
+    const periodIdx = filter.indexOf('.');
+    let newFilterName = filter;
+    if (periodIdx !== -1) {
+      newFilterName = filter.slice(periodIdx + 1);
+    }
+    return capitalizeFirstLetter(newFilterName);
+  }
+
+  const filterToRelation = filterConfig.filterDependencyConfig.filterToRelation;
+  const relations = filterConfig.filterDependencyConfig.relations;
 
   const [filterStatus, setFilterStatus] = useState(
     getFilterStatus({
@@ -369,6 +390,17 @@ function FilterGroup({
     }
   }
 
+  /** Returns a list of display names for filters, to be used for configuring dependentFilters */
+  function createDependentFiltersArr(origfilterNames, currentFilterName) {
+    const newfilterNames = [];
+    for (const filterName of origfilterNames) {
+      if (filterName != currentFilterName) {
+        newfilterNames.push(toDisplayName(filterName));
+      }
+    }
+    return newfilterNames;
+  }
+
   return (
     <div className={`g3-filter-group ${className}`}>
       <Select
@@ -444,46 +476,59 @@ function FilterGroup({
             handleClearPatientIds={handleClearPatientIds}
           />
         )}
-        {tabs[tabIndex].map((section, index) => (
-          <FilterSection
-            key={section.title}
-            sectionTitle={section.title}
-            disabledTooltipMessage={disabledTooltipMessage}
-            excluded={excludedStatus[tabIndex][index]}
-            expanded={expandedStatus[tabIndex][index]}
-            filterStatus={filterTabStatus[index]}
-            hideZero={hideZero}
-            isArrayField={section.isArrayField}
-            isSearchFilter={section.isSearchFilter}
-            lockedTooltipMessage={lockedTooltipMessage}
-            onAfterDrag={(...args) => handleDrag(index, ...args)}
-            onClear={() => handleClearSection(index)}
-            onSearchFilterLoadOptions={section.onSearchFilterLoadOptions}
-            onSelect={(label, isExclusion) =>
-              handleSelect(index, label, isExclusion)
-            }
-            onToggle={(isExpanded) => handleToggleSection(index, isExpanded)}
-            onToggleCombineMode={(...args) =>
-              handleToggleCombineMode(index, ...args)
-            }
-            onToggleExclusion={(isExclusion) =>
-              handleToggleExclusion(index, isExclusion)
-            }
-            options={section.options}
-            title={section.title}
-            tooltip={section.tooltip}
-            unitCalcType={
-              unitCalcTitles.age.includes(filterTabs[tabIndex].fields[index])
-                ? 'age'
-                : 'number'
-            }
-            unitCalcConfig={
-              filterConfig.unitCalcConfig
-                ? filterConfig.unitCalcConfig.ageUnits
-                : null
-            }
-          />
-        ))}
+        {tabs[tabIndex].map((section, index) => {
+          const filterName = filterTabs[tabIndex].fields[index];
+          const relationName = filterToRelation[filterName];
+          const depFilters = Object.keys(filterToRelation);
+          return (
+            <FilterSection
+              key={section.title}
+              sectionTitle={section.title}
+              disabledTooltipMessage={disabledTooltipMessage}
+              excluded={excludedStatus[tabIndex][index]}
+              expanded={expandedStatus[tabIndex][index]}
+              filterStatus={filterTabStatus[index]}
+              hideZero={hideZero}
+              isArrayField={section.isArrayField}
+              isSearchFilter={section.isSearchFilter}
+              lockedTooltipMessage={lockedTooltipMessage}
+              onAfterDrag={(...args) => handleDrag(index, ...args)}
+              onClear={() => handleClearSection(index)}
+              onSearchFilterLoadOptions={section.onSearchFilterLoadOptions}
+              onSelect={(label, isExclusion) =>
+                handleSelect(index, label, isExclusion)
+              }
+              onToggle={(isExpanded) => handleToggleSection(index, isExpanded)}
+              onToggleCombineMode={(...args) =>
+                handleToggleCombineMode(index, ...args)
+              }
+              onToggleExclusion={(isExclusion) =>
+                handleToggleExclusion(index, isExclusion)
+              }
+              options={section.options}
+              title={section.title}
+              tooltip={section.tooltip}
+              dependentFilters={
+                depFilters.includes(filterName)
+                  ? createDependentFiltersArr(
+                      relations[relationName],
+                      filterName,
+                    )
+                  : false
+              }
+              unitCalcType={
+                unitCalcTitles.age.includes(filterTabs[tabIndex].fields[index])
+                  ? 'age'
+                  : 'number'
+              }
+              unitCalcConfig={
+                filterConfig.unitCalcConfig
+                  ? filterConfig.unitCalcConfig.ageUnits
+                  : null
+              }
+            />
+          );
+        })}
       </div>
     </div>
   );

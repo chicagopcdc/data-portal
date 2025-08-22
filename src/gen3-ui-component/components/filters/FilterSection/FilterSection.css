@@ -68,6 +68,30 @@
   margin-top: 10px;
 }
 
+.filter-dependency-container {
+  background-color: var(--g3-color__white);
+  border: 1px solid var(--pcdc-color__secondary);
+  border-left-width: 0.25rem;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  max-height: 100px;
+  padding: 8px;
+  margin-bottom: 20px;
+  width: 300px;
+}
+
+.requirement-message {
+  word-wrap: break-word;
+  font-size: 12px;
+  width: fit-content;
+}
+
+.requirement-message li {
+  list-style-type: disc;
+  list-style-position: inside;
+}
+
 .g3-filter-section__toggle-icon-container {
   margin-right: 5px;
 }
@@ -224,4 +248,3 @@
   margin-left: 14px;
   margin-top: 14px;
 }
-

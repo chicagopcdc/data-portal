@@ -81,6 +81,8 @@ export type TableOneConfig = {
 export type PatientIdsConfig = {
   export?: boolean;
   filter?: boolean;
+  filterName?: string;
+  displayName?: string;
 };
 
 export type SurvivalAnalysisConfig = {

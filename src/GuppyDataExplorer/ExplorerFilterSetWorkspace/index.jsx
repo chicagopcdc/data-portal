@@ -41,15 +41,19 @@ function ExplorerFilterSetWorkspace() {
     dispatch(updateExplorerFilter(filter));
   }
   const filterInfo = useAppSelector(
-    (state) => state.explorer.config.filterConfig.info
+    (state) => state.explorer.config.filterConfig.info,
   );
   const savedFilterSets = useAppSelector(
-    (state) => state.explorer.savedFilterSets
+    (state) => state.explorer.savedFilterSets,
+  );
+
+  const patientIdsConfig = useAppSelector(
+    (state) => state.explorer.config.patientIdsConfig,
   );
   const workspace = useFilterSetWorkspace();
   const activeFilterSet = workspace.all[workspace.activeId];
   const activeSavedFilterSet = savedFilterSets.data.find(
-    ({ id }) => id === activeFilterSet.id
+    ({ id }) => id === activeFilterSet.id,
   );
   const all = workspace.all;
 
@@ -71,7 +75,7 @@ function ExplorerFilterSetWorkspace() {
   const shouldNotRemove = composedWithActive.length > 0;
 
   const [actionFormType, setActionFormType] = useState(
-    /** @type {ActionFormType} */ (undefined)
+    /** @type {ActionFormType} */ (undefined),
   );
   function closeActionForm() {
     setActionFormType(undefined);
@@ -168,7 +172,7 @@ function ExplorerFilterSetWorkspace() {
   }
 
   const disableNew = Object.values(workspace.all).some(({ filter }) =>
-    checkIfFilterEmpty(filter ?? {})
+    checkIfFilterEmpty(filter ?? {}),
   );
 
   const defaultComposeState = {
@@ -252,7 +256,7 @@ function ExplorerFilterSetWorkspace() {
               style={{ display: 'inline-flex', margin: '0 1rem 0 0' }}
             >
               Compose with
-              <ButtonToggle 
+              <ButtonToggle
                 isOn={composeState.combineMode === 'AND'}
                 onText='AND'
                 offText='OR'
@@ -309,9 +313,10 @@ function ExplorerFilterSetWorkspace() {
               </button>
               <Tooltip
                 arrowContent={<div className='rc-tooltip-arrow-inner' />}
-                overlay={shouldNotRemove ?
-                  'To remove the currently active filter set from the workspace, first remove it from any unsaved composed filter set in the workspace' :
-                  'Remove the currently active filter set from the workspace'
+                overlay={
+                  shouldNotRemove
+                    ? 'To remove the currently active filter set from the workspace, first remove it from any unsaved composed filter set in the workspace'
+                    : 'Remove the currently active filter set from the workspace'
                 }
                 placement='bottom'
                 trigger={['hover', 'focus']}
@@ -327,9 +332,10 @@ function ExplorerFilterSetWorkspace() {
               </Tooltip>
               <Tooltip
                 arrowContent={<div className='rc-tooltip-arrow-inner' />}
-                overlay={shouldNotRemove ?
-                  'To clear the currently active filter set from the workspace, first remove it from any unsaved composed filter set in the workspace' :
-                  'Clear the currently active filter set'
+                overlay={
+                  shouldNotRemove
+                    ? 'To clear the currently active filter set from the workspace, first remove it from any unsaved composed filter set in the workspace'
+                    : 'Clear the currently active filter set'
                 }
                 placement='bottom'
                 trigger={['hover', 'focus']}
@@ -338,7 +344,10 @@ function ExplorerFilterSetWorkspace() {
                   className='explorer-filter-set-workspace__action-button'
                   type='button'
                   onClick={handleClear}
-                  disabled={shouldNotRemove || checkIfFilterEmpty(activeFilterSet?.filter ?? {})}
+                  disabled={
+                    shouldNotRemove ||
+                    checkIfFilterEmpty(activeFilterSet?.filter ?? {})
+                  }
                 >
                   Clear
                 </button>
@@ -438,6 +447,7 @@ function ExplorerFilterSetWorkspace() {
                   <FilterDisplay
                     filter={filterSet.filter}
                     filterInfo={filterInfo}
+                    patientIdsConfig={patientIdsConfig}
                     onClickCombineMode={handleClickCombineMode}
                     onCloseFilter={handleCloseFilter}
                   />
@@ -464,6 +474,7 @@ function ExplorerFilterSetWorkspace() {
                   <FilterDisplay
                     filter={filterSet.filter}
                     filterInfo={filterInfo}
+                    patientIdsConfig={patientIdsConfig}
                   />
                 )}
               </main>

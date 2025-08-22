@@ -55,7 +55,6 @@ export type ExplorerState = {
   explorerFilter: ExplorerFilter;
   explorerId: number;
   explorerIds: ExplorerState['explorerId'][];
-  patientIds: string[];
   savedFilterSets: {
     data: SavedExplorerFilterSet[];
     isError: boolean;

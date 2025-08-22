@@ -39,8 +39,10 @@ function findFilterElement(label) {
 /** @typedef {import('../types').EmptyFilter} EmptyFilter */
 /** @typedef {import('../types').FilterChangeHandler} FilterChangeHandler */
 /** @typedef {import('../types').FilterConfig} FilterConfig */
+/** @typedef {import('../../../../GuppyDataExplorer/types').PatientIdsConfig} PatientIdsConfig */
 /** @typedef {import('../types').FilterSectionConfig} FilterSectionConfig */
 /** @typedef {import('../types').StandardFilterState} StandardFilterState */
+/** @typedef {import('../types').OptionFilter} OptionFilter */
 
 /**
  * @typedef {Object} UnitCalcParams
@@ -56,12 +58,11 @@ function findFilterElement(label) {
  * @property {string} [disabledTooltipMessage]
  * @property {EmptyFilter | StandardFilterState} [filter]
  * @property {FilterConfig} filterConfig
+ * @property {PatientIdsConfig} patientIdsConfig
  * @property {boolean} [hideZero]
  * @property {string} [lockedTooltipMessage]
  * @property {(anchorValue: string) => void} [onAnchorValueChange]
  * @property {FilterChangeHandler} [onFilterChange]
- * @property {(patientIds: string[]) => void} [onPatientIdsChange]
- * @property {string[]} [patientIds]
  * @property {FilterSectionConfig[][]} tabs
  * @property {UnitCalcParams} [unitCalcConfig]
  */
@@ -74,13 +75,12 @@ function FilterGroup({
   className = '',
   disabledTooltipMessage,
   filterConfig,
+  patientIdsConfig,
   hideZero = true,
   filter = defaultExplorerFilter,
   lockedTooltipMessage,
   onAnchorValueChange = () => {},
   onFilterChange = () => {},
-  onPatientIdsChange,
-  patientIds,
   tabs,
 }) {
   const filterTabs = filterConfig.tabs.map(
@@ -107,7 +107,7 @@ function FilterGroup({
     filterConfig.anchor !== undefined &&
     filterConfig.anchor.tabs.includes(tabTitle);
   const showPatientIdsFilter =
-    patientIds !== undefined && tabTitle === 'Subject';
+    patientIdsConfig?.filter === true && tabTitle === 'Subject';
 
   const anchorLabel =
     filterConfig.anchor !== undefined && anchorValue !== '' && showAnchorFilter
@@ -256,6 +256,52 @@ function FilterGroup({
     setFilterStatus(updated.filterStatus);
     setFilterResults(updated.filterResults);
     onFilterChange(updated.filterResults);
+  }
+
+  /**
+   * Handles a list of patient IDs.
+   * @param {string[]} inputPatientIds - Array of patient ID strings.
+   */
+  function handlePatientIdsChange(inputPatientIds) {
+    let newFilterResults = cloneDeep(filterResults);
+    if (!('value' in newFilterResults)) {
+      newFilterResults = { value: {} };
+    }
+    /** @type {OptionFilter} */
+    newFilterResults.value['subject_submitter_id'] = {
+      selectedValues: inputPatientIds,
+      __type: 'OPTION',
+      isExclusion: false,
+    };
+    setFilterResults(newFilterResults);
+    onFilterChange(newFilterResults);
+  }
+
+  function retrieveFilterPatientIds() {
+    if (!('value' in filterResults)) {
+      return [];
+    }
+    if (
+      'subject_submitter_id' in filterResults.value &&
+      filterResults.value['subject_submitter_id']?.__type === 'OPTION'
+    ) {
+      const patientIds =
+        filterResults.value['subject_submitter_id'].selectedValues || [];
+      return patientIds;
+    }
+    return [];
+  }
+
+  function handleClearPatientIds() {
+    let newFilterResults = cloneDeep(filterResults);
+    if (!('value' in newFilterResults)) {
+      newFilterResults = { value: {} };
+    }
+    if ('subject_submitter_id' in newFilterResults.value) {
+      delete newFilterResults.value['subject_submitter_id'];
+    }
+    setFilterResults(newFilterResults);
+    onFilterChange(newFilterResults);
   }
 
   /**
@@ -425,8 +471,9 @@ function FilterGroup({
         )}
         {showPatientIdsFilter && (
           <PatientIdFilter
-            onPatientIdsChange={onPatientIdsChange}
-            patientIds={patientIds}
+            getPatientIds={retrieveFilterPatientIds}
+            handlePatientIdsChange={handlePatientIdsChange}
+            handleClearPatientIds={handleClearPatientIds}
           />
         )}
         {tabs[tabIndex].map((section, index) => {
@@ -511,8 +558,6 @@ FilterGroup.propTypes = {
   lockedTooltipMessage: PropTypes.string,
   onAnchorValueChange: PropTypes.func,
   onFilterChange: PropTypes.func,
-  onPatientIdsChange: PropTypes.func,
-  patientIds: PropTypes.arrayOf(PropTypes.string),
   tabs: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.object)).isRequired,
 };
 

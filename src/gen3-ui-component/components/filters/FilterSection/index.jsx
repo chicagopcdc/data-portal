@@ -8,6 +8,7 @@ import SingleSelectFilter from '../SingleSelectFilter';
 import Chip from '../Chip';
 import RangeFilter from '../RangeFilter';
 import './FilterSection.css';
+import DependentFilterMessage from './DependentFilterMessage';
 
 /** @typedef {import('react-select-async-paginate').Response<any, null, null>} PaginateResponse */
 /** @typedef {import('../types').OptionFilterStatus} OptionFilterStatus */
@@ -99,6 +100,7 @@ function FilterSection({
   options = defaultOptions,
   title = '',
   tooltip,
+  dependentFilters,
 }) {
   /**
    * @param {boolean} isShowingMoreOptions
@@ -138,7 +140,7 @@ function FilterSection({
       ...prevState,
       optionsVisibleStatus: getOptionsVisibleStatus(
         prevState.isShowingMoreOptions,
-        inputElem.current?.value
+        inputElem.current?.value,
       ),
     }));
   }, [options]);
@@ -149,7 +151,7 @@ function FilterSection({
       ...prevState,
       isSearchInputEmpty: true,
       optionsVisibleStatus: getOptionsVisibleStatus(
-        prevState.isShowingMoreOptions
+        prevState.isShowingMoreOptions,
       ),
     }));
   }
@@ -180,7 +182,7 @@ function FilterSection({
       isSearchInputEmpty: !currentInput || currentInput.length === 0,
       optionsVisibleStatus: getOptionsVisibleStatus(
         prevState.isShowingMoreOptions,
-        currentInput
+        currentInput,
       ),
     }));
   }
@@ -245,7 +247,7 @@ function FilterSection({
       ...prevState,
       isShowingMoreOptions: !prevState.isShowingMoreOptions,
       optionsVisibleStatus: getOptionsVisibleStatus(
-        !prevState.isShowingMoreOptions
+        !prevState.isShowingMoreOptions,
       ),
     }));
   }
@@ -284,7 +286,7 @@ function FilterSection({
               />
               {combineMode}
             </label>
-          )
+          ),
         )}
         <Tooltip
           arrowContent={<div className='rc-tooltip-arrow-inner' />}
@@ -361,7 +363,6 @@ function FilterSection({
       </div>
     );
   }
-
   function renderShowMoreButton() {
     let totalCount = 0;
     for (const o of options)
@@ -466,7 +467,7 @@ function FilterSection({
                 onSelect={handleSelectSingleSelectFilter}
                 selected={filterStatus[option.text]}
               />
-            )
+            ),
         )}
       </>
     );
@@ -609,6 +610,11 @@ function FilterSection({
       {isSearchFilter && renderSearchFilter()}
       {state.isExpanded && (
         <div className='g3-filter-section__options'>
+          {dependentFilters && Object.keys(filterStatus).length !== 0 && (
+            <div className='filter-dependency-container'>
+              <DependentFilterMessage dependentFilters={dependentFilters} />
+            </div>
+          )}
           {(isTextFilter || isSearchFilter) &&
             renderTextFilter(/** @type {OptionFilterStatus} */ (filterStatus))}
           {isRangeFilter &&
@@ -653,7 +659,7 @@ FilterSection.propTypes = {
       min: PropTypes.number,
       max: PropTypes.number,
       rangeStep: PropTypes.number, // by default 1
-    })
+    }),
   ),
   title: PropTypes.string,
   tooltip: PropTypes.string,

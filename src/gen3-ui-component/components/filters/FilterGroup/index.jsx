@@ -20,6 +20,7 @@ import {
   updateSelectedValue,
   removeEmptyFilter,
 } from './utils';
+import { capitalizeFirstLetter } from '../../../../utils';
 import './FilterGroup.css';
 
 /** @param {string} label */
@@ -38,8 +39,10 @@ function findFilterElement(label) {
 /** @typedef {import('../types').EmptyFilter} EmptyFilter */
 /** @typedef {import('../types').FilterChangeHandler} FilterChangeHandler */
 /** @typedef {import('../types').FilterConfig} FilterConfig */
+/** @typedef {import('../../../../GuppyDataExplorer/types').PatientIdsConfig} PatientIdsConfig */
 /** @typedef {import('../types').FilterSectionConfig} FilterSectionConfig */
 /** @typedef {import('../types').StandardFilterState} StandardFilterState */
+/** @typedef {import('../types').OptionFilter} OptionFilter */
 
 /**
  * @typedef {Object} UnitCalcParams
@@ -55,12 +58,11 @@ function findFilterElement(label) {
  * @property {string} [disabledTooltipMessage]
  * @property {EmptyFilter | StandardFilterState} [filter]
  * @property {FilterConfig} filterConfig
+ * @property {PatientIdsConfig} patientIdsConfig
  * @property {boolean} [hideZero]
  * @property {string} [lockedTooltipMessage]
  * @property {(anchorValue: string) => void} [onAnchorValueChange]
  * @property {FilterChangeHandler} [onFilterChange]
- * @property {(patientIds: string[]) => void} [onPatientIdsChange]
- * @property {string[]} [patientIds]
  * @property {FilterSectionConfig[][]} tabs
  * @property {UnitCalcParams} [unitCalcConfig]
  */
@@ -73,13 +75,12 @@ function FilterGroup({
   className = '',
   disabledTooltipMessage,
   filterConfig,
+  patientIdsConfig,
   hideZero = true,
   filter = defaultExplorerFilter,
   lockedTooltipMessage,
   onAnchorValueChange = () => {},
   onFilterChange = () => {},
-  onPatientIdsChange,
-  patientIds,
   tabs,
 }) {
   const filterTabs = filterConfig.tabs.map(
@@ -87,16 +88,18 @@ function FilterGroup({
       title,
       // If there are any search fields, insert them at the top of each tab's fields.
       fields: searchFields ? searchFields.concat(fields) : fields,
-    })
+    }),
   );
 
   // pulls info about which range filters use what quantity (e.g. age or number) from pcdc.json
   // unitCalcTitles.age contains all titles with the age quantity, and unitCalcTitles.number
   // contains all titles with the number quantity
 
-  // for backwards compatibility, if filterConfig.unitCalcConfig is undefined, 
+  // for backwards compatibility, if filterConfig.unitCalcConfig is undefined,
   // no unit calculator is shown on any range filter (all range filters are numeric)
-  const unitCalcTitles = (!filterConfig.unitCalcConfig) ? { number: [], age: [] } : filterConfig.unitCalcConfig.calculatorMapping;
+  const unitCalcTitles = !filterConfig.unitCalcConfig
+    ? { number: [], age: [] }
+    : filterConfig.unitCalcConfig.calculatorMapping;
 
   const [tabIndex, setTabIndex] = useState(0);
   const tabTitle = filterTabs[tabIndex].title;
@@ -104,7 +107,7 @@ function FilterGroup({
     filterConfig.anchor !== undefined &&
     filterConfig.anchor.tabs.includes(tabTitle);
   const showPatientIdsFilter =
-    patientIds !== undefined && tabTitle === 'Subject';
+    patientIdsConfig?.filter === true && tabTitle === 'Subject';
 
   const anchorLabel =
     filterConfig.anchor !== undefined && anchorValue !== '' && showAnchorFilter
@@ -116,7 +119,7 @@ function FilterGroup({
     ? 'Collapse all'
     : 'Open all';
   const [expandedStatus, setExpandedStatus] = useState(
-    getExpandedStatus(filterTabs, false)
+    getExpandedStatus(filterTabs, false),
   );
 
   const [filterResults, setFilterResults] = useState(filter);
@@ -125,12 +128,32 @@ function FilterGroup({
     getExcludedStatus(filterTabs, filterResults),
   );
 
+  /** Takes in a filter's filter name and returns its display name
+   * @returns {string} newFilterName - the display name of the filter, with capitals
+   */
+  function toDisplayName(filter) {
+    for (const key in Object.keys(filterConfig.info)) {
+      if (filter === key) {
+        return filterConfig.info[key].label;
+      }
+    }
+    const periodIdx = filter.indexOf('.');
+    let newFilterName = filter;
+    if (periodIdx !== -1) {
+      newFilterName = filter.slice(periodIdx + 1);
+    }
+    return capitalizeFirstLetter(newFilterName);
+  }
+
+  const filterToRelation = filterConfig.filterDependencyConfig.filterToRelation;
+  const relations = filterConfig.filterDependencyConfig.relations;
+
   const [filterStatus, setFilterStatus] = useState(
     getFilterStatus({
       anchorConfig: filterConfig.anchor,
       filterResults: filter,
       filterTabs,
-    })
+    }),
   );
   const isInitialRenderRef = useRef(true);
   useEffect(() => {
@@ -189,7 +212,7 @@ function FilterGroup({
   function handleToggleCombineMode(
     sectionIndex,
     combineModeFieldName,
-    combineModeValue
+    combineModeValue,
   ) {
     const updated = updateCombineMode({
       filterStatus,
@@ -213,7 +236,6 @@ function FilterGroup({
     )
       onFilterChange(updated.filterResults);
   }
-  
 
   /**
    * @param {number} sectionIndex
@@ -237,6 +259,52 @@ function FilterGroup({
   }
 
   /**
+   * Handles a list of patient IDs.
+   * @param {string[]} inputPatientIds - Array of patient ID strings.
+   */
+  function handlePatientIdsChange(inputPatientIds) {
+    let newFilterResults = cloneDeep(filterResults);
+    if (!('value' in newFilterResults)) {
+      newFilterResults = { value: {} };
+    }
+    /** @type {OptionFilter} */
+    newFilterResults.value['subject_submitter_id'] = {
+      selectedValues: inputPatientIds,
+      __type: 'OPTION',
+      isExclusion: false,
+    };
+    setFilterResults(newFilterResults);
+    onFilterChange(newFilterResults);
+  }
+
+  function retrieveFilterPatientIds() {
+    if (!('value' in filterResults)) {
+      return [];
+    }
+    if (
+      'subject_submitter_id' in filterResults.value &&
+      filterResults.value['subject_submitter_id']?.__type === 'OPTION'
+    ) {
+      const patientIds =
+        filterResults.value['subject_submitter_id'].selectedValues || [];
+      return patientIds;
+    }
+    return [];
+  }
+
+  function handleClearPatientIds() {
+    let newFilterResults = cloneDeep(filterResults);
+    if (!('value' in newFilterResults)) {
+      newFilterResults = { value: {} };
+    }
+    if ('subject_submitter_id' in newFilterResults.value) {
+      delete newFilterResults.value['subject_submitter_id'];
+    }
+    setFilterResults(newFilterResults);
+    onFilterChange(newFilterResults);
+  }
+
+  /**
    * @param {number} sectionIndex
    * @param {boolean} isExclusion
    */
@@ -251,7 +319,7 @@ function FilterGroup({
     });
 
     setExcludedStatus(
-      getExcludedStatus(filterTabs, updated.filterResults, excludedStatus)
+      getExcludedStatus(filterTabs, updated.filterResults, excludedStatus),
     );
     setFilterResults(removeEmptyFilter(updated.filterResults));
     onFilterChange(removeEmptyFilter(updated.filterResults));
@@ -271,7 +339,7 @@ function FilterGroup({
     upperBound,
     minValue,
     maxValue,
-    rangeStep = 1
+    rangeStep = 1,
   ) {
     const updated = updateRangeValue({
       filterStatus,
@@ -322,6 +390,17 @@ function FilterGroup({
     }
   }
 
+  /** Returns a list of display names for filters, to be used for configuring dependentFilters */
+  function createDependentFiltersArr(origfilterNames, currentFilterName) {
+    const newfilterNames = [];
+    for (const filterName of origfilterNames) {
+      if (filterName != currentFilterName) {
+        newfilterNames.push(toDisplayName(filterName));
+      }
+    }
+    return newfilterNames;
+  }
+
   return (
     <div className={`g3-filter-group ${className}`}>
       <Select
@@ -337,7 +416,7 @@ function FilterGroup({
           <div
             key={index}
             className={'g3-filter-group__tab'.concat(
-              tabIndex === index ? ' g3-filter-group__tab--selected' : ''
+              tabIndex === index ? ' g3-filter-group__tab--selected' : '',
             )}
             onClick={() => setTabIndex(index)}
             onKeyPress={(e) => {
@@ -392,44 +471,64 @@ function FilterGroup({
         )}
         {showPatientIdsFilter && (
           <PatientIdFilter
-            onPatientIdsChange={onPatientIdsChange}
-            patientIds={patientIds}
+            getPatientIds={retrieveFilterPatientIds}
+            handlePatientIdsChange={handlePatientIdsChange}
+            handleClearPatientIds={handleClearPatientIds}
           />
         )}
-        {tabs[tabIndex].map((section, index) => (
-          <FilterSection
-            key={section.title}
-            sectionTitle={section.title}
-            disabledTooltipMessage={disabledTooltipMessage}
-            excluded={excludedStatus[tabIndex][index]}
-            expanded={expandedStatus[tabIndex][index]}
-            filterStatus={filterTabStatus[index]}
-            hideZero={hideZero}
-            isArrayField={section.isArrayField}
-            isSearchFilter={section.isSearchFilter}
-            lockedTooltipMessage={lockedTooltipMessage}
-            onAfterDrag={(...args) => handleDrag(index, ...args)}
-            onClear={() => handleClearSection(index)}
-            onSearchFilterLoadOptions={section.onSearchFilterLoadOptions}
-            onSelect={(label, isExclusion) =>
-              handleSelect(index, label, isExclusion)
-            }
-            onToggle={(isExpanded) => handleToggleSection(index, isExpanded)}
-            onToggleCombineMode={(...args) =>
-              handleToggleCombineMode(index, ...args)
-            }
-            onToggleExclusion={(isExclusion) =>
-              handleToggleExclusion(index, isExclusion)
-            }
-            options={section.options}
-            title={section.title}
-            tooltip={section.tooltip}
-            unitCalcType={
-              unitCalcTitles.age.includes(filterTabs[tabIndex].fields[index]) ? 'age' : 'number'
-            }
-            unitCalcConfig={filterConfig.unitCalcConfig ? filterConfig.unitCalcConfig.ageUnits: null}
-          />
-        ))}
+        {tabs[tabIndex].map((section, index) => {
+          const filterName = filterTabs[tabIndex].fields[index];
+          const relationName = filterToRelation[filterName];
+          const depFilters = Object.keys(filterToRelation);
+          return (
+            <FilterSection
+              key={section.title}
+              sectionTitle={section.title}
+              disabledTooltipMessage={disabledTooltipMessage}
+              excluded={excludedStatus[tabIndex][index]}
+              expanded={expandedStatus[tabIndex][index]}
+              filterStatus={filterTabStatus[index]}
+              hideZero={hideZero}
+              isArrayField={section.isArrayField}
+              isSearchFilter={section.isSearchFilter}
+              lockedTooltipMessage={lockedTooltipMessage}
+              onAfterDrag={(...args) => handleDrag(index, ...args)}
+              onClear={() => handleClearSection(index)}
+              onSearchFilterLoadOptions={section.onSearchFilterLoadOptions}
+              onSelect={(label, isExclusion) =>
+                handleSelect(index, label, isExclusion)
+              }
+              onToggle={(isExpanded) => handleToggleSection(index, isExpanded)}
+              onToggleCombineMode={(...args) =>
+                handleToggleCombineMode(index, ...args)
+              }
+              onToggleExclusion={(isExclusion) =>
+                handleToggleExclusion(index, isExclusion)
+              }
+              options={section.options}
+              title={section.title}
+              tooltip={section.tooltip}
+              dependentFilters={
+                depFilters.includes(filterName)
+                  ? createDependentFiltersArr(
+                      relations[relationName],
+                      filterName,
+                    )
+                  : false
+              }
+              unitCalcType={
+                unitCalcTitles.age.includes(filterTabs[tabIndex].fields[index])
+                  ? 'age'
+                  : 'number'
+              }
+              unitCalcConfig={
+                filterConfig.unitCalcConfig
+                  ? filterConfig.unitCalcConfig.ageUnits
+                  : null
+              }
+            />
+          );
+        })}
       </div>
     </div>
   );
@@ -452,15 +551,13 @@ FilterGroup.propTypes = {
         title: PropTypes.string,
         fields: PropTypes.arrayOf(PropTypes.string),
         searchFields: PropTypes.arrayOf(PropTypes.string),
-      })
+      }),
     ),
   }).isRequired,
   hideZero: PropTypes.bool,
   lockedTooltipMessage: PropTypes.string,
   onAnchorValueChange: PropTypes.func,
   onFilterChange: PropTypes.func,
-  onPatientIdsChange: PropTypes.func,
-  patientIds: PropTypes.arrayOf(PropTypes.string),
   tabs: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.object)).isRequired,
 };
 

@@ -1,7 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import PropTypes from 'prop-types';
 import ConnectedFilter from '../../GuppyComponents/ConnectedFilter';
-import { updatePatientIds } from '../../redux/explorer/slice';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import './ExplorerFilter.css';
 
@@ -25,7 +24,10 @@ export function DisabledExplorerFilter({ className }) {
         <em>Composed filter state cannot be modified!</em>
       </p>
       <p>
-        To re-enable <i>this feature</i>, go to Filter Set Workspace and use (activate) a Filter Set with a standard (non-composed) filter state or create a new one. <i>This feature</i> is disabled when the active Filter Set has a composed filter state.       
+        To re-enable <i>this feature</i>, go to Filter Set Workspace and use
+        (activate) a Filter Set with a standard (non-composed) filter state or
+        create a new one. <i>This feature</i> is disabled when the active Filter
+        Set has a composed filter state.
       </p>
     </div>
   );
@@ -49,14 +51,13 @@ DisabledExplorerFilter.propTypes = {
 
 /** @param {ExplorerFilterProps} props */
 function ExplorerFilter({ className = '', ...filterProps }) {
-  const dispatch = useAppDispatch();
-  /** @param {RootState['explorer']['patientIds']} ids */
-  function handlePatientIdsChange(ids) {
-    dispatch(updatePatientIds(ids));
-  }
   const {
-    config: { adminAppliedPreFilters, filterConfig, guppyConfig },
-    patientIds,
+    config: {
+      adminAppliedPreFilters,
+      filterConfig,
+      guppyConfig,
+      patientIdsConfig,
+    },
   } = useAppSelector((state) => state.explorer);
 
   const connectedFilterProps = {
@@ -64,8 +65,7 @@ function ExplorerFilter({ className = '', ...filterProps }) {
     adminAppliedPreFilters,
     filterConfig,
     guppyConfig,
-    patientIds,
-    onPatientIdsChange: handlePatientIdsChange,
+    patientIdsConfig,
   };
   const hasExplorerFilter =
     Object.keys(filterProps.filter.value ?? {}).length > 0;
@@ -97,7 +97,7 @@ ExplorerFilter.propTypes = {
   onAnchorValueChange: PropTypes.func.isRequired, // from GuppyWrapper
   onFilterChange: PropTypes.func.isRequired, // from GuppyWrapper
   tabsOptions: PropTypes.object.isRequired, // from GuppWrapper
-  dictionaryEntries: PropTypes.array
+  dictionaryEntries: PropTypes.array,
 };
 
 export default ExplorerFilter;

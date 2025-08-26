@@ -44,7 +44,6 @@ function ExplorerDashboard() {
     explorerFilter,
     explorerId,
     explorerIds,
-    patientIds,
   } = useAppSelector((state) => state.explorer);
   useEffect(() => {
     // sync saved filter sets with explorer id state
@@ -107,7 +106,6 @@ function ExplorerDashboard() {
       guppyConfig={guppyConfig}
       onFilterChange={handleFilterChange}
       rawDataFields={tableConfig.fields}
-      patientIds={patientIds}
     >
       {(data) => {
         return (

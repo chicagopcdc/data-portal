@@ -12,6 +12,7 @@ import {
 /** @typedef {import('../types').FilterChangeHandler} FilterChangeHandler */
 /** @typedef {import('../types').FilterConfig} FilterConfig */
 /** @typedef {import('../types').GuppyConfig} GuppyConfig */
+/** @typedef {import('../../GuppyDataExplorer/types').PatientIdsConfig} PatientIdsConfig */
 /** @typedef {import('../types').SimpleAggsData} SimpleAggsData */
 /** @typedef {import('../types').StandardFilterState} StandardFilterState */
 
@@ -23,13 +24,12 @@ import {
  * @property {StandardFilterState} filter
  * @property {FilterConfig} filterConfig
  * @property {GuppyConfig} guppyConfig
+ * @property {PatientIdsConfig} patientIdsConfig
  * @property {boolean} [hidden]
  * @property {boolean} [hideZero]
  * @property {SimpleAggsData} [initialTabsOptions]
  * @property {(anchorValue: string) => void} onAnchorValueChange
  * @property {FilterChangeHandler} onFilterChange
- * @property {(x: string[]) => void} [onPatientIdsChange]
- * @property {string[]} [patientIds]
  * @property {SimpleAggsData} tabsOptions
  * @property {Array} dictionaryEntries
  */
@@ -42,15 +42,14 @@ function ConnectedFilter({
   filter = {},
   filterConfig,
   guppyConfig,
+  patientIdsConfig,
   hidden = false,
   hideZero = false,
   initialTabsOptions = {},
   onAnchorValueChange,
   onFilterChange,
-  onPatientIdsChange,
-  patientIds,
   tabsOptions,
-  dictionaryEntries
+  dictionaryEntries,
 }) {
   if (
     hidden ||
@@ -60,7 +59,7 @@ function ConnectedFilter({
     return null;
 
   const processedTabsOptions = sortTabsOptions(
-    updateCountsInInitialTabsOptions(initialTabsOptions, tabsOptions, filter)
+    updateCountsInInitialTabsOptions(initialTabsOptions, tabsOptions, filter),
   );
   if (Object.keys(processedTabsOptions).length === 0) {
     return null;
@@ -85,7 +84,7 @@ function ConnectedFilter({
       initialTabsOptions,
       searchFields,
       tabsOptions: processedTabsOptions,
-    })
+    }),
   );
 
   return (
@@ -97,11 +96,10 @@ function ConnectedFilter({
       }
       filter={filter}
       filterConfig={filterConfig}
+      patientIdsConfig={patientIdsConfig}
       lockedTooltipMessage={`You may only view summary information for this project. You do not have ${guppyConfig.dataType}-level access.`}
       onAnchorValueChange={onAnchorValueChange}
       onFilterChange={onFilterChange}
-      onPatientIdsChange={onPatientIdsChange}
-      patientIds={patientIds}
       hideZero={hideZero}
       tabs={filterTabs}
     />
@@ -123,14 +121,14 @@ ConnectedFilter.propTypes = {
       PropTypes.shape({
         label: PropTypes.string,
         tooltip: PropTypes.string,
-      })
+      }),
     ),
     tabs: PropTypes.arrayOf(
       PropTypes.shape({
         title: PropTypes.string,
         fields: PropTypes.arrayOf(PropTypes.string),
         searchFields: PropTypes.arrayOf(PropTypes.string),
-      })
+      }),
     ),
   }).isRequired,
   guppyConfig: PropTypes.shape({
@@ -140,7 +138,7 @@ ConnectedFilter.propTypes = {
         field: PropTypes.string,
         name: PropTypes.string,
         tooltip: PropTypes.string,
-      })
+      }),
     ),
     nodeCountTitle: PropTypes.string,
   }).isRequired,
@@ -149,10 +147,8 @@ ConnectedFilter.propTypes = {
   initialTabsOptions: PropTypes.object,
   onAnchorValueChange: PropTypes.func.isRequired,
   onFilterChange: PropTypes.func.isRequired,
-  onPatientIdsChange: PropTypes.func,
-  patientIds: PropTypes.arrayOf(PropTypes.string),
   tabsOptions: PropTypes.object.isRequired,
-  dictionaryEntries: PropTypes.array.isRequired
+  dictionaryEntries: PropTypes.array.isRequired,
 };
 
 export default ConnectedFilter;

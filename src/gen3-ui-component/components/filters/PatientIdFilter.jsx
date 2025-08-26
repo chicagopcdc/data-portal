@@ -7,11 +7,16 @@ import Button from '../Button';
 
 /**
  * @param {Object} props
- * @param {Function} props.onPatientIdsChange
- * @param {string[]} props.patientIds
+ * @param {Function} props.getPatientIds
+ * @param {Function} props.handlePatientIdsChange
+ * @param {Function} props.handleClearPatientIds
  */
-function PatientIdFilter({ onPatientIdsChange, patientIds }) {
-  const isUsingPatientIds = patientIds.length > 0;
+function PatientIdFilter({
+  getPatientIds,
+  handlePatientIdsChange,
+  handleClearPatientIds,
+}) {
+  const isUsingPatientIds = getPatientIds().length > 0;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   function openModal() {
@@ -40,12 +45,11 @@ function PatientIdFilter({ onPatientIdsChange, patientIds }) {
       input = textareaRef.current.value.replace(/\s/g, '');
       textareaRef.current.value = '';
     }
-
-    onPatientIdsChange(input ? input.split(',') : []);
+    handlePatientIdsChange(input ? input.split(',') : []);
     closeModal();
   }
   function handleReset() {
-    onPatientIdsChange([]);
+    handleClearPatientIds();
   }
 
   return (
@@ -167,8 +171,9 @@ function PatientIdFilter({ onPatientIdsChange, patientIds }) {
 }
 
 PatientIdFilter.propTypes = {
-  onPatientIdsChange: PropTypes.func.isRequired,
-  patientIds: PropTypes.arrayOf(PropTypes.string).isRequired,
+  getPatientIds: PropTypes.func.isRequired,
+  handlePatientIdsChange: PropTypes.func.isRequired,
+  handleClearPatientIds: PropTypes.func.isRequired,
 };
 
 export default PatientIdFilter;

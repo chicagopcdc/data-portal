@@ -166,16 +166,32 @@ function DataRequestsTable({
   const [successMessage, setSuccessMessage] = useState(location.state?.successMessage || null);
   const [slideOut, setSlideOut] = useState(false);
 
+
+  // First, display message if it exists
   useEffect(() => {
-    if (successMessage) {
-      // Cleanly remove success notice
-      const slideOutTimer = setTimeout(() => setSlideOut(true), 9500); // Start sliding up at 9.5s
-      const clearTimer = setTimeout(() => setSuccessMessage(null), 10000); // Fully remove after 10s
-      return () => {
-        clearTimeout(slideOutTimer);
-        clearTimeout(clearTimer);
-      };
+    if (location.state?.successMessage) {
+      setSuccessMessage(location.state.successMessage);
     }
+  }, [location.state?.successMessage]);
+
+  // Then, when successMessage is set, clean up the navigation state + timers
+  useEffect(() => {
+    if (!successMessage) return;
+
+    // Set up timers
+    const slideOutTimer = setTimeout(() => setSlideOut(true), 9500);
+    const clearTimer = setTimeout(() => {
+      setSlideOut(false);
+      setSuccessMessage(null);
+
+      // Clean up navigation so message doesn't reappear on refresh
+      navigate(location.pathname, { replace: true });
+    }, 10000);
+
+    return () => {
+      clearTimeout(slideOutTimer);
+      clearTimeout(clearTimer);
+    };
   }, [successMessage]);
 
   const closeProjectActionPopup = () => {

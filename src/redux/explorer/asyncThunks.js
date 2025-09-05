@@ -1,5 +1,9 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { getGQLFilter } from '../../GuppyComponents/Utils/queries';
+import {
+  getGQLFilter,
+  queryGuppyForAggregationOptionsData,
+} from '../../GuppyComponents/Utils/queries';
+import { useAppSelector } from '../hooks';
 import * as filterSetsAPI from './filterSetsAPI';
 import * as survivalAnalysisAPI from './survivalAnalysisAPI';
 import * as tableOneAPI from './tableOneAPI';
@@ -129,8 +133,12 @@ export const fetchSurvivalConfig = createAsyncThunk(
 
 export const fetchTableOneConfig = createAsyncThunk(
   'explorer/fetchTableOneConfig',
-  async () => {
-    return tableOneAPI.fetchTableOneConfig();
+  async (_, { rejectWithValue }) => {
+    try {
+      return await tableOneAPI.fetchTableOneConfig();
+    } catch (error) {
+      return rejectWithValue(error);
+    }
   },
 );
 
@@ -149,6 +157,73 @@ export const updateTableOneResult = createAsyncThunk(
       });
     } catch (e) {
       return rejectWithValue(e);
+    }
+  },
+);
+
+export const buildTableOneOptions = createAsyncThunk(
+  'explorer/buildTableOneOptions',
+  async (_, { getState, rejectWithValue }) => {
+    try {
+      const { explorer } = /** @type {AppGetState} */ (getState)();
+      const filterConfig = explorer.config.filterConfig;
+      const guppyConfig = explorer.config.guppyConfig;
+      const tableOneConfig = explorer.config.tableOneConfig;
+      const resp = await queryGuppyForAggregationOptionsData({
+        type: guppyConfig.dataType,
+        anchorConfig: filterConfig.anchor,
+        anchorValue: '',
+        filterTabs: filterConfig.tabs,
+        gqlFilter: {},
+      });
+      const main = resp.data._aggregation.main;
+      if (!main) return {};
+      const fieldName = (f) =>
+        guppyConfig.fieldMapping.find((m) => m.field === f)?.name ||
+        f
+          .split('_')
+          .map((w) => w[0]?.toUpperCase() + w.slice(1))
+          .join(' ');
+
+      const newOptions = {};
+      filterConfig.tabs.forEach((tab) => {
+        newOptions[tab.title] = [];
+        tab.fields.forEach((field) => {
+          const selectable = {
+            label: field,
+            name: fieldName(field),
+            type: '',
+            values: [],
+          };
+          if (tableOneConfig.excludedVariables.some((ev) => ev.field === field))
+            return;
+          const fieldParts = field.split('.');
+          const fieldData = fieldParts.reduce((acc, part) => acc?.[part], main);
+          if (!fieldData || !('histogram' in fieldData)) return;
+          const histogram = fieldData.histogram;
+          if (!Array.isArray(histogram) || histogram.length === 0) return;
+          if (
+            histogram.length === 1 &&
+            Array.isArray(histogram[0].key) &&
+            histogram[0].key.length === 2 &&
+            typeof histogram[0].key[0] === 'number' &&
+            typeof histogram[0].key[1] === 'number' &&
+            histogram[0].key[0] < histogram[0].key[1]
+          ) {
+            selectable.values = histogram[0].key;
+            selectable.type = 'continuous';
+          } else if (!Array.isArray(histogram[0].key)) {
+            selectable.type = 'categorical';
+            histogram.forEach((v) => selectable.values.push(v.key));
+          } else {
+            return;
+          }
+          newOptions[tab.title].push(selectable);
+        });
+      });
+      return newOptions;
+    } catch (err) {
+      return rejectWithValue(err instanceof Error ? err.message : String(err));
     }
   },
 );

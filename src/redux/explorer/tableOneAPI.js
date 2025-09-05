@@ -1,5 +1,4 @@
 import { fetchWithCreds } from '../utils.fetch';
-import { isTableOneEnabled } from './utils';
 
 /** @typedef {import('./types').ExplorerState} ExplorerState */
 
@@ -10,12 +9,12 @@ export function fetchTableOneConfig() {
     method: 'GET',
   }).then(({ response, data, status }) => {
     if (status !== 200) throw response.statusText;
-    return { ...data, enabled: isTableOneEnabled(data) };
+    return { ...data };
   });
 }
 
 /**
- * @returns {Promise<ExplorerState['tableOneResult']>}
+ * @returns {Promise<ExplorerState['tableOneResult']['data']>}
  */
 export function fetchTableOneResult(body) {
   return fetchWithCreds({
@@ -24,7 +23,7 @@ export function fetchTableOneResult(body) {
     body: JSON.stringify(body),
   }).then(({ response, data, status }) => {
     if (status !== 200) {
-      throw response.statusText;
+      throw data || response.statusText;
     }
     return data;
   });

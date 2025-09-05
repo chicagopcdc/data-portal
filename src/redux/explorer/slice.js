@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { FILTER_TYPE } from '../../GuppyComponents/Utils/const';
 import { explorerConfig } from '../../localconf';
+import isEqual from 'lodash.isequal';
 import {
   createFilterSet,
   deleteFilterSet,
@@ -10,6 +11,7 @@ import {
   updateSurvivalResult,
   fetchFederationQuery,
   updateTableOneResult,
+  buildTableOneOptions,
   fetchTableOneConfig,
 } from './asyncThunks';
 import {
@@ -369,8 +371,7 @@ const slice = createSlice({
         });
       })
       .addCase(updateTableOneResult.fulfilled, (state, action) => {
-        const data = action.payload?.data || action.payload;
-        state.tableOneResult.data = data;
+        state.tableOneResult.data = action.payload;
         state.tableOneResult.isPending = false;
         state.tableOneResult.error = null;
       })
@@ -385,9 +386,42 @@ const slice = createSlice({
       })
       .addCase(fetchTableOneConfig.fulfilled, (state, action) => {
         const config = action.payload;
-        if (config === undefined) return;
-
-        state.config.tableOneConfig = config;
+        if (
+          !isEqual(
+            config?.consortium,
+            state.config.tableOneConfig.consortium,
+          ) ||
+          !isEqual(
+            config?.excludedVariables,
+            state.config.tableOneConfig.excludedVariables,
+          )
+        ) {
+          state.config.tableOneConfig.buildOptions = true;
+        }
+        state.config.tableOneConfig = {
+          ...state.config.tableOneConfig,
+          ...config,
+        };
+      })
+      .addCase(fetchTableOneConfig.rejected, (state) => {
+        state.config.tableOneConfig = {
+          enabled: false,
+          buildOptions: false,
+          optionsPending: false,
+        };
+      })
+      .addCase(buildTableOneOptions.fulfilled, (state, action) => {
+        state.config.tableOneConfig.options = action.payload || {};
+        state.config.tableOneConfig.buildOptions = false;
+        state.config.tableOneConfig.optionsPending = false;
+      })
+      .addCase(buildTableOneOptions.pending, (state) => {
+        state.config.tableOneConfig.optionsPending = true;
+      })
+      .addCase(buildTableOneOptions.rejected, (state) => {
+        state.config.tableOneConfig.options = {};
+        state.config.tableOneConfig.buildOptions = false;
+        state.config.tableOneConfig.optionsPending = false;
       });
   },
 });

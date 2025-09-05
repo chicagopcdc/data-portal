@@ -3,7 +3,6 @@ import {
   getGQLFilter,
   queryGuppyForAggregationOptionsData,
 } from '../../GuppyComponents/Utils/queries';
-import { useAppSelector } from '../hooks';
 import * as filterSetsAPI from './filterSetsAPI';
 import * as survivalAnalysisAPI from './survivalAnalysisAPI';
 import * as tableOneAPI from './tableOneAPI';

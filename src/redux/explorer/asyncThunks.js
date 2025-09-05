@@ -214,7 +214,11 @@ export const buildTableOneOptions = createAsyncThunk(
             selectable.type = 'continuous';
           } else if (!Array.isArray(histogram[0].key)) {
             selectable.type = 'categorical';
-            histogram.forEach((v) => selectable.values.push(v.key));
+            histogram.forEach((v) => {
+              if (tableOneConfig.consortium.includes(v.key)) {
+                selectable.values.push(v.key);
+              }
+            });
           } else {
             return;
           }

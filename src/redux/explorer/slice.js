@@ -407,21 +407,15 @@ const slice = createSlice({
         state.config.tableOneConfig = {
           enabled: false,
           buildOptions: false,
-          optionsPending: false,
         };
       })
       .addCase(buildTableOneOptions.fulfilled, (state, action) => {
         state.config.tableOneConfig.options = action.payload || {};
         state.config.tableOneConfig.buildOptions = false;
-        state.config.tableOneConfig.optionsPending = false;
-      })
-      .addCase(buildTableOneOptions.pending, (state) => {
-        state.config.tableOneConfig.optionsPending = true;
       })
       .addCase(buildTableOneOptions.rejected, (state) => {
         state.config.tableOneConfig.options = {};
         state.config.tableOneConfig.buildOptions = false;
-        state.config.tableOneConfig.optionsPending = false;
       });
   },
 });

@@ -172,7 +172,6 @@ export function getCurrentConfig(explorerId) {
       enabled: false,
       buildOptions: false,
       options: {},
-      optionsPending: false,
     },
   };
 }

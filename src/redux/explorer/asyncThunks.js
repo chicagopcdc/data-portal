@@ -214,9 +214,13 @@ export const buildTableOneOptions = createAsyncThunk(
           } else if (!Array.isArray(histogram[0].key)) {
             selectable.type = 'categorical';
             histogram.forEach((v) => {
-              if (tableOneConfig.consortium.includes(v.key)) {
-                selectable.values.push(v.key);
+              if (
+                field == 'consortium' &&
+                !tableOneConfig.consortium.includes(v.key)
+              ) {
+                return;
               }
+              selectable.values.push(v.key);
             });
           } else {
             return;

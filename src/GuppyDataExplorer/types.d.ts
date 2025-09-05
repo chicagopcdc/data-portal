@@ -88,7 +88,6 @@ export type TableOneConfig = {
   excludedVariables?: { label: string; field: string }[];
   enabled: boolean;
   buildOptions: boolean;
-  optionsPending: boolean;
   options?: TableOneOptions;
 };
 

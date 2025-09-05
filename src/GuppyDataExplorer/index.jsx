@@ -175,7 +175,6 @@ function ExplorerDashboard() {
                 getTotalCountsByTypeAndFilter={
                   data.getTotalCountsByTypeAndFilter
                 }
-                tabsOptions={data.tabsOptions}
               />
             </Dashboard.Main>
           </Dashboard>

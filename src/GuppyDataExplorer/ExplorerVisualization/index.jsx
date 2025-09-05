@@ -180,7 +180,6 @@ function ExplorerVisualization({
   fetchAndUpdateRawData,
   getTotalCountsByTypeAndFilter,
   className = '',
-  tabsOptions,
 }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -437,7 +436,7 @@ function ExplorerVisualization({
       )}
       {tableOneConfig.enabled && (
         <ViewContainer showIf={explorerView === 'table one'}>
-          <ExplorerTableOne tabsOptions={tabsOptions} />
+          <ExplorerTableOne />
         </ViewContainer>
       )}
     </div>

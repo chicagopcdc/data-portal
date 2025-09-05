@@ -138,22 +138,15 @@ export function isSurvivalAnalysisEnabled(config) {
   return false;
 }
 
-/** @param {TableOneConfig} config */
-export function isTableOneEnabled(config) {
-  if (config?.result !== undefined)
-    if (config.result.enabled !== undefined) return config.result.enabled;
-  return false;
-}
-
 /** @param {number} explorerId */
 export function getCurrentConfig(explorerId) {
   const config = explorerConfig.find(({ id }) => id === explorerId);
   // for backwards compatibility, dynamically find unitCalcConfig
-  // make sure we don't get crashes, even if unitCalcConfig doesn't exist 
-  const configWithUnitCalc = explorerConfig.find((item) => (
-    item?.filters?.unitCalcConfig
-  ))
-  const unitCalcConfig = configWithUnitCalc?.filters?.unitCalcConfig
+  // make sure we don't get crashes, even if unitCalcConfig doesn't exist
+  const configWithUnitCalc = explorerConfig.find(
+    (item) => item?.filters?.unitCalcConfig,
+  );
+  const unitCalcConfig = configWithUnitCalc?.filters?.unitCalcConfig;
   return {
     adminAppliedPreFilters: config.adminAppliedPreFilters,
     buttonConfig: {
@@ -175,7 +168,11 @@ export function getCurrentConfig(explorerId) {
     patientIdsConfig: config.patientIds,
     survivalAnalysisConfig: { enabled: false },
     tableConfig: config.table,
-    tableOneConfig: { enabled: false },
+    tableOneConfig: {
+      enabled: false,
+      buildOptions: false,
+      options: {},
+    },
   };
 }
 

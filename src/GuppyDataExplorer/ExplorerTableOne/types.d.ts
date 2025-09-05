@@ -5,13 +5,17 @@ export type TableOneBaseVariable = {
   name: string;
   type: 'categorical' | 'continuous';
   missingFromTotal: string;
+  missingFromTotalCount: number;
   missingFromTrue: string;
+  missingFromTrueCount: number;
 };
 
 export type TableOneCategoricalData = {
   data: {
     true: string;
+    trueCount: number;
     total: string;
+    totalCount: number;
   };
   name: string;
 };
@@ -19,7 +23,9 @@ export type TableOneCategoricalData = {
 export type TableOneContinuousData = {
   mean: {
     true: number;
+    trueCount: number;
     total: number;
+    totalCount: number;
   };
 };
 

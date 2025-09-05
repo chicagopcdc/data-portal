@@ -70,12 +70,25 @@ export type TableConfig = {
   linkFields?: string[];
 };
 
+export type TableOneOptionType = 'categorical' | 'continuous';
+
+export type TableOneOption = {
+  label: string;
+  name: string;
+  type: TableOneOptionType;
+  values: string[] | number[];
+};
+
+export type TableOneOptions = {
+  [category: string]: TableOneOption[];
+};
+
 export type TableOneConfig = {
   consortium?: string[];
-  excludedVariables?: any;
-  result?: {
-    enabled?: boolean;
-  };
+  excludedVariables?: { label: string; field: string }[];
+  enabled: boolean;
+  buildOptions: boolean;
+  options?: TableOneOptions;
 };
 
 export type PatientIdsConfig = {

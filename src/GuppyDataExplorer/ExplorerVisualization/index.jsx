@@ -209,7 +209,7 @@ function ExplorerVisualization({
   const explorerView = searchParams.get('view') ?? explorerViews[0];
   // State for external commons config and result data
   const [externalConfig, setExternalConfig] = useState(
-    /** @type {ExternalConfig} */ (null),
+    /** @type {ExternalConfig} */(null),
   );
   // State for popup UI passing to child
   const [isLoadingExploreButton, setIsLoadingExploreButton] = useState(false);

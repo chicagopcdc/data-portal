@@ -13,7 +13,6 @@ import Spinner from '../gen3-ui-component/components/Spinner/Spinner';
 import Tooltip from 'rc-tooltip';
 import 'rc-tooltip/assets/bootstrap_white.css';
 
-
 /** @typedef {import("../redux/types").RootState} RootState */
 /** @typedef {import("../redux/dataRequest/types").ResearcherInfo} ResearcherInfo */
 /** @typedef {import("../redux/dataRequest/types").DataRequestProject} DataRequestProject */
@@ -77,9 +76,23 @@ function parseTableData({ projects, userId, rowAction, isAdminActive }) {
           project.description || ''
         );
 
+      const titleContent =
+        project.name && project.name.length > 100 ? (
+          <Tooltip
+            placement='right'
+            arrowContent={<div className='rc-tooltip-arrow-inner' />}
+            overlay={<span>{project.name}</span>}
+            trigger={['hover', 'focus']}
+          >
+            <span>{project.name.slice(0, 100) + '…'}</span>
+          </Tooltip>
+        ) : (
+          project.name || ''
+        );
+
       const row = [
         project.id,
-        project.name,
+        titleContent,
         descriptionContent,
         project.researcher?.id === userId
           ? 'Me'
@@ -163,9 +176,10 @@ function DataRequestsTable({
   );
   let shouldReloadProjectsOnActionClose = false;
   const location = useLocation();
-  const [successMessage, setSuccessMessage] = useState(location.state?.successMessage || null);
+  const [successMessage, setSuccessMessage] = useState(
+    location.state?.successMessage || null,
+  );
   const [slideOut, setSlideOut] = useState(false);
-
 
   // First, display message if it exists
   useEffect(() => {
@@ -206,7 +220,9 @@ function DataRequestsTable({
       <div className='data-requests__table-header'>
         {/* Successful Submission */}
         {successMessage && (
-          <div className={`submission-success-message${slideOut ? ' slide-out' : ''}`}>
+          <div
+            className={`submission-success-message${slideOut ? ' slide-out' : ''}`}
+          >
             {successMessage}
           </div>
         )}

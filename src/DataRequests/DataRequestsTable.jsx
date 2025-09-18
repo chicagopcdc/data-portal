@@ -76,23 +76,10 @@ function parseTableData({ projects, userId, rowAction, isAdminActive }) {
         ) : (
           project.description || ''
         );
-      const titleContent =
-        project.name && project.name.length > 100 ? (
-          <Tooltip
-            placement='right'
-            arrowContent={<div className='rc-tooltip-arrow-inner' />}
-            overlay={<span>{project.name}</span>}
-            trigger={['hover', 'focus']}
-          >
-            <span>{project.name.slice(0, 100) + '…'}</span>
-          </Tooltip>
-        ) : (
-          project.name || ''
-        );
 
       const row = [
         project.id,
-        titleContent,
+        project.name,
         descriptionContent,
         project.researcher?.id === userId
           ? 'Me'

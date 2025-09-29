@@ -6,7 +6,8 @@ import FileSaver from 'file-saver';
 import SimplePopup from '../../components/SimplePopup';
 import SimpleInputField from '../../components/SimpleInputField';
 import Button from '../../gen3-ui-component/components/Button';
-import { overrideSelectTheme } from '../../utils';
+import { useAppSelector } from '../../redux/hooks';
+import { overrideSelectTheme, isAdminUser } from '../../utils';
 import { fetchWithCreds } from '../../utils.fetch';
 import { getGQLFilter } from '../../GuppyComponents/Utils/queries';
 import ExplorerFilterDisplay from '../ExplorerFilterDisplay';
@@ -98,6 +99,12 @@ function ExplorerExploreExternalButton({ filter, selectedCommonsCounts, external
     setIsLoading(false);
     setIsFileDownloaded(false);
   }
+
+  const {
+    authz,
+    user_id: currentUserId,
+  } = useAppSelector((state) => state.user);
+  const isAdmin = isAdminUser(authz);
 
   /**
    * Handle dropdown option selection
@@ -209,18 +216,23 @@ function ExplorerExploreExternalButton({ filter, selectedCommonsCounts, external
                   label='Download manifest'
                   onClick={handleDownloadManifest}
                 />
-                <p>
-                  <FontAwesomeIcon
-                    icon='circle-info'
-                    color='var(--pcdc-color__secondary)'
-                  />
-                  &nbsp;Click to view documentation on how and where to load the manifest for the current cohort.
-                </p>
-                <Button
-                  label='Open Documentation'
-                  rightIcon='external-link'
-                  onClick={handleOpenInstructions}
-                />
+                {/* Show documentation only if not admin */}
+                {!isAdmin && (
+                  <>
+                    <p>
+                      <FontAwesomeIcon
+                        icon='circle-info'
+                        color='var(--pcdc-color__secondary)'
+                      />
+                      &nbsp;Click to view documentation on how and where to load the manifest for the current cohort.
+                    </p>
+                    <Button
+                      label='Open Documentation'
+                      rightIcon='external-link'
+                      onClick={handleOpenInstructions}
+                    />
+                  </>
+                )}
               </div>
             )}
             <div>

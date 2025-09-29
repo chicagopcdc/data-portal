@@ -13,7 +13,6 @@ import Spinner from '../gen3-ui-component/components/Spinner/Spinner';
 import Tooltip from 'rc-tooltip';
 import 'rc-tooltip/assets/bootstrap_white.css';
 
-
 /** @typedef {import("../redux/types").RootState} RootState */
 /** @typedef {import("../redux/dataRequest/types").ResearcherInfo} ResearcherInfo */
 /** @typedef {import("../redux/dataRequest/types").DataRequestProject} DataRequestProject */
@@ -77,9 +76,23 @@ function parseTableData({ projects, userId, rowAction, isAdminActive }) {
           project.description || ''
         );
 
+      const titleContent =
+        project.name && project.name.length > 100 ? (
+          <Tooltip
+            placement='right'
+            arrowContent={<div className='rc-tooltip-arrow-inner' />}
+            overlay={<span>{project.name}</span>}
+            trigger={['hover', 'focus']}
+          >
+            <span>{project.name.slice(0, 100) + '…'}</span>
+          </Tooltip>
+        ) : (
+          project.name || ''
+        );
+
       const row = [
         project.id,
-        project.name,
+        titleContent,
         descriptionContent,
         project.researcher?.id === userId
           ? 'Me'
@@ -163,19 +176,36 @@ function DataRequestsTable({
   );
   let shouldReloadProjectsOnActionClose = false;
   const location = useLocation();
-  const [successMessage, setSuccessMessage] = useState(location.state?.successMessage || null);
+  const [successMessage, setSuccessMessage] = useState(
+    location.state?.successMessage || null,
+  );
   const [slideOut, setSlideOut] = useState(false);
 
+  // First, display message if it exists
   useEffect(() => {
-    if (successMessage) {
-      // Cleanly remove success notice
-      const slideOutTimer = setTimeout(() => setSlideOut(true), 9500); // Start sliding up at 9.5s
-      const clearTimer = setTimeout(() => setSuccessMessage(null), 10000); // Fully remove after 10s
-      return () => {
-        clearTimeout(slideOutTimer);
-        clearTimeout(clearTimer);
-      };
+    if (location.state?.successMessage) {
+      setSuccessMessage(location.state.successMessage);
     }
+  }, [location.state?.successMessage]);
+
+  // Then, when successMessage is set, clean up the navigation state + timers
+  useEffect(() => {
+    if (!successMessage) return;
+
+    // Set up timers
+    const slideOutTimer = setTimeout(() => setSlideOut(true), 9500);
+    const clearTimer = setTimeout(() => {
+      setSlideOut(false);
+      setSuccessMessage(null);
+
+      // Clean up navigation so message doesn't reappear on refresh
+      navigate(location.pathname, { replace: true });
+    }, 10000);
+
+    return () => {
+      clearTimeout(slideOutTimer);
+      clearTimeout(clearTimer);
+    };
   }, [successMessage]);
 
   const closeProjectActionPopup = () => {
@@ -190,7 +220,9 @@ function DataRequestsTable({
       <div className='data-requests__table-header'>
         {/* Successful Submission */}
         {successMessage && (
-          <div className={`submission-success-message${slideOut ? ' slide-out' : ''}`}>
+          <div
+            className={`submission-success-message${slideOut ? ' slide-out' : ''}`}
+          >
             {successMessage}
           </div>
         )}

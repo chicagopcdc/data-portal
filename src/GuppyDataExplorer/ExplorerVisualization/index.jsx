@@ -180,7 +180,6 @@ function ExplorerVisualization({
   fetchAndUpdateRawData,
   getTotalCountsByTypeAndFilter,
   className = '',
-  tabsOptions,
 }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -210,7 +209,7 @@ function ExplorerVisualization({
   const explorerView = searchParams.get('view') ?? explorerViews[0];
   // State for external commons config and result data
   const [externalConfig, setExternalConfig] = useState(
-    /** @type {ExternalConfig} */ (null),
+    /** @type {ExternalConfig} */(null),
   );
   // State for popup UI passing to child
   const [isLoadingExploreButton, setIsLoadingExploreButton] = useState(false);
@@ -437,7 +436,7 @@ function ExplorerVisualization({
       )}
       {tableOneConfig.enabled && (
         <ViewContainer showIf={explorerView === 'table one'}>
-          <ExplorerTableOne tabsOptions={tabsOptions} />
+          <ExplorerTableOne />
         </ViewContainer>
       )}
     </div>

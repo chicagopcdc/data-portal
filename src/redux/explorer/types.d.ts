@@ -34,7 +34,7 @@ export type ExplorerConfig = {
   patientIdsConfig?: PatientIdsConfig;
   survivalAnalysisConfig: SurvivalAnalysisConfig & { enabled: Boolean };
   tableConfig: TableConfig;
-  tableOneConfig: TableOneConfig & { enabled: Boolean };
+  tableOneConfig: TableOneConfig;
 };
 
 export type ExplorerFilter = ExplorerFilter;

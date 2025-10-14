@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Tooltip from 'rc-tooltip';
+import Select from 'react-select';
 import ButtonToggle from '../../ButtonToggle';
 import 'rc-tooltip/assets/bootstrap_white.css';
 import { AsyncPaginate } from 'react-select-async-paginate';
@@ -19,11 +20,16 @@ import DependentFilterMessage from './DependentFilterMessage';
 
 /** @param {OptionFilterStatus | RangeFilterStatus} filterStatus */
 function getNumValuesSelected(filterStatus) {
-  if (Array.isArray(filterStatus)) return 1;
+  if (Array.isArray(filterStatus)) {
+    return 1;
+  }
 
   let numSelected = 0;
-  for (const status of Object.values(filterStatus))
-    if (status === true || Array.isArray(status)) numSelected += 1;
+  for (const status of Object.values(filterStatus)) {
+    if (status === true || Array.isArray(status)) {
+      numSelected += 1;
+    }
+  }
 
   return numSelected;
 }
@@ -32,7 +38,7 @@ function getNumValuesSelected(filterStatus) {
  * @typedef {Object} FilterSectionProps
  * @property {string} [disabledTooltipMessage]
  * @property {string} [sectionTitle]
- * @property {boolean} [excluded]
+ * @property {string} [filterMode]
  * @property {boolean} [expanded]
  * @property {OptionFilterStatus | RangeFilterStatus} [filterStatus]
  * @property {boolean} [hideZero]
@@ -43,8 +49,8 @@ function getNumValuesSelected(filterStatus) {
  * @property {(lowerBound: number, upperBound: number, min: number, max: number, rangeStep: number) => void} onAfterDrag
  * @property {() => void} [onClear]
  * @property {(searchString: string, offset: number) => PaginateResponse} [onSearchFilterLoadOptions]
- * @property {(label: string, isExclusion: boolean) => void} [onSelect]
- * @property {(isExclusion: boolean) => void} [onToggleExclusion]
+ * @property {(label: string, filterMode: string) => void} [onSelect]
+ * @property {(filterMode: string) => void} [onFilterModeChange]
  * @property {(isExpanded: boolean) => void} [onToggle]
  * @property {(fieldName: string, value: string) => void} [onToggleCombineMode]
  * @property {(SingleSelectFilterOption[] | RangeFilterOption[])} options
@@ -80,7 +86,7 @@ const defaultOptions = [];
 function FilterSection({
   disabledTooltipMessage = '',
   sectionTitle = '',
-  excluded = false,
+  filterMode = 'CONTAINS_ANY',
   expanded = true,
   filterStatus: filterStatusProp,
   hideZero = true,
@@ -91,16 +97,20 @@ function FilterSection({
   unitCalcType,
   unitCalcConfig,
   onAfterDrag,
-  onClear = () => {},
+  onClear = () => {
+  },
   onSearchFilterLoadOptions,
   onSelect,
-  onToggle = () => {},
-  onToggleCombineMode = () => {},
-  onToggleExclusion = () => {},
+  onToggle = () => {
+  },
+  onToggleCombineMode = () => {
+  },
+  onFilterModeChange = () => {
+  },
   options = defaultOptions,
   title = '',
   tooltip,
-  dependentFilters,
+  dependentFilters
 }) {
   /**
    * @param {boolean} isShowingMoreOptions
@@ -109,11 +119,12 @@ function FilterSection({
   function getOptionsVisibleStatus(isShowingMoreOptions, inputText) {
     /** @type {{ [label: string]: boolean }} */
     const res = {};
-    for (const [i, o] of options.entries())
+    for (const [i, o] of options.entries()) {
       res[o.text] =
         inputText === undefined || inputText.trim() === ''
           ? isShowingMoreOptions || i < initVisibleItemNumber
           : o.text.toLowerCase().indexOf(inputText.toLowerCase()) >= 0;
+    }
 
     return res;
   }
@@ -123,14 +134,14 @@ function FilterSection({
     combineMode: 'OR',
     filterStatus: {},
     isExpanded: expanded,
-    isExclusion: excluded,
+    filterMode,
     isSearchInputEmpty: true,
     isShowingCombineMode: false,
     isShowingMoreOptions: false,
     isShowingSearch: false,
     optionsVisibleStatus: getOptionsVisibleStatus(false),
     // used for rerendering child components when reset button is clicked
-    resetClickCounter: 0,
+    resetClickCounter: 0
   });
 
   /** @type {React.MutableRefObject<HTMLInputElement>} */
@@ -140,8 +151,8 @@ function FilterSection({
       ...prevState,
       optionsVisibleStatus: getOptionsVisibleStatus(
         prevState.isShowingMoreOptions,
-        inputElem.current?.value,
-      ),
+        inputElem.current?.value
+      )
     }));
   }, [options]);
 
@@ -151,8 +162,8 @@ function FilterSection({
       ...prevState,
       isSearchInputEmpty: true,
       optionsVisibleStatus: getOptionsVisibleStatus(
-        prevState.isShowingMoreOptions,
-      ),
+        prevState.isShowingMoreOptions
+      )
     }));
   }
 
@@ -170,7 +181,7 @@ function FilterSection({
       ...prevState,
       filterStatus: {},
       resetClickCounter: prevState.resetClickCounter + 1,
-      isExclusion: false,
+      filterMode: 'CONTAINS_ANY'
     }));
     onClear();
   }
@@ -182,8 +193,8 @@ function FilterSection({
       isSearchInputEmpty: !currentInput || currentInput.length === 0,
       optionsVisibleStatus: getOptionsVisibleStatus(
         prevState.isShowingMoreOptions,
-        currentInput,
-      ),
+        currentInput
+      )
     }));
   }
 
@@ -195,10 +206,10 @@ function FilterSection({
       newFilterStatus[label] = isSelected === undefined || !isSelected;
       return {
         ...prevState,
-        filterStatus: newFilterStatus,
+        filterStatus: newFilterStatus
       };
     });
-    onSelect(label, state.isExclusion);
+    onSelect(label, state.filterMode);
   }
 
   /**
@@ -209,7 +220,7 @@ function FilterSection({
   function handleDragRangeFilter(lowerBound, upperBound, ...args) {
     setState((prevState) => ({
       ...prevState,
-      filterStatus: [lowerBound, upperBound],
+      filterStatus: [lowerBound, upperBound]
     }));
     onAfterDrag(lowerBound, upperBound, ...args);
   }
@@ -221,12 +232,11 @@ function FilterSection({
     setState((prevState) => ({ ...prevState, isExpanded: newIsExpanded }));
   }
 
-  function handleToggleExclusion({ isOn }) {
-    let isExclusion = !isOn;
-    onToggleExclusion(isExclusion);
+  function handleFilterModeChange({ value }) {
+    onFilterModeChange(value);
     setState((prevState) => ({
       ...prevState,
-      isExclusion,
+      filterMode: value
     }));
   }
 
@@ -238,7 +248,7 @@ function FilterSection({
     setState((prevState) => ({
       ...prevState,
       isShowingCombineMode: !prevState.isShowingCombineMode,
-      isShowingSearch: false,
+      isShowingSearch: false
     }));
   }
 
@@ -247,8 +257,8 @@ function FilterSection({
       ...prevState,
       isShowingMoreOptions: !prevState.isShowingMoreOptions,
       optionsVisibleStatus: getOptionsVisibleStatus(
-        !prevState.isShowingMoreOptions,
-      ),
+        !prevState.isShowingMoreOptions
+      )
     }));
   }
 
@@ -256,13 +266,14 @@ function FilterSection({
     setState((prevState) => ({
       ...prevState,
       isShowingCombineMode: false,
-      isShowingSearch: !prevState.isShowingSearch,
+      isShowingSearch: !prevState.isShowingSearch
     }));
   }
 
   function renderCombineOptionButton() {
     const tooltipText =
-      'This toggle selects the logical operator used to combine checked filter options. ' +
+      'This toggle selects the logical operator used to combine checked filter options. '
+      +
       'If AND is set, records must match all checked filter options. ' +
       'If OR is set, records must match at least one checked option.';
     return (
@@ -279,24 +290,25 @@ function FilterSection({
             <label key={combineMode}>
               <input
                 checked={state.combineMode === combineMode}
-                name='combineMode'
+                name="combineMode"
                 onChange={handleSetCombineModeOption}
                 value={combineMode}
-                type='radio'
+                type="radio"
               />
               {combineMode}
             </label>
-          ),
+          )
         )}
         <Tooltip
-          arrowContent={<div className='rc-tooltip-arrow-inner' />}
+          arrowContent={<div className="rc-tooltip-arrow-inner" />}
           overlay={tooltipText}
-          overlayClassName='g3-filter-section__and-or-toggle-helper-tooltip'
-          placement='right'
+          overlayClassName="g3-filter-section__and-or-toggle-helper-tooltip"
+          placement="right"
           trigger={['hover', 'focus']}
         >
-          <span className='g3-helper-tooltip'>
-            <i className='g3-icon g3-icon--sm g3-icon--question-mark-bootstrap help-tooltip-icon' />
+          <span className="g3-helper-tooltip">
+            <i
+              className="g3-icon g3-icon--sm g3-icon--question-mark-bootstrap help-tooltip-icon" />
           </span>
         </Tooltip>
       </div>
@@ -305,8 +317,11 @@ function FilterSection({
 
   function renderSearchFilter() {
     const selectedOptions = [];
-    for (const [value, isSelected] of Object.entries(state.filterStatus))
-      if (isSelected) selectedOptions.push({ value, label: value });
+    for (const [value, isSelected] of Object.entries(state.filterStatus)) {
+      if (isSelected) {
+        selectedOptions.push({ value, label: value });
+      }
+    }
 
     return (
       <AsyncPaginate
@@ -335,23 +350,25 @@ function FilterSection({
         }
       >
         <input
-          className='g3-filter-section__search-input-box body'
+          className="g3-filter-section__search-input-box body"
           onChange={handleSearchInputChange}
           ref={inputElem}
         />
         <span
           aria-label={state.isSearchInputEmpty ? 'Search' : 'Clear'}
-          className=''
+          className=""
           onClick={state.isSearchInputEmpty ? undefined : clearSearchInput}
           onKeyPress={(e) => {
-            if (state.isSearchInputEmpty) return;
+            if (state.isSearchInputEmpty) {
+              return;
+            }
 
             if (e.charCode === 13 || e.charCode === 32) {
               e.preventDefault();
               clearSearchInput();
             }
           }}
-          role='button'
+          role="button"
           tabIndex={0}
         >
           <i
@@ -363,16 +380,20 @@ function FilterSection({
       </div>
     );
   }
+
   function renderShowMoreButton() {
     let totalCount = 0;
-    for (const o of options)
-      if (o.count > 0 || !hideZero || o.count === -1) totalCount += 1;
+    for (const o of options) {
+      if (o.count > 0 || !hideZero || o.count === -1) {
+        totalCount += 1;
+      }
+    }
 
     return (
       totalCount > initVisibleItemNumber && (
         <div
           aria-label={state.isShowingMoreOptions ? 'Show less' : 'Show more'}
-          className='g3-filter-section__show-more'
+          className="g3-filter-section__show-more"
           onClick={toggleIsShowingMoreOptions}
           onKeyPress={(e) => {
             if (e.charCode === 13 || e.charCode === 32) {
@@ -380,7 +401,7 @@ function FilterSection({
               toggleIsShowingMoreOptions();
             }
           }}
-          role='button'
+          role="button"
           tabIndex={0}
         >
           {state.isShowingMoreOptions
@@ -438,15 +459,24 @@ function FilterSection({
     // We use the 'key' prop to force the SingleSelectFilter
     // to rerender on filterStatus change.
     // See https://reactjs.org/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-uncontrolled-component-with-a-key
+    const filterModeOptions = [{
+      label: 'Include any of',
+      value: 'CONTAINS_ANY'
+    },
+      { label: 'Include all of', value: 'CONTAINS_ALL' },
+      { label: 'Exclude any of', value: 'EXCLUDES_ANY' },
+      { label: 'Exclude all of', value: 'EXCLUDES_ALL' }];
     return (
       <>
         <div>
           Filter Mode
-          <ButtonToggle
-            isOn={!state.isExclusion}
-            onText='Include'
-            offText='Exclude'
-            onToggle={handleToggleExclusion}
+          <Select
+            value={filterModeOptions.find(o => o.value === state.filterMode)
+              || filterModeOptions[0]}
+            options={filterModeOptions}
+            isSearchable={false}
+            isClearable={false}
+            onChange={handleFilterModeChange}
           />
         </div>
         {options.map(
@@ -467,7 +497,7 @@ function FilterSection({
                 onSelect={handleSelectSingleSelectFilter}
                 selected={filterStatus[option.text]}
               />
-            ),
+            )
         )}
       </>
     );
@@ -481,12 +511,12 @@ function FilterSection({
 
   const numSelected = getNumValuesSelected(filterStatus);
   const sectionHeader = (
-    <div className='g3-filter-section__header'>
+    <div className="g3-filter-section__header">
       <div
         aria-label={`${
           state.isExpanded ? 'Collapse' : 'Expand'
         } filter: ${title}`}
-        className='g3-filter-section__title-container'
+        className="g3-filter-section__title-container"
         onClick={() => toggleIsExpanded()}
         onKeyPress={(e) => {
           if (e.charCode === 13 || e.charCode === 32) {
@@ -494,15 +524,15 @@ function FilterSection({
             toggleIsExpanded();
           }
         }}
-        role='button'
+        role="button"
         tabIndex={0}
       >
-        <div className='g3-filter-section__toggle-icon-container'>
+        <div className="g3-filter-section__toggle-icon-container">
           <i
             className={`g3-filter-section__toggle-icon g3-icon g3-icon-color__coal 
                 g3-icon--sm g3-icon--chevron-${
-                  state.isExpanded ? 'down' : 'right'
-                }`}
+              state.isExpanded ? 'down' : 'right'
+            }`}
           />
         </div>
         <div
@@ -513,10 +543,10 @@ function FilterSection({
           {title}
         </div>
         {isRangeFilter && numSelected !== 0 && (
-          <div className='g3-filter-section__selected-count-chip'>
+          <div className="g3-filter-section__selected-count-chip">
             <div
-              aria-label='Reset filter'
-              className='g3-filter-section__range-filter-clear-btn'
+              aria-label="Reset filter"
+              className="g3-filter-section__range-filter-clear-btn"
               onClick={handleClearButtonClick}
               onKeyPress={(e) => {
                 if (e.keyCode === 13 || e.keyCode === 32) {
@@ -524,27 +554,33 @@ function FilterSection({
                   handleClearButtonClick();
                 }
               }}
-              role='button'
+              role="button"
               tabIndex={0}
             >
-              <div className='g3-filter-section__range-filter-clear-btn-text'>
+              <div className="g3-filter-section__range-filter-clear-btn-text">
                 reset
               </div>
-              <div className='g3-filter-section__range-filter-clear-btn-icon'>
-                <i className='g3-icon g3-icon--sm g3-icon-color__lightgray g3-icon--undo' />
+              <div className="g3-filter-section__range-filter-clear-btn-icon">
+                <i
+                  className="g3-icon g3-icon--sm g3-icon-color__lightgray g3-icon--undo" />
               </div>
             </div>
           </div>
         )}
         {(isTextFilter || isSearchFilter) && numSelected !== 0 && (
-          <div className='g3-filter-section__selected-count-chip'>
+          <div className="g3-filter-section__selected-count-chip">
             <Chip
               text={
                 <>
-                  <span className='g3-filter-section__selected-count-chip-text-emphasis'>
+                  {state.filterMode === 'CONTAINS_ANY' ? 'Includes any of '
+                    : state.filterMode === 'CONTAINS_ALL' ? 'Includes all of '
+                      : state.filterMode === 'EXCLUDES_ANY' ? 'Excludes any of '
+                        : state.filterMode === 'EXCLUDES_ALL'
+                          ? 'Excludes all of ' : ''}
+                  <span
+                    className="g3-filter-section__selected-count-chip-text-emphasis">
                     {numSelected}
                   </span>
-                  &nbsp;{`${state.isExclusion ? 'excluded' : 'selected'}`}
                 </>
               }
               onClearButtonClick={handleClearButtonClick}
@@ -566,10 +602,11 @@ function FilterSection({
               toggleIsShowingCombineMode();
             }
           }}
-          role='button'
+          role="button"
           tabIndex={0}
         >
-          <i className='g3-filter-section__toggle-icon g3-icon g3-icon--sm g3-icon--gear' />
+          <i
+            className="g3-filter-section__toggle-icon g3-icon g3-icon--sm g3-icon--gear" />
         </div>
       )}
       {isTextFilter && (
@@ -582,23 +619,24 @@ function FilterSection({
               toggleIsShowingSearch();
             }
           }}
-          role='button'
+          role="button"
           tabIndex={0}
         >
-          <i className='g3-filter-section__search-icon g3-icon g3-icon--sm g3-icon--search' />
+          <i
+            className="g3-filter-section__search-icon g3-icon g3-icon--sm g3-icon--search" />
         </div>
       )}
     </div>
   );
 
   return options.length ? (
-    <div className='g3-filter-section'>
+    <div className="g3-filter-section">
       {tooltip ? (
         <Tooltip
-          arrowContent={<div className='rc-tooltip-arrow-inner' />}
+          arrowContent={<div className="rc-tooltip-arrow-inner" />}
           overlay={<span>{tooltip}</span>}
-          overlayClassName='g3-filter-section__tooltip'
-          placement='topLeft'
+          overlayClassName="g3-filter-section__tooltip"
+          placement="topLeft"
         >
           {sectionHeader}
         </Tooltip>
@@ -609,9 +647,9 @@ function FilterSection({
       {isArrayField && renderCombineOptionButton()}
       {isSearchFilter && renderSearchFilter()}
       {state.isExpanded && (
-        <div className='g3-filter-section__options'>
+        <div className="g3-filter-section__options">
           {dependentFilters && Object.keys(filterStatus).length !== 0 && (
-            <div className='filter-dependency-container'>
+            <div className="filter-dependency-container">
               <DependentFilterMessage dependentFilters={dependentFilters} />
             </div>
           )}
@@ -628,11 +666,12 @@ function FilterSection({
 
 FilterSection.propTypes = {
   expanded: PropTypes.bool,
-  excluded: PropTypes.bool,
+  filterMode: PropTypes.oneOf(
+    ['CONTAINS_ANY', 'CONTAINS_ALL', 'EXCLUDES_ANY', 'EXCLUDES_ALL']),
   sectionTitle: PropTypes.string,
   filterStatus: PropTypes.oneOfType([
     PropTypes.object,
-    PropTypes.arrayOf(PropTypes.number),
+    PropTypes.arrayOf(PropTypes.number)
   ]),
   hideZero: PropTypes.bool,
   initVisibleItemNumber: PropTypes.number,
@@ -644,7 +683,7 @@ FilterSection.propTypes = {
   onSelect: PropTypes.func.isRequired,
   onToggle: PropTypes.func,
   onToggleCombineMode: PropTypes.func,
-  onToggleExclusion: PropTypes.func,
+  onFilterModeChange: PropTypes.func,
   options: PropTypes.arrayOf(
     PropTypes.shape({
       filterType: PropTypes.oneOf(['singleSelect', 'range']).isRequired,
@@ -658,13 +697,13 @@ FilterSection.propTypes = {
       // for range filter
       min: PropTypes.number,
       max: PropTypes.number,
-      rangeStep: PropTypes.number, // by default 1
-    }),
+      rangeStep: PropTypes.number // by default 1
+    })
   ),
   title: PropTypes.string,
   tooltip: PropTypes.string,
   lockedTooltipMessage: PropTypes.string,
-  disabledTooltipMessage: PropTypes.string,
+  disabledTooltipMessage: PropTypes.string
 };
 
 export default FilterSection;

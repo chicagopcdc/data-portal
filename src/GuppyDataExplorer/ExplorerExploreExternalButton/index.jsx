@@ -48,7 +48,13 @@ async function fetchExternalCommonsInfo(payload) {
  * @param {boolean} props.isLoading - Loading state controlled by parent
  * @param {function} props.setIsLoading - Function to update loading state from parent
  */
-function ExplorerExploreExternalButton({ filter, selectedCommonsCounts, externalConfig, isLoading, setIsLoading }) {
+function ExplorerExploreExternalButton({
+  filter,
+  selectedCommonsCounts,
+  externalConfig,
+  isLoading,
+  setIsLoading,
+}) {
   const emptyOption = {
     label: 'Select data commons',
     value: '',
@@ -61,25 +67,28 @@ function ExplorerExploreExternalButton({ filter, selectedCommonsCounts, external
   const [isFileDownloaded, setIsFileDownloaded] = useState(false);
 
   // State for external commons config and result data
-  const [commonsInfo, setCommonsInfo] = useState(/** @type {ExternalCommonsInfo} */(null));
+  const [commonsInfo, setCommonsInfo] = useState(
+    /** @type {ExternalCommonsInfo} */ (null),
+  );
 
   // Available commons to check
   const resourceCounts = Object.fromEntries(
-    selectedCommonsCounts.map((entry) => [entry.resourceName, entry.count])
+    selectedCommonsCounts.map((entry) => [entry.resourceName, entry.count]),
   );
 
   // Filter commons options based on presence of corresponding subjects
-  const validCommonsOptions = externalConfig?.commons?.filter((entry) => {
-    if (!externalConfig.commons_dict?.hasOwnProperty(entry.value)) {
-      return false;
-    }
+  const validCommonsOptions =
+    externalConfig?.commons?.filter((entry) => {
+      if (!externalConfig.commons_dict?.hasOwnProperty(entry.value)) {
+        return false;
+      }
 
-    // Check if we have a count entry for this resource
-    const resourceName = externalConfig.commons_dict[entry.value];
-    const count = resourceCounts[resourceName];
+      // Check if we have a count entry for this resource
+      const resourceName = externalConfig.commons_dict[entry.value];
+      const count = resourceCounts[resourceName];
 
-    return count > 0;
-  }) || [];
+      return count > 0;
+    }) || [];
 
   // Enable/disable Explore button based on valid options
   useEffect(() => {
@@ -100,10 +109,9 @@ function ExplorerExploreExternalButton({ filter, selectedCommonsCounts, external
     setIsFileDownloaded(false);
   }
 
-  const {
-    authz,
-    user_id: currentUserId,
-  } = useAppSelector((state) => state.user);
+  const { authz, user_id: currentUserId } = useAppSelector(
+    (state) => state.user,
+  );
   const isAdmin = isAdminUser(authz);
 
   /**
@@ -147,15 +155,16 @@ function ExplorerExploreExternalButton({ filter, selectedCommonsCounts, external
 
   // View instructions in new tab
   function handleOpenInstructions() {
-    const url = 'https://docs.pedscommons.org/DataPortalUserGuide/#explore-in-an-external-data-commons';
+    const url =
+      'https://docs.pedscommons.org/DataPortalUserGuide/#explore-in-an-external-data-commons';
     window.open(url, '_blank', 'noopener,noreferrer');
   }
-
 
   // Check if "Open in new tab" button should be enabled
   function isOpenInNewTabButtonEnabled() {
     if (!commonsInfo) return false;
-    if (commonsInfo.type === 'file') return commonsInfo.data ? isFileDownloaded : false;
+    if (commonsInfo.type === 'file')
+      return commonsInfo.data ? isFileDownloaded : false;
     if (commonsInfo.type === 'redirect') return !!commonsInfo.link;
     return true;
   }
@@ -189,13 +198,13 @@ function ExplorerExploreExternalButton({ filter, selectedCommonsCounts, external
                 }
               />
               <ExplorerFilterDisplay filter={filter} />
-              {((commonsInfo?.type === 'file' && !commonsInfo.data)
-                || (commonsInfo?.type === 'redirect' && !commonsInfo.link)) && (
-                  <p className='no-data-info'>
-                    There is no data for this cohort of subjects in the{' '}
-                    {selected.value.toUpperCase()} platform
-                  </p>
-                )}
+              {((commonsInfo?.type === 'file' && !commonsInfo.data) ||
+                (commonsInfo?.type === 'redirect' && !commonsInfo.link)) && (
+                <p className='no-data-info'>
+                  There is no data for this cohort of subjects in the{' '}
+                  {selected.value.toUpperCase()} platform
+                </p>
+              )}
               {isLoading && (
                 <div className='explorer-explore-external__loading'>
                   <Spinner />
@@ -203,37 +212,48 @@ function ExplorerExploreExternalButton({ filter, selectedCommonsCounts, external
               )}
             </form>
             {commonsInfo?.type === 'file' && commonsInfo?.data && (
-              <div className='explorer-explore-external__download-manifest'>
-                <p>
-                  <FontAwesomeIcon
-                    icon='triangle-exclamation'
-                    color='var(--pcdc-color__secondary)'
+              <>
+                <div className='explorer-explore-external__download-manifest'>
+                  <p>
+                    <FontAwesomeIcon
+                      icon='triangle-exclamation'
+                      color='var(--pcdc-color__secondary)'
+                    />
+                    Download a manifest file and upload it to the selected
+                    commons to use the current cohort.
+                  </p>
+                  <Button
+                    label='Download manifest'
+                    onClick={handleDownloadManifest}
                   />
-                  Download a manifest file and upload it to the selected commons
-                  to use the current cohort.
-                </p>
-                <Button
-                  label='Download manifest'
-                  onClick={handleDownloadManifest}
-                />
+                </div>
                 {/* Show documentation only if not admin */}
                 {!isAdmin && (
-                  <>
+                  <div className='explorer-explore-external__download-manifest'>
                     <p>
                       <FontAwesomeIcon
                         icon='circle-info'
                         color='var(--pcdc-color__secondary)'
                       />
-                      &nbsp;Click to view documentation on how and where to load the manifest for the current cohort.
+                      &nbsp; Check the{' '}
+                      <a
+                        href='#'
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleOpenInstructions();
+                        }}
+                        style={{
+                          textDecoration: 'underline',
+                          color: 'var(--pcdc-color__secondary)',
+                        }}
+                      >
+                        PCDC User Guide
+                      </a>{' '}
+                      for information about how to upload a file.
                     </p>
-                    <Button
-                      label='Open Documentation'
-                      rightIcon='external-link'
-                      onClick={handleOpenInstructions}
-                    />
-                  </>
+                  </div>
                 )}
-              </div>
+              </>
             )}
             <div>
               <Button
@@ -261,7 +281,7 @@ ExplorerExploreExternalButton.propTypes = {
     PropTypes.shape({
       resourceName: PropTypes.string.isRequired,
       count: PropTypes.number.isRequired,
-    })
+    }),
   ).isRequired,
   externalConfig: PropTypes.object,
   isLoading: PropTypes.bool.isRequired,

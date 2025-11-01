@@ -4,18 +4,18 @@ import papaparse from 'papaparse';
 import { FILE_DELIMITERS, FILTER_TYPE, GUPPY_URL } from './const';
 import { headers } from '../../localconf';
 
-/** @typedef {import("../types").AnchorConfig} AnchorConfig */
-/** @typedef {import("../types").AnchoredFilterState} AnchoredFilterState */
-/** @typedef {import("../types").FilterState} FilterState */
-/** @typedef {import("../types").GqlFilter} GqlFilter */
-/** @typedef {import("../types").GqlInFilter} GqlInFilter */
-/** @typedef {import("../types").GqlSimpleFilter} GqlSimpleFilter */
-/** @typedef {import("../types").GqlNestedFilter} GqlNestedFilter */
-/** @typedef {import("../types").GqlNestedAnchoredFilter} GqlNestedAnchoredFilter */
-/** @typedef {import("../types").GqlSort} GqlSort */
-/** @typedef {import("../types").EmptyFilter} EmptyFilter */
-/** @typedef {import("../types").OptionFilter} OptionFilter */
-/** @typedef {import("../types").RangeFilter} RangeFilter */
+/** @typedef {import('../types').AnchorConfig} AnchorConfig */
+/** @typedef {import('../types').AnchoredFilterState} AnchoredFilterState */
+/** @typedef {import('../types').FilterState} FilterState */
+/** @typedef {import('../types').GqlFilter} GqlFilter */
+/** @typedef {import('../types').GqlInFilter} GqlInFilter */
+/** @typedef {import('../types').GqlSimpleFilter} GqlSimpleFilter */
+/** @typedef {import('../types').GqlNestedFilter} GqlNestedFilter */
+/** @typedef {import('../types').GqlNestedAnchoredFilter} GqlNestedAnchoredFilter */
+/** @typedef {import('../types').GqlSort} GqlSort */
+/** @typedef {import('../types').EmptyFilter} EmptyFilter */
+/** @typedef {import('../types').OptionFilter} OptionFilter */
+/** @typedef {import('../types').RangeFilter} RangeFilter */
 
 const graphqlEndpoint = `${GUPPY_URL}/graphql`;
 const downloadEndpoint = `${GUPPY_URL}/download`;
@@ -31,7 +31,7 @@ function jsonToFormat(json, format) {
   return format in FILE_DELIMITERS
     ? papaparse.unparse(
       Object.values(json).map((value) => flat(value, { delimiter: '_' })),
-      { delimiter: FILE_DELIMITERS[format] },
+      { delimiter: FILE_DELIMITERS[format] }
     )
     : json;
 }
@@ -57,26 +57,38 @@ function buildHistogramQueryStrForField(field) {
 /** @param {GqlFilter} gqlFilter */
 function checkFilterSelf(gqlFilter) {
   // No filter
-  if (gqlFilter === undefined) return false;
+  if (gqlFilter === undefined) {
+    return false;
+  }
 
   // AND always sets `filterSelf: false`
-  if (!('OR' in gqlFilter)) return false;
+  if (!('OR' in gqlFilter)) {
+    return false;
+  }
 
   // OR without any filter sets `filterSelf: false`
-  if (gqlFilter.OR.length === 0) return false;
+  if (gqlFilter.OR.length === 0) {
+    return false;
+  }
 
   // OR with more than one filter always sets `filterSelf: true`
-  if (gqlFilter.OR.length > 1) return true;
+  if (gqlFilter.OR.length > 1) {
+    return true;
+  }
 
   // OR with a single non-nested filter sets `filterSelf: false`
-  if (!('nested' in gqlFilter.OR[0])) return false;
+  if (!('nested' in gqlFilter.OR[0])) {
+    return false;
+  }
 
   // OR with a single nested filter is complicated due to anchored filter
   if ('OR' in gqlFilter.OR[0].nested) {
     const { nested } = gqlFilter.OR[0];
 
     // Nested OR sets `filter: true` if with more than one filter
-    if (nested.OR.length > 1) return true;
+    if (nested.OR.length > 1) {
+      return true;
+    }
 
     // Nested OR with anchored filter sets `filter: true`
     // if more than one filter is used with anchor
@@ -84,8 +96,9 @@ function checkFilterSelf(gqlFilter) {
       'AND' in nested.OR[0] &&
       nested.OR[0].AND.length === 2 &&
       'OR' in nested.OR[0].AND[1]
-    )
+    ) {
       return nested.OR[0].AND[1].OR.length > 1;
+    }
   }
 
   // default to `filterSelf: false`
@@ -103,7 +116,7 @@ export function queryGuppyForAggregationChartData({
   type,
   fields,
   gqlFilter,
-  signal,
+  signal
 }) {
   const query = (
     gqlFilter !== undefined
@@ -127,10 +140,10 @@ export function queryGuppyForAggregationChartData({
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...headers,
+      ...headers
     },
     body: JSON.stringify({ query, variables: { filter: gqlFilter } }),
-    signal,
+    signal
   }).then((response) => response.json());
 }
 
@@ -169,10 +182,10 @@ export function queryGuppyForAggregationCountData({ type, gqlFilter, signal }) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...headers,
+      ...headers
     },
     body: JSON.stringify({ query, variables: { filter: gqlFilter } }),
-    signal,
+    signal
   }).then((response) => response.json());
 }
 
@@ -187,11 +200,11 @@ export function getQueryInfoForAggregationOptionsData({
   anchorConfig,
   anchorValue = '',
   filterTabs,
-  gqlFilter,
+  gqlFilter
 }) {
   const isUsingAnchor = anchorConfig !== undefined && anchorValue !== '';
   const anchorFilterPiece = isUsingAnchor
-    ? { IN: { [anchorConfig.field]: [anchorValue] } }
+    ? { CONTAINS_ANY: { [anchorConfig.field]: [anchorValue] } }
     : undefined;
 
   /** @type {{ [group: string]: string[]; }} */
@@ -199,21 +212,21 @@ export function getQueryInfoForAggregationOptionsData({
   /** @type {{ [group: string]: GqlFilter; }} */
   const gqlFilterByGroup = {};
 
-  for (const { title, fields } of filterTabs)
+  for (const { title, fields } of filterTabs) {
     if (isUsingAnchor && anchorConfig.tabs.includes(title)) {
       for (const field of fields) {
         const [path, fieldName] = field.split('.');
 
-        if (fieldName === undefined)
+        if (fieldName === undefined) {
           fieldsByGroup.main = [...(fieldsByGroup?.main ?? []), field];
-        else {
+        } else {
           fieldsByGroup[path] = [...(fieldsByGroup?.[path] ?? []), field];
 
           // add gqlFilterGroup for each nested field object path
           if (!(path in gqlFilterByGroup)) {
             const combineMode = gqlFilter ? Object.keys(gqlFilter)[0] : 'AND';
             const groupGqlFilter = cloneDeep(
-              gqlFilter ?? { [combineMode]: [] },
+              gqlFilter ?? { [combineMode]: [] }
             );
 
             if (anchorValue !== '' && 'AND' in groupGqlFilter) {
@@ -226,8 +239,8 @@ export function getQueryInfoForAggregationOptionsData({
               if (found === undefined) {
                 filters.push(
                   /** @type {GqlNestedAnchoredFilter} */({
-                    nested: { path, AND: [anchorFilterPiece] },
-                  }),
+                    nested: { path, AND: [anchorFilterPiece] }
+                  })
                 );
               } else if (Array.isArray(found.nested.AND)) {
                 found.nested.AND.push(anchorFilterPiece);
@@ -240,12 +253,15 @@ export function getQueryInfoForAggregationOptionsData({
     } else {
       fieldsByGroup.main = [...(fieldsByGroup?.main ?? []), ...fields];
     }
+  }
 
-  if (fieldsByGroup.main?.length > 0) gqlFilterByGroup.filter_main = gqlFilter;
+  if (fieldsByGroup.main?.length > 0) {
+    gqlFilterByGroup.filter_main = gqlFilter;
+  }
 
   return {
     fieldsByGroup,
-    gqlFilterByGroup,
+    gqlFilterByGroup
   };
 }
 
@@ -262,12 +278,14 @@ export function buildQueryForAggregationOptionsData({
   fieldsByGroup,
   isFilterEmpty,
   isInitialQuery = false,
-  type,
+  type
 }) {
   const queryVariables = [];
-  for (const group of Object.keys(fieldsByGroup))
-    if (!(isFilterEmpty && group === 'main'))
+  for (const group of Object.keys(fieldsByGroup)) {
+    if (!(isFilterEmpty && group === 'main')) {
       queryVariables.push(`$filter_${group}: JSON`);
+    }
+  }
 
   const { main, ...fieldsByAnchoredGroup } = fieldsByGroup;
   const hasMainFields = main !== undefined;
@@ -291,15 +309,17 @@ export function buildQueryForAggregationOptionsData({
       : '';
 
   const anchoredPathQueryFragments = [];
-  for (const [group, fields] of Object.entries(fieldsByAnchoredGroup))
+  for (const [group, fields] of Object.entries(fieldsByAnchoredGroup)) {
     anchoredPathQueryFragments.push(`
       anchored_${group}: ${type} (filter: $filter_${group}, filterSelf: ${filterSelf}, accessibility: all) {
         ${fields.map(buildHistogramQueryStrForField).join('\n')}
       }
     `);
+  }
 
-  return `query ${queryVariables.length > 0 ? `(${queryVariables.join(', ')})` : ''
-    } {
+  return `query ${queryVariables.length > 0 ? `(${queryVariables.join(', ')})`
+    : ''
+  } {
     _aggregation {
       ${mainQueryFragment}
       ${unfilteredQueryFragment}
@@ -325,14 +345,14 @@ export function queryGuppyForAggregationOptionsData({
   gqlFilter,
   isInitialQuery,
   signal,
-  type,
+  type
 }) {
   const { fieldsByGroup, gqlFilterByGroup } =
     getQueryInfoForAggregationOptionsData({
       anchorConfig,
       anchorValue,
       filterTabs,
-      gqlFilter,
+      gqlFilter
     });
 
   const isFilterEmpty = gqlFilter === undefined;
@@ -342,7 +362,7 @@ export function queryGuppyForAggregationOptionsData({
     fieldsByGroup,
     isFilterEmpty,
     isInitialQuery,
-    type,
+    type
   });
   const variables = { ...gqlFilterByGroup };
 
@@ -350,10 +370,10 @@ export function queryGuppyForAggregationOptionsData({
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...headers,
+      ...headers
     },
     body: JSON.stringify({ query, variables }),
-    signal,
+    signal
   }).then((response) => response.json());
 }
 
@@ -409,10 +429,10 @@ export function queryGuppyForExternalResourceAggs({ type, gqlFilter, signal }) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...headers,
+      ...headers
     },
     body: JSON.stringify({ query, variables: { filter: gqlFilter } }),
-    signal,
+    signal
   }).then((response) => response.json());
 }
 
@@ -420,8 +440,8 @@ export function queryGuppyForStatus() {
   return fetch(statusEndpoint, {
     method: 'GET',
     headers: {
-      'Content-Type': 'application/json',
-    },
+      'Content-Type': 'application/json'
+    }
   }).then((response) => response.json());
 }
 
@@ -466,18 +486,18 @@ export function queryGuppyForSubAggregationData({
   termsFields,
   missingFields,
   gqlFilter,
-  signal,
+  signal
 }) {
   const query = (
     gqlFilter !== undefined
       ? `query ($filter: JSON, $nestedAggFields: JSON) {
         _aggregation {
             ${type} (filter: $filter, filterSelf: ${checkFilterSelf(
-        gqlFilter,
+        gqlFilter
       )}, nestedAggFields: $nestedAggFields, accessibility: all) {
               ${nestedHistogramQueryStrForEachField(
         mainField,
-        numericAggAsText,
+        numericAggAsText
       )}
             }
           }
@@ -495,21 +515,21 @@ export function queryGuppyForSubAggregationData({
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...headers,
+      ...headers
     },
     body: JSON.stringify({
       query,
       variables: {
         filter: gqlFilter,
-        nestedAggFields: { termsFields, missingFields },
-      },
+        nestedAggFields: { termsFields, missingFields }
+      }
     }),
-    signal,
+    signal
   })
-    .then((response) => response.json())
-    .catch((err) => {
-      throw new Error(`Error during queryGuppyForSubAggregationData ${err}`);
-    });
+  .then((response) => response.json())
+  .catch((err) => {
+    throw new Error(`Error during queryGuppyForSubAggregationData ${err}`);
+  });
 }
 
 /**
@@ -546,15 +566,15 @@ export function queryGuppyForRawData({
   size = 20,
   signal,
   format,
-  withTotalCount = false,
+  withTotalCount = false
 }) {
   const queryArgument = [
     sort ? '$sort: JSON' : '',
     gqlFilter ? '$filter: JSON' : '',
-    format ? '$format: Format' : '',
+    format ? '$format: Format' : ''
   ]
-    .filter((e) => e)
-    .join(', ');
+  .filter((e) => e)
+  .join(', ');
   const queryLine = queryArgument ? `query (${queryArgument})` : 'query';
 
   const dataTypeArgument = [
@@ -563,18 +583,18 @@ export function queryGuppyForRawData({
     `first: ${size}`,
     format && 'format: $format',
     sort && 'sort: $sort',
-    gqlFilter && 'filter: $filter',
+    gqlFilter && 'filter: $filter'
   ]
-    .filter((e) => e)
-    .join(', ');
+  .filter((e) => e)
+  .join(', ');
   const dataTypeLine = `${type} (${dataTypeArgument})`;
 
   const aggregationArgument = [
     'accessibility: accessible',
-    gqlFilter ? 'filter: $filter' : '',
+    gqlFilter ? 'filter: $filter' : ''
   ]
-    .filter((e) => e)
-    .join(', ');
+  .filter((e) => e)
+  .join(', ');
   const aggregationFragment = withTotalCount
     ? `_aggregation {
       ${type} (${aggregationArgument}) {
@@ -594,22 +614,22 @@ export function queryGuppyForRawData({
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...headers,
+      ...headers
     },
     body: JSON.stringify({
       query,
       variables: {
         format,
         filter: gqlFilter,
-        sort,
-      },
+        sort
+      }
     }),
-    signal,
+    signal
   })
-    .then((response) => response.json())
-    .catch((err) => {
-      throw new Error(`Error during queryGuppyForRawData ${err}`);
-    });
+  .then((response) => response.json())
+  .catch((err) => {
+    throw new Error(`Error during queryGuppyForRawData ${err}`);
+  });
 }
 
 /**
@@ -619,47 +639,43 @@ export function queryGuppyForRawData({
  */
 function parseSimpleFilter(fieldName, filterValues) {
   const invalidFilterError = new Error(
-    `Invalid filter object for "${fieldName}": ${JSON.stringify(filterValues)}`,
+    `Invalid filter object for "${fieldName}": ${JSON.stringify(filterValues)}`
   );
-  if (filterValues === undefined) throw invalidFilterError;
+  if (filterValues === undefined) {
+    throw invalidFilterError;
+  }
 
   // a range-type filter
   if (filterValues.__type === FILTER_TYPE.RANGE) {
     const { lowerBound, upperBound } = filterValues;
-    if (typeof lowerBound === 'number' && typeof upperBound === 'number')
+    if (typeof lowerBound === 'number' && typeof upperBound === 'number') {
       return {
         AND: [
           { GTE: { [fieldName]: lowerBound } },
-          { LTE: { [fieldName]: upperBound } },
-        ],
+          { LTE: { [fieldName]: upperBound } }
+        ]
       };
+    }
   }
 
   // an option-type filter
   if (filterValues.__type === FILTER_TYPE.OPTION) {
-    const { selectedValues, __combineMode, isExclusion } = filterValues;
+    const { selectedValues, __combineMode, filterMode } = filterValues;
     const hasSelectedValues = selectedValues?.length > 0;
 
-    if (!hasSelectedValues && isExclusion) {
-      // do nothing when only selecting NOT but no other values
+    if (!hasSelectedValues) {
+      // do nothing when only selecting filter mode but no other values
       return undefined;
     }
 
     if (hasSelectedValues) {
-      if (isExclusion) {
-        return {
-          AND: selectedValues.map((selectedValue) => ({
-            '!=': { [fieldName]: selectedValue },
-          })),
-        };
-      }
       return __combineMode === 'AND'
         ? {
           AND: selectedValues.map((selectedValue) => ({
-            IN: { [fieldName]: [selectedValue] },
-          })),
+            [filterMode || 'CONTAINS_ANY']: { [fieldName]: [selectedValue] }
+          }))
         }
-        : { IN: { [fieldName]: selectedValues } };
+        : { [filterMode || 'CONTAINS_ANY']: { [fieldName]: selectedValues } };
     }
     if (__combineMode !== undefined) {
       // with a combine setting only - ignore it.
@@ -673,16 +689,17 @@ function parseSimpleFilter(fieldName, filterValues) {
 /**
  * @param {string} anchorName Formatted as "[anchorFieldName]:[anchorValue]"
  * @param {AnchoredFilterState} anchoredFilterState
- * @param {"AND" | "OR"} combineMode
+ * @param {'AND' | 'OR'} combineMode
  * @returns {GqlNestedAnchoredFilter[]}
  */
 function parseAnchoredFilters(anchorName, anchoredFilterState, combineMode) {
   const filterState = anchoredFilterState;
-  if (filterState === undefined || Object.keys(filterState).length === 0)
+  if (filterState === undefined || Object.keys(filterState).length === 0) {
     return undefined;
+  }
 
   const [anchorFieldName, anchorValue] = anchorName.split(':');
-  const anchorFilter = { IN: { [anchorFieldName]: [anchorValue] } };
+  const anchorFilter = { CONTAINS_ANY: { [anchorFieldName]: [anchorValue] } };
 
   /** @type {GqlNestedAnchoredFilter[]} */
   const nestedFilters = [];
@@ -700,14 +717,14 @@ function parseAnchoredFilters(anchorName, anchoredFilterState, combineMode) {
         nestedFilterIndices[path] = nestedFilterIndex;
         nestedFilters.push(
           /** @type {GqlNestedAnchoredFilter} */({
-            nested: { path, AND: [anchorFilter, { [combineMode]: [] }] },
-          }),
+            nested: { path, AND: [anchorFilter, { [combineMode]: [] }] }
+          })
         );
         nestedFilterIndex += 1;
       }
 
       nestedFilters[nestedFilterIndices[path]].nested.AND[1][combineMode].push(
-        simpleFilter,
+        simpleFilter
       );
     }
   }
@@ -725,12 +742,14 @@ export function getGQLFilter(filterState) {
     filterState === undefined ||
     !('value' in filterState) ||
     Object.keys(filterState.value).length === 0
-  )
+  ) {
     return undefined;
+  }
 
   const combineMode = filterState.__combineMode ?? 'AND';
-  if (filterState.__type === FILTER_TYPE.COMPOSED)
+  if (filterState.__type === FILTER_TYPE.COMPOSED) {
     return { [combineMode]: filterState.value.map(getGQLFilter) };
+  }
 
   /** @type {GqlSimpleFilter[]} */
   const simpleFilters = [];
@@ -750,22 +769,22 @@ export function getGQLFilter(filterState) {
       const parsedAnchoredFilters = parseAnchoredFilters(
         fieldName,
         filterValues,
-        combineMode,
+        combineMode
       );
       for (const { nested } of parsedAnchoredFilters) {
         if (!(nested.path in nestedFilterIndices)) {
           nestedFilterIndices[nested.path] = nestedFilterIndex;
           nestedFilters.push(
             /** @type {GqlNestedFilter} */({
-              nested: { path: nested.path, [combineMode]: [] },
-            }),
+              nested: { path: nested.path, [combineMode]: [] }
+            })
           );
           nestedFilterIndex += 1;
         }
 
         nestedFilters[nestedFilterIndices[nested.path]].nested[
           combineMode
-        ].push({ AND: nested.AND });
+          ].push({ AND: nested.AND });
       }
     } else {
       const simpleFilter = parseSimpleFilter(fieldName, filterValues);
@@ -778,14 +797,14 @@ export function getGQLFilter(filterState) {
             nestedFilterIndices[path] = nestedFilterIndex;
             nestedFilters.push(
               /** @type {GqlNestedFilter} */({
-                nested: { path, [combineMode]: [] },
-              }),
+                nested: { path, [combineMode]: [] }
+              })
             );
             nestedFilterIndex += 1;
           }
 
           nestedFilters[nestedFilterIndices[path]].nested[combineMode].push(
-            simpleFilter,
+            simpleFilter
           );
         } else {
           simpleFilters.push(simpleFilter);
@@ -809,8 +828,9 @@ export function getFilterState(gqlFilter) {
   if (
     gqlFilter === undefined ||
     Object.keys(gqlFilter[combinator]).length === 0
-  )
+  ) {
     return undefined;
+  }
 
   if (combinator === 'AND' || combinator === 'OR') {
     /** @type {import('../types').BaseFilter} */
@@ -819,7 +839,9 @@ export function getFilterState(gqlFilter) {
       const valueCombinator = Object.keys(filterValue)[0];
       const value = filterValue[valueCombinator];
 
-      if (valueCombinator === 'IN') {
+      if (valueCombinator === 'CONTAINS_ANY' || valueCombinator
+        === 'CONTAINS_ALL' || valueCombinator === 'EXCLUDES_ALL'
+        || valueCombinator === 'EXCLUDES_ANY') {
         const option = {};
         const optionFields = Object.keys(value);
 
@@ -827,7 +849,7 @@ export function getFilterState(gqlFilter) {
           option[field] = {
             __type: 'OPTION',
             selectedValues: value[field],
-            isExclusion: false
+            filterMode: valueCombinator
           };
         }
 
@@ -866,23 +888,23 @@ export function downloadDataFromGuppy({
   fields,
   gqlFilter,
   sort,
-  format,
+  format
 }) {
   const JSON_FORMAT = format === 'json' || format === undefined;
   return fetch(downloadEndpoint, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify({
       accessibility: 'accessible',
       filter: gqlFilter,
       type,
       fields,
-      sort,
-    }),
+      sort
+    })
   }).then((res) =>
-    JSON_FORMAT ? res.json() : jsonToFormat(res.json(), format),
+    JSON_FORMAT ? res.json() : jsonToFormat(res.json(), format)
   );
 }
 
@@ -919,18 +941,18 @@ export function queryGuppyForTotalCounts({ type, filter }) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...headers,
+      ...headers
     },
     body: JSON.stringify({
       query,
-      variables: { filter: getGQLFilter(filter) },
-    }),
+      variables: { filter: getGQLFilter(filter) }
+    })
   })
-    .then((response) => response.json())
-    .then((response) => response.data._aggregation[type]._totalCount)
-    .catch((err) => {
-      throw new Error(`Error during download ${err}`);
-    });
+  .then((response) => response.json())
+  .then((response) => response.data._aggregation[type]._totalCount)
+  .catch((err) => {
+    throw new Error(`Error during download ${err}`);
+  });
 }
 
 /**
@@ -942,19 +964,19 @@ export function getAllFieldsFromGuppy({ type }) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...headers,
+      ...headers
     },
     body: JSON.stringify({
       query: `{
         _mapping {
           ${type}
         }
-      }`.replace(/\s+/g, ' '),
-    }),
+      }`.replace(/\s+/g, ' ')
+    })
   })
-    .then((response) => response.json())
-    .then((response) => response.data._mapping[type])
-    .catch((err) => {
-      throw new Error(`Error when getting fields from guppy: ${err}`);
-    });
+  .then((response) => response.json())
+  .then((response) => response.data._mapping[type])
+  .catch((err) => {
+    throw new Error(`Error when getting fields from guppy: ${err}`);
+  });
 }

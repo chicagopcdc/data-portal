@@ -28,13 +28,17 @@ export function getExpandedStatus(filterTabs, expandedStatusControl) {
 /**
  * @param {FilterTabsOption[]} filterTabs
  * @param {EmptyFilter | StandardFilterState} filterResults
+ * @param {string[]} previousFilterModeStatus
  */
-export function getExcludedStatus(filterTabs, filterResults, previousExcludedStatus = []) {
+export function getFilterModeStatus(filterTabs, filterResults,
+  previousFilterModeStatus = []) {
   return filterTabs.map(({ fields }, i) =>
     fields.map((field, j) => {
-      return filterResults.value?.[field]?.isExclusion ?? previousExcludedStatus[i]?.[j] ?? false
+      return filterResults.value?.[field]?.filterMode
+        ?? previousFilterModeStatus[i]?.[j] ?? 'CONTAINS_ANY';
     })
   );
+
 }
 
 /**
@@ -46,19 +50,24 @@ export function getFilterResultsByAnchor({ anchorConfig, filterResults }) {
   /** @type {{ [anchorLabel: string]: AnchoredFilterState['value'] }} */
   const filterResultsByAnchor = { '': { value: {} } };
 
-  if (anchorConfig !== undefined)
-    for (const anchorValue of anchorConfig.options)
+  if (anchorConfig !== undefined) {
+    for (const anchorValue of anchorConfig.options) {
       filterResultsByAnchor[`${anchorConfig.field}:${anchorValue}`] = {
-        value: {},
+        value: {}
       };
+    }
+  }
 
-  if (filterResults.value !== undefined)
-    for (const [filterKey, filterValues] of Object.entries(filterResults.value))
+  if (filterResults.value !== undefined) {
+    for (const [filterKey, filterValues] of
+      Object.entries(filterResults.value)) {
       if (filterValues.__type === FILTER_TYPE.ANCHORED) {
         filterResultsByAnchor[filterKey].value = filterValues.value;
       } else {
         filterResultsByAnchor[''].value[filterKey] = filterValues;
       }
+    }
+  }
 
   return filterResultsByAnchor;
 }
@@ -74,8 +83,9 @@ function getFilterTabStatus(fields, filterResults) {
       const filterValues = filterResults.value[field];
       if (filterValues.__type === FILTER_TYPE.OPTION) {
         const status = {};
-        for (const selected of filterValues.selectedValues)
+        for (const selected of filterValues.selectedValues) {
           status[selected] = true;
+        }
         return status;
       }
       if (filterValues.__type === FILTER_TYPE.RANGE) {
@@ -96,14 +106,15 @@ function getFilterTabStatus(fields, filterResults) {
 export function getFilterStatus({ anchorConfig, filterResults, filterTabs }) {
   const filterResultsByAnchor = getFilterResultsByAnchor({
     anchorConfig,
-    filterResults,
+    filterResults
   });
   return filterTabs.map(({ title, fields }) => {
     if (anchorConfig?.tabs.includes(title)) {
       /** @type {AnchoredFilterTabStatus} */
       const status = {};
-      for (const [anchor, results] of Object.entries(filterResultsByAnchor))
+      for (const [anchor, results] of Object.entries(filterResultsByAnchor)) {
         status[anchor] = getFilterTabStatus(fields, results);
+      }
       return status;
     }
 
@@ -132,8 +143,11 @@ function _isNonEmptyFilter(baseFilter) {
  */
 function _removeEmptyFilter(anchoredFilter) {
   const newValue = /** @type {AnchoredFilterState['value']} */ ({});
-  for (const [field, filter] of Object.entries(anchoredFilter.value))
-    if (_isNonEmptyFilter(filter)) newValue[field] = filter;
+  for (const [field, filter] of Object.entries(anchoredFilter.value)) {
+    if (_isNonEmptyFilter(filter)) {
+      newValue[field] = filter;
+    }
+  }
 
   return { ...anchoredFilter, value: newValue };
 }
@@ -144,14 +158,16 @@ function _removeEmptyFilter(anchoredFilter) {
  */
 export function removeEmptyFilter(filterResults) {
   const newValue = /** @type {StandardFilterState['value']} */ ({});
-  for (const [field, filter] of Object.entries(filterResults.value))
+  for (const [field, filter] of Object.entries(filterResults.value)) {
     if (filter.__type === FILTER_TYPE.ANCHORED) {
       const newAnchoredFilter = _removeEmptyFilter(filter);
-      if (Object.keys(newAnchoredFilter.value).length > 0)
+      if (Object.keys(newAnchoredFilter.value).length > 0) {
         newValue[field] = newAnchoredFilter;
+      }
     } else if (_isNonEmptyFilter(filter)) {
       newValue[field] = filter;
     }
+  }
 
   return { ...filterResults, value: newValue };
 }
@@ -171,13 +187,16 @@ export function clearFilterSection({
   filterTabs,
   tabIndex,
   anchorLabel,
-  sectionIndex,
+  sectionIndex
 }) {
   // update filter status
   const newFilterStatus = cloneDeep(filterStatus);
   const newFilterTabStatus = newFilterStatus[tabIndex];
-  if (Array.isArray(newFilterTabStatus)) newFilterTabStatus[sectionIndex] = {};
-  else newFilterTabStatus[anchorLabel][sectionIndex] = {};
+  if (Array.isArray(newFilterTabStatus)) {
+    newFilterTabStatus[sectionIndex] = {};
+  } else {
+    newFilterTabStatus[anchorLabel][sectionIndex] = {};
+  }
 
   // update filter results; clear the results for this filter
   let newFilterResults = cloneDeep(filterResults);
@@ -194,7 +213,7 @@ export function clearFilterSection({
   // update component state
   return {
     filterStatus: newFilterStatus,
-    filterResults: newFilterResults,
+    filterResults: newFilterResults
   };
 }
 
@@ -205,7 +224,9 @@ export function tabHasActiveFilters(filterTabStatus) {
       const hasActiveFilters = Object.values(filterSectionStatus).some(
         (status) => status !== undefined && status !== false
       );
-      if (hasActiveFilters) return true;
+      if (hasActiveFilters) {
+        return true;
+      }
     }
     return false;
   }
@@ -219,15 +240,15 @@ export function tabHasActiveFilters(filterTabStatus) {
  * @param {number} args.tabIndex
  * @param {string} args.anchorLabel
  * @param {number} args.sectionIndex
- * @param {boolean} args.isExclusion
+ * @param {string} args.filterMode
  */
-export function updateExclusion({
+export function updateFilterMode({
   filterResults,
   filterTabs,
   tabIndex,
   anchorLabel,
   sectionIndex,
-  isExclusion,
+  filterMode
 }) {
   const newFilterResults = cloneDeep(filterResults);
 
@@ -237,13 +258,13 @@ export function updateExclusion({
       ...newFilterResults.value[fieldName],
       selectedValues: newFilterResults.value[fieldName]?.selectedValues ?? [],
       __type: FILTER_TYPE.OPTION,
-      isExclusion,
+      filterMode
     };
   } else {
     if (!(anchorLabel in newFilterResults.value)) {
       newFilterResults.value[anchorLabel] = {
         __type: FILTER_TYPE.ANCHORED,
-        value: {},
+        value: {}
       };
     }
     newFilterResults.value[anchorLabel].value[fieldName] = {
@@ -252,12 +273,12 @@ export function updateExclusion({
         newFilterResults.value[anchorLabel].value[fieldName]?.selectedValues ??
         [],
       __type: FILTER_TYPE.OPTION,
-      isExclusion,
+      filterMode
     };
   }
 
   return {
-    filterResults: newFilterResults,
+    filterResults: newFilterResults
   };
 }
 
@@ -280,16 +301,17 @@ export function updateCombineMode({
   anchorLabel,
   sectionIndex,
   combineModeFieldName,
-  combineModeValue,
+  combineModeValue
 }) {
   // update filter status
   const newFilterStatus = cloneDeep(filterStatus);
   const newFilterTabStatus = newFilterStatus[tabIndex];
-  if (Array.isArray(newFilterTabStatus))
+  if (Array.isArray(newFilterTabStatus)) {
     newFilterTabStatus[sectionIndex][combineModeFieldName] = combineModeValue;
-  else
+  } else {
     newFilterTabStatus[anchorLabel][sectionIndex][combineModeFieldName] =
       combineModeValue;
+  }
 
   // update filter results
   let newFilterResults = cloneDeep(filterResults);
@@ -298,29 +320,29 @@ export function updateCombineMode({
     if (newFilterResults.value[fieldName] === undefined) {
       newFilterResults.value[fieldName] = {
         [combineModeFieldName]: combineModeValue,
-        __type: FILTER_TYPE.OPTION,
+        __type: FILTER_TYPE.OPTION
       };
     } else {
       newFilterResults.value[fieldName][combineModeFieldName] =
         combineModeValue;
     }
   } else {
-    if (!(anchorLabel in newFilterResults.value))
+    if (!(anchorLabel in newFilterResults.value)) {
       newFilterResults.value[anchorLabel] = {
         __type: FILTER_TYPE.ANCHORED,
-        value: {},
+        value: {}
       };
-    if (newFilterResults.value[anchorLabel].__type !== FILTER_TYPE.ANCHORED)
-      /** @type {AnchoredFilterState} */ (
-        newFilterResults.value[anchorLabel]
-      ).value = {};
+    }
+    if (newFilterResults.value[anchorLabel].__type !== FILTER_TYPE.ANCHORED) {
+      (/** @type {AnchoredFilterState} */ (newFilterResults.value[anchorLabel])).value = {};
+    }
     const newAnchoredFilterResults = /** @type {AnchoredFilterState} */ (
       newFilterResults.value[anchorLabel]
     );
     if (newAnchoredFilterResults.value[fieldName] === undefined) {
       newAnchoredFilterResults.value[fieldName] = {
         [combineModeFieldName]: combineModeValue,
-        __type: FILTER_TYPE.OPTION,
+        __type: FILTER_TYPE.OPTION
       };
     } else {
       newAnchoredFilterResults.value[fieldName][combineModeFieldName] =
@@ -333,7 +355,7 @@ export function updateCombineMode({
   // update component state
   return {
     filterStatus: newFilterStatus,
-    filterResults: newFilterResults,
+    filterResults: newFilterResults
   };
 }
 
@@ -362,24 +384,28 @@ export function updateRangeValue({
   upperBound,
   minValue,
   maxValue,
-  rangeStep,
+  rangeStep
 }) {
   // update filter status
   const newFilterStatus = cloneDeep(filterStatus);
   const newFilterTabStatus = newFilterStatus[tabIndex];
-  if (Array.isArray(newFilterTabStatus))
+  if (Array.isArray(newFilterTabStatus)) {
     newFilterTabStatus[sectionIndex] = [lowerBound, upperBound];
-  else newFilterTabStatus[anchorLabel][sectionIndex] = [lowerBound, upperBound];
+  } else {
+    newFilterTabStatus[anchorLabel][sectionIndex] = [lowerBound, upperBound];
+  }
 
   // update filter results
   let newFilterResults = cloneDeep(filterResults);
-  if (newFilterResults.value === undefined) newFilterResults.value = {};
+  if (newFilterResults.value === undefined) {
+    newFilterResults.value = {};
+  }
   const fieldName = filterTabs[tabIndex].fields[sectionIndex];
   if (anchorLabel === undefined || anchorLabel === '') {
     newFilterResults.value[fieldName] = {
       __type: FILTER_TYPE.RANGE,
       lowerBound,
-      upperBound,
+      upperBound
     };
     // if lowerbound and upperbound values equal min and max,
     // remove this range from filter
@@ -390,22 +416,22 @@ export function updateRangeValue({
       delete newFilterResults.value[fieldName];
     }
   } else {
-    if (!(anchorLabel in newFilterResults.value))
+    if (!(anchorLabel in newFilterResults.value)) {
       newFilterResults.value[anchorLabel] = {
         __type: FILTER_TYPE.ANCHORED,
-        value: {},
+        value: {}
       };
-    if (newFilterResults.value[anchorLabel].__type !== FILTER_TYPE.ANCHORED)
-      /** @type {AnchoredFilterState} */ (
-        newFilterResults.value[anchorLabel]
-      ).value = {};
+    }
+    if (newFilterResults.value[anchorLabel].__type !== FILTER_TYPE.ANCHORED) {
+      (/** @type {AnchoredFilterState} */ (newFilterResults.value[anchorLabel])).value = {};
+    }
     const newAnchoredFilterResults = /** @type {AnchoredFilterState} */ (
       newFilterResults.value[anchorLabel]
     );
     newAnchoredFilterResults.value[fieldName] = {
       __type: FILTER_TYPE.RANGE,
       lowerBound,
-      upperBound,
+      upperBound
     };
     // if lowerbound and upperbound values equal min and max,
     // remove this range from filter
@@ -420,7 +446,7 @@ export function updateRangeValue({
 
   return {
     filterStatus: newFilterStatus,
-    filterResults: newFilterResults,
+    filterResults: newFilterResults
   };
 }
 
@@ -433,7 +459,7 @@ export function updateRangeValue({
  * @param {string} args.anchorLabel
  * @param {number} args.sectionIndex
  * @param {string} args.selectedValue
- * @param {boolean} args.isExclusion
+ * @param {string} args.filterMode
  */
 export function updateSelectedValue({
   filterStatus,
@@ -443,7 +469,7 @@ export function updateSelectedValue({
   anchorLabel,
   sectionIndex,
   selectedValue,
-  isExclusion,
+  filterMode
 }) {
   // update filter status
   const newFilterStatus = cloneDeep(filterStatus);
@@ -462,77 +488,75 @@ export function updateSelectedValue({
 
   // update filter results
   let newFilterResults = cloneDeep(filterResults);
-  if (newFilterResults.value === undefined) newFilterResults.value = {};
+  if (newFilterResults.value === undefined) {
+    newFilterResults.value = {};
+  }
   const fieldName = filterTabs[tabIndex].fields[sectionIndex];
   if (anchorLabel === undefined || anchorLabel === '') {
-    if (newFilterResults.value[fieldName] === undefined)
+    if (newFilterResults.value[fieldName] === undefined) {
       newFilterResults.value[fieldName] = {
         __type: FILTER_TYPE.OPTION,
-        selectedValues: [selectedValue],
+        selectedValues: [selectedValue]
       };
-    else if (
+    } else if (
       /** @type {OptionFilter} */ (newFilterResults.value[fieldName])
-        .selectedValues === undefined
-    )
-      /** @type {OptionFilter} */ (
-        newFilterResults.value[fieldName]
-      ).selectedValues = [selectedValue];
-    else {
+      .selectedValues === undefined
+    ) {
+      (/** @type {OptionFilter} */ (newFilterResults.value[fieldName])).selectedValues = [selectedValue];
+    } else {
       const { selectedValues } = /** @type {OptionFilter} */ (
         newFilterResults.value[fieldName]
       );
       const selectedValueIndex = selectedValues.indexOf(selectedValue);
-      if (selectedValueIndex >= 0 && !isSelected)
+      if (selectedValueIndex >= 0 && !isSelected) {
         selectedValues.splice(selectedValueIndex, 1);
-      else if (selectedValueIndex < 0 && isSelected)
+      } else if (selectedValueIndex < 0 && isSelected) {
         selectedValues.push(selectedValue);
+      }
     }
-    newFilterResults.value[fieldName].isExclusion = isExclusion;
+    newFilterResults.value[fieldName].filterMode = filterMode;
   } else {
-    if (!(anchorLabel in newFilterResults.value))
+    if (!(anchorLabel in newFilterResults.value)) {
       newFilterResults.value[anchorLabel] = {
         __type: FILTER_TYPE.ANCHORED,
-        value: {},
+        value: {}
       };
-    if (newFilterResults.value[anchorLabel].__type !== FILTER_TYPE.ANCHORED)
-      /** @type {AnchoredFilterState} */ (
-        newFilterResults.value[anchorLabel]
-      ).value = {};
+    }
+    if (newFilterResults.value[anchorLabel].__type !== FILTER_TYPE.ANCHORED) {
+      (/** @type {AnchoredFilterState} */ (newFilterResults.value[anchorLabel])).value = {};
+    }
     const newAnchoredFilterResults = /** @type {AnchoredFilterState} */ (
       newFilterResults.value[anchorLabel]
     );
-    if (newAnchoredFilterResults.value[fieldName] === undefined)
+    if (newAnchoredFilterResults.value[fieldName] === undefined) {
       newAnchoredFilterResults.value[fieldName] = {
         __type: FILTER_TYPE.OPTION,
-        selectedValues: [selectedValue],
+        selectedValues: [selectedValue]
       };
-    else if (
-      /** @type {OptionFilter} */ (newAnchoredFilterResults.value[fieldName])
-        .selectedValues === undefined
-    )
-      /** @type {OptionFilter} */ (
-        newAnchoredFilterResults.value[fieldName]
-      ).selectedValues = [selectedValue];
-    else {
+    } else if (
+      (/** @type {OptionFilter} */ (newAnchoredFilterResults.value[fieldName])).selectedValues
+      === undefined
+    ) {
+      (/** @type {OptionFilter} */ (newAnchoredFilterResults.value[fieldName])).selectedValues = [selectedValue];
+    } else {
       const { selectedValues } = /** @type {OptionFilter} */ (
         newAnchoredFilterResults.value[fieldName]
       );
       const selectedValueIndex = selectedValues.indexOf(selectedValue);
-      if (selectedValueIndex >= 0 && !isSelected)
+      if (selectedValueIndex >= 0 && !isSelected) {
         selectedValues.splice(selectedValueIndex, 1);
-      else if (selectedValueIndex < 0 && isSelected)
+      } else if (selectedValueIndex < 0 && isSelected) {
         selectedValues.push(selectedValue);
+      }
     }
-    /** @type {OptionFilter} */ (
-      newAnchoredFilterResults.value[fieldName]
-    ).isExclusion = isExclusion;
+    (/** @type {OptionFilter} */ (newAnchoredFilterResults.value[fieldName])).filterMode = filterMode;
   }
   newFilterResults = removeEmptyFilter(newFilterResults);
 
   // update component state
   return {
     filterStatus: newFilterStatus,
-    filterResults: newFilterResults,
+    filterResults: newFilterResults
   };
 }
 
@@ -550,13 +574,17 @@ export function getSelectedAnchors(filterStatus) {
   for (const tabStatus of filterStatus) {
     /** @type {string[]} */
     const selectedAnchorsForTab = [];
-    if (!Array.isArray(tabStatus))
-      for (const [anchorLabel, anchoredTabStatus] of Object.entries(tabStatus))
+    if (!Array.isArray(tabStatus)) {
+      for (const [anchorLabel, anchoredTabStatus] of
+        Object.entries(tabStatus)) {
         if (
           anchorLabel !== '' &&
           anchoredTabStatus.some(checkIfFilterSectionActive)
-        )
+        ) {
           selectedAnchorsForTab.push(anchorLabel.split(':')[1]);
+        }
+      }
+    }
 
     selectedAnchors.push(selectedAnchorsForTab);
   }

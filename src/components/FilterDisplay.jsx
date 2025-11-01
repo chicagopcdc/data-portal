@@ -43,17 +43,17 @@ function FilterDisplay({
   manual = false,
   onClickCombineMode,
   onClickFilter,
-  onCloseFilter,
+  onCloseFilter
 }) {
-  if (filter.__type === FILTER_TYPE.COMPOSED)
+  if (filter.__type === FILTER_TYPE.COMPOSED) {
     return (
-      <span className='filter-display'>
+      <span className="filter-display">
         {filter.value.map((__filter, i) => (
           <Fragment key={i}>
             {__filter.__type === 'REF' ? (
               <Pill>{__filter.value.label}</Pill>
             ) : (
-              <span className='pill-container'>
+              <span className="pill-container">
                 <FilterDisplay
                   filter={__filter}
                   filterInfo={filterInfo}
@@ -66,6 +66,7 @@ function FilterDisplay({
         ))}
       </span>
     );
+  }
 
   const filterElements = /** @type {JSX.Element[]} */ ([]);
   const { __combineMode, value: __filter } = filter;
@@ -78,30 +79,30 @@ function FilterDisplay({
   const handleClickFilter =
     typeof onClickFilter === 'function'
       ? (/** @type {React.SyntheticEvent} */ e) => {
-          onClickFilter({
-            field: e.currentTarget.attributes.getNamedItem('filter-key').value,
-            anchorField: anchorInfo?.[0],
-            anchorValue: anchorInfo?.[1],
-          });
-        }
+        onClickFilter({
+          field: e.currentTarget.attributes.getNamedItem('filter-key').value,
+          anchorField: anchorInfo?.[0],
+          anchorValue: anchorInfo?.[1]
+        });
+      }
       : undefined;
   const handleCloseFilter =
     typeof onCloseFilter === 'function'
       ? (/** @type {React.SyntheticEvent} */ e) => {
-          onCloseFilter({
-            field: e.currentTarget.attributes.getNamedItem('filter-key').value,
-            anchorField: anchorInfo?.[0],
-            anchorValue: anchorInfo?.[1],
-          });
-        }
+        onCloseFilter({
+          field: e.currentTarget.attributes.getNamedItem('filter-key').value,
+          anchorField: anchorInfo?.[0],
+          anchorValue: anchorInfo?.[1]
+        });
+      }
       : undefined;
 
-  for (const [key, value] of Object.entries(__filter))
+  for (const [key, value] of Object.entries(__filter)) {
     if (value.__type === FILTER_TYPE.ANCHORED) {
       const [anchorField, anchorValue] = key.split(':');
       filterElements.push(
         <Pill key={key}>
-          <span className='token field'>
+          <span className="token field">
             With{' '}
             <code>
               {manual
@@ -110,7 +111,7 @@ function FilterDisplay({
             </code>{' '}
             of <code>{`"${anchorValue}"`}</code>
           </span>
-          <span className='token'>
+          <span className="token">
             ({' '}
             <FilterDisplay
               anchorInfo={[anchorField, anchorValue]}
@@ -125,7 +126,7 @@ function FilterDisplay({
             />{' '}
             )
           </span>
-        </Pill>,
+        </Pill>
       );
     } else if (value.__type === FILTER_TYPE.OPTION) {
       filterElements.push(
@@ -135,7 +136,7 @@ function FilterDisplay({
           onClose={handleCloseFilter}
           filterKey={key}
         >
-          <span className='token'>
+          <span className="token">
             <code>
               {patientIdsConfig?.filter && key === patientIdsConfig?.filterName
                 ? patientIdsConfig.displayName
@@ -143,26 +144,28 @@ function FilterDisplay({
                   ? (filterInfo[key]?.label ?? key)
                   : filterInfo[key].label}
             </code>{' '}
-            {value.selectedValues.length > 1
-              ? `is ${value.isExclusion ? 'not' : ''} any of `
-              : `is ${value.isExclusion ? 'not' : ''} `}
+            {value.filterMode === 'CONTAINS_ANY' ? `includes any of`
+              : value.filterMode === 'CONTAINS_ALL' ? 'includes all of'
+                : value.filterMode === 'EXCLUDES_ANY' ? 'excludes any of'
+                  : value.filterMode === 'EXCLUDES_ALL' ? 'excludes all of'
+                    : ''}
           </span>
-          <span className='token'>
+          <span className="token">
             {value.selectedValues.length > 1 ? (
               <Tooltip
-                arrowContent={<div className='rc-tooltip-arrow-inner' />}
+                arrowContent={<div className="rc-tooltip-arrow-inner" />}
                 overlay={
-                  <div className='filter-values-tooltip'>
+                  <div className="filter-values-tooltip">
                     {value.selectedValues.map((v) => `"${v}"`).join(', ')}
                   </div>
                 }
-                placement='bottomLeft'
+                placement="bottomLeft"
                 trigger={['hover', 'focus']}
                 getTooltipContainer={() => document.body}
                 overlayStyle={{
                   maxWidth: 480,
                   whiteSpace: 'normal',
-                  overflowWrap: 'anywhere',
+                  overflowWrap: 'anywhere'
                 }}
               >
                 <span>
@@ -173,7 +176,7 @@ function FilterDisplay({
               <code>{`"${value.selectedValues[0]}"`}</code>
             )}
           </span>
-        </Pill>,
+        </Pill>
       );
     } else if (value.__type === FILTER_TYPE.RANGE) {
       filterElements.push(
@@ -183,23 +186,24 @@ function FilterDisplay({
           onClose={handleCloseFilter}
           filterKey={key}
         >
-          <span className='token'>
+          <span className="token">
             <code>
               {manual ? (filterInfo[key]?.label ?? key) : filterInfo[key].label}
             </code>
             {' is between '}
           </span>
-          <span className='token'>
+          <span className="token">
             <code>
               ({value.lowerBound}, {value.upperBound})
             </code>
           </span>
-        </Pill>,
+        </Pill>
       );
     }
+  }
 
   return (
-    <span className='filter-display'>
+    <span className="filter-display">
       {filterElements.map((filterElement, i) => (
         <Fragment key={i}>
           {filterElement}
@@ -218,14 +222,14 @@ FilterDisplay.propTypes = {
   filter: PropTypes.any.isRequired,
   filterInfo: PropTypes.objectOf(
     PropTypes.shape({
-      label: PropTypes.string.isRequired,
-    }),
+      label: PropTypes.string.isRequired
+    })
   ),
   patientIdsConfig: PropTypes.object,
   manual: PropTypes.bool,
   onClickCombineMode: PropTypes.func,
   onClickFilter: PropTypes.func,
-  onCloseFilter: PropTypes.func,
+  onCloseFilter: PropTypes.func
 };
 
 export default FilterDisplay;

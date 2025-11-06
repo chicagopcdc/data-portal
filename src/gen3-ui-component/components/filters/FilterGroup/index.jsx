@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import cloneDeep from 'lodash.clonedeep';
 import Select from 'react-select';
-import { overrideSelectTheme } from '../../../../utils';
+import { overrideSelectTheme, capitalizeFirstLetter } from '../../../../utils';
 import AnchorFilter from '../AnchorFilter';
 import FilterSection from '../FilterSection';
 import PatientIdFilter from '../PatientIdFilter';
@@ -20,7 +20,6 @@ import {
   updateSelectedValue,
   removeEmptyFilter,
 } from './utils';
-import { capitalizeFirstLetter } from '../../../../utils';
 import './FilterGroup.css';
 
 /** @param {string} label */

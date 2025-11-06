@@ -145,8 +145,43 @@ function FilterGroup({
     return capitalizeFirstLetter(newFilterName);
   }
 
-  const filterToRelation = filterConfig.filterDependencyConfig.filterToRelation;
-  const relations = filterConfig.filterDependencyConfig.relations;
+  // default pulled from pcdc.json
+  const FALLBACK_FILTER_DEPENDENCY_CONFIG = {
+    filterToRelation: {
+      'molecular_analysis.molecular_abnormality': 'molecular_abnormality',
+      'molecular_analysis.molecular_abnormality_result':
+        'molecular_abnormality',
+      'tumor_assessments.tumor_state': 'tumor_site_state',
+      'tumor_assessments.tumor_site': 'tumor_site_state',
+      'stagings.stage_system': 'stage',
+      'stagings.stage': 'stage',
+      'minimal_residual_diseases.mrd_result_numeric': 'mrd_result',
+      'minimal_residual_diseases.mrd_result_unit': 'mrd_result',
+      'labs.lab_result_numeric': 'lab_result',
+      'labs.lab_result_unit': 'lab_result',
+    },
+    relations: [], // empty
+  };
+
+  // Current values from gitops, checking if value is missing
+  let filterToRelation =
+    filterConfig?.filterDependencyConfig?.filterToRelation ?? null;
+
+  let relations = Array.isArray(filterConfig?.filterDependencyConfig?.relations)
+    ? filterConfig.filterDependencyConfig.relations
+    : [];
+
+  // check for invalid or empty
+  if (!filterToRelation) {
+    console.warn(
+      'filterToRelation invalid; using FALLBACK_FILTER_DEPENDENCY_CONFIG.',
+    );
+    filterToRelation = FALLBACK_FILTER_DEPENDENCY_CONFIG.filterToRelation;
+  }
+  if (relations.length === 0) {
+    console.warn('relations invalid; using FALLBACK_FILTER_DEPENDENCY_CONFIG.');
+    relations = FALLBACK_FILTER_DEPENDENCY_CONFIG.relations;
+  }
 
   const [filterStatus, setFilterStatus] = useState(
     getFilterStatus({

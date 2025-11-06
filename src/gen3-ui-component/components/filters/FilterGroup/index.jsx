@@ -162,7 +162,7 @@ function FilterGroup({
     relations: [], // empty
   };
 
-  // Current values from gitops, checking if value is missing
+  // Current values from gitops
   let filterToRelation =
     filterConfig?.filterDependencyConfig?.filterToRelation ?? null;
 

@@ -80,6 +80,20 @@ export const defaultFilterSet = {
   id: -1,
 };
 
+// Disbable-state helper + reason for UI
+function getFilterSetDisableInfo({ isUsed, inScope, isDisallowedVariables }) {
+  const isDisabled = Boolean(
+    isUsed || inScope === false || isDisallowedVariables,
+  );
+  if (!isDisabled) return { isDisabled, reason: undefined };
+  const reason = isUsed
+    ? 'This Filter Set is already in use.'
+    : inScope === false
+      ? 'This Filter Set contains out of scope consortia.'
+      : 'This Filter Set includes disallowed variables and cannot be used for survival analysis.';
+  return { isDisabled, reason };
+}
+
 /**
  * @param {React.FocusEvent<HTMLInputElement>} e
  * @param {React.Dispatch<React.SetStateAction<number>>} setStateAction
@@ -134,12 +148,10 @@ function ControlForm({ countByFilterSet, onSubmit }) {
     const innerProps = {
       ...props.innerProps,
       onMouseDown: (e) => {
-        if (isDisabled) {
+        if (isDisabled && data?.disabledOverlay) {
           e.preventDefault();
           e.stopPropagation();
-          props.selectProps.onDisabledOptionClick?.(
-            data.disabledOverlay || 'This option is unavailable.',
-          );
+          props.selectProps.onDisabledOptionClick?.(data.disabledOverlay);
           return;
         }
         origOnMouseDown?.(e);
@@ -184,13 +196,13 @@ function ControlForm({ countByFilterSet, onSubmit }) {
 
     if (
       selectedOption &&
+      selectedOption.isDisabled &&
+      selectedOption.disabledOverlay &&
       (selectedValue !== prevKey
         ? nowDisabled
         : !prevWasDisabled && nowDisabled)
     ) {
-      setDisabledReason(
-        selectedOption?.disabledOverlay || 'This option is unavailable.',
-      );
+      setDisabledReason(selectedOption.disabledOverlay);
     }
 
     // Update refs for next comparison
@@ -208,9 +220,18 @@ function ControlForm({ countByFilterSet, onSubmit }) {
         if (key in scopes) {
           if (scopes[key] === false) {
             suppressAutoNotifyRef.current = true;
-            setDisabledReason(
-              'This Filter Set contains out-of-scope consortia.',
+            // Build reason consistently for the currently selected set
+            const isUsed = usedFilterSetIds.includes(key);
+            const isDisallowedVariables = checkIfFilterHasDisallowedVariables(
+              disallowedVariables,
+              selectFilterSet.filter,
             );
+            const { reason } = getFilterSetDisableInfo({
+              isUsed,
+              inScope: false,
+              isDisallowedVariables,
+            });
+            setDisabledReason(reason);
             setSelectFilterSet(null);
           }
           return;
@@ -230,7 +251,18 @@ function ControlForm({ countByFilterSet, onSubmit }) {
         const key = selectFilterSet.value;
         if (scopes[key] === false) {
           suppressAutoNotifyRef.current = true;
-          setDisabledReason('This Filter Set contains out-of-scope consortia.');
+          // Build reason consistently for the currently selected set
+          const isUsed = usedFilterSetIds.includes(key);
+          const isDisallowedVariables = checkIfFilterHasDisallowedVariables(
+            disallowedVariables,
+            selectFilterSet.filter,
+          );
+          const { reason } = getFilterSetDisableInfo({
+            isUsed,
+            inScope: false,
+            isDisallowedVariables,
+          });
+          setDisabledReason(reason);
           setSelectFilterSet(null);
         }
         setFilterSetsConsortiumScope(scopes);
@@ -247,22 +279,20 @@ function ControlForm({ countByFilterSet, onSubmit }) {
       disallowedVariables,
       filterSet.filter,
     );
-    const inScope =
-      value in filterSetsConsortiumScope && !filterSetsConsortiumScope[value];
+    // True/false if known, otherwise undefined (unknown yet)
+    const inScope = Object.prototype.hasOwnProperty.call(
+      filterSetsConsortiumScope,
+      value,
+    )
+      ? filterSetsConsortiumScope[value]
+      : undefined;
 
-    const isDisabled = isUsed || isDisallowedVariables || inScope;
-
-    let disabledOverlay;
-    if (isUsed) {
-      disabledOverlay = 'This Filter Set is already in use.';
-    } else if (inScope) {
-      disabledOverlay = 'This Filter Set contains out of scope consortia.';
-    } else if (isDisallowedVariables) {
-      disabledOverlay =
-        'This Filter Set includes disallowed variables and cannot be used for survival analysis.';
-    } else {
-      disabledOverlay = '';
-    }
+    // Single source of truth for disabled state + message
+    const { isDisabled, reason: disabledOverlay } = getFilterSetDisableInfo({
+      isUsed,
+      inScope,
+      isDisallowedVariables,
+    });
 
     filterSetOptions.push({
       label: isDisabled ? (
@@ -280,7 +310,7 @@ function ControlForm({ countByFilterSet, onSubmit }) {
       value,
       filter,
       isDisabled,
-      disabledOverlay,
+      ...(disabledOverlay ? { disabledOverlay } : {}),
     });
 
     if (isUsed) {
@@ -459,8 +489,8 @@ function ControlForm({ countByFilterSet, onSubmit }) {
             value={selectFilterSet}
             theme={overrideSelectTheme}
             menuPlacement='auto'
-            // Show overlay when a disabled item is clicked
-            onDisabledOptionClick={(msg) => setDisabledReason(msg)}
+            // Only open overlay if a reason was provided
+            onDisabledOptionClick={(msg) => msg && setDisabledReason(msg)}
             components={{ Option: DisabledReasonOption }}
           />
           <Button

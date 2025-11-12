@@ -75,6 +75,7 @@ function ExplorerSurvivalAnalysis() {
           <div className='explorer-survival-analysis__column-left'>
             <ControlForm
               countByFilterSet={result.parsed.count}
+              requestError={result.error}
               onSubmit={handleSubmit}
             />
           </div>

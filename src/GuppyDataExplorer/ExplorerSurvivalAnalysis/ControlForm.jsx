@@ -113,7 +113,7 @@ function validateNumberInput(e, setStateAction) {
  * @param {ParsedSurvivalAnalysisResult['count']} [prop.countByFilterSet]
  * @param {UserInputSubmitHandler} prop.onSubmit
  */
-function ControlForm({ countByFilterSet, onSubmit }) {
+function ControlForm({ countByFilterSet, requestError, onSubmit }) {
   const consortiums = useAppSelector(
     (state) => state.explorer.config.survivalAnalysisConfig.consortium ?? [],
   );
@@ -140,6 +140,21 @@ function ControlForm({ countByFilterSet, onSubmit }) {
   );
 
   const [disabledReason, setDisabledReason] = useState(null);
+
+  const getRequestErrorMessage = (err) => {
+    if (!err) return null;
+    // Backend throws response.statusText, e.g. 'NOT FOUND' for 404.
+    if (String(err).toUpperCase().includes('NOT FOUND')) {
+      return 'Unable to generate a survival curve. Check your filter criteria and try again.';
+    }
+    return 'We could not generate a survival curve at this time. Please review your filters and try again.';
+  };
+
+  // If the survival POST fails (non-200), open the overlay with a message.
+  useEffect(() => {
+    const msg = getRequestErrorMessage(requestError);
+    if (msg) setDisabledReason(msg);
+  }, [requestError]);
 
   // Custom <Option> to open an overlay when a disabled item is clicked
   const DisabledReasonOption = (props) => {
@@ -569,6 +584,7 @@ ControlForm.propTypes = {
       total: PropTypes.number,
     }),
   ),
+  requestError: PropTypes.any,
   onSubmit: PropTypes.func.isRequired,
 };
 

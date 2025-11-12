@@ -229,58 +229,58 @@ function ControlForm({ countByFilterSet, requestError, onSubmit }) {
   useEffect(() => {
     if (!selectFilterSet) return;
     const checkFilterSetScopes = async () => {
-      const scopes = { ...filterSetsConsortiumScope };
-      try {
-        const key = selectFilterSet.value;
-        if (key in scopes) {
-          if (scopes[key] === false) {
-            suppressAutoNotifyRef.current = true;
-            // Build reason consistently for the currently selected set
-            const isUsed = usedFilterSetIds.includes(key);
-            const isDisallowedVariables = checkIfFilterHasDisallowedVariables(
+      const key = selectFilterSet.value;
+      // If we already know the scope for this key, handle and exit WITHOUT updating state.
+      if (
+        Object.prototype.hasOwnProperty.call(filterSetsConsortiumScope, key)
+      ) {
+        if (filterSetsConsortiumScope[key] === false) {
+          suppressAutoNotifyRef.current = true;
+          // Reuse your centralized message if present
+          const { reason } = getFilterSetDisableInfo({
+            isUsed: usedFilterSetIds.includes(key),
+            inScope: false,
+            isDisallowedVariables: checkIfFilterHasDisallowedVariables(
               disallowedVariables,
               selectFilterSet.filter,
-            );
-            const { reason } = getFilterSetDisableInfo({
-              isUsed,
-              inScope: false,
-              isDisallowedVariables,
-            });
-            setDisabledReason(reason);
-            setSelectFilterSet(null);
-          }
-          return;
-        }
-        setIsCheckingScope(true);
-
-        const inScope = await checkIfFilterInScope(
-          consortiums,
-          selectFilterSet.filter,
-        );
-        scopes[key] = inScope;
-      } catch (error) {
-        console.error('Error checking filter scope:', error);
-        const key = selectFilterSet.value;
-        scopes[key] = false;
-      } finally {
-        const key = selectFilterSet.value;
-        if (scopes[key] === false) {
-          suppressAutoNotifyRef.current = true;
-          // Build reason consistently for the currently selected set
-          const isUsed = usedFilterSetIds.includes(key);
-          const isDisallowedVariables = checkIfFilterHasDisallowedVariables(
-            disallowedVariables,
-            selectFilterSet.filter,
-          );
-          const { reason } = getFilterSetDisableInfo({
-            isUsed,
-            inScope: false,
-            isDisallowedVariables,
+            ),
           });
           setDisabledReason(reason);
           setSelectFilterSet(null);
         }
-        setFilterSetsConsortiumScope(scopes);
+        return;
+      }
+
+      setIsCheckingScope(true);
+      let scopes = filterSetsConsortiumScope;
+      let didChange = false;
+      try {
+        const inScope = await checkIfFilterInScope(
+          consortiums,
+          selectFilterSet.filter,
+        );
+        scopes = { ...filterSetsConsortiumScope, [key]: inScope };
+        didChange = true;
+      } catch (error) {
+        console.error('Error checking filter scope:', error);
+        scopes = { ...filterSetsConsortiumScope, [key]: false };
+        didChange = true;
+      } finally {
+        if (scopes[key] === false) {
+          suppressAutoNotifyRef.current = true;
+          const { reason } = getFilterSetDisableInfo({
+            isUsed: usedFilterSetIds.includes(key),
+            inScope: false,
+            isDisallowedVariables: checkIfFilterHasDisallowedVariables(
+              disallowedVariables,
+              selectFilterSet.filter,
+            ),
+          });
+          setDisabledReason(reason);
+          setSelectFilterSet(null);
+        }
+        // Only update state if we actually changed the map (avoids infinite loop)
+        if (didChange) setFilterSetsConsortiumScope(scopes);
         setIsCheckingScope(false);
       }
     };
@@ -343,6 +343,7 @@ function ControlForm({ countByFilterSet, requestError, onSubmit }) {
   }, [countByFilterSet]);
 
   const submitUserInput = () => {
+    setDisabledReason(null);
     setIsInputChanged(false);
     gaEvents.clickApplySurvivalButtonEvent();
     onSubmit({

@@ -165,14 +165,6 @@ function FilterGroup({
     typeof filterToRelation === 'object' &&
     Object.keys(filterToRelation).length > 0;
 
-  // known filter keys from FTR (or empty when disabled)
-  const depFilters = hasFilterDependency ? Object.keys(filterToRelation) : [];
-  if (!hasFilterDependency) {
-    console.warn(
-      '[deps] disabled: missing or empty filterToRelation (safe fallback)',
-    );
-  }
-
   // Returns a safe dependentFilters value or false.
   // - Disables the feature if filterToRelation is missing (hasFilterDependency === false)
   // - Uses only relation entries that are known filter keys to avoid submission errors

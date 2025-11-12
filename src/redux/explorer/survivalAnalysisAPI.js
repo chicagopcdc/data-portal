@@ -27,7 +27,8 @@ export function fetchResult(body) {
     body: JSON.stringify(body),
   }).then(({ response, data, status }) => {
     if (status !== 200) {
-      throw response.statusText;
+      const msg = response?.statusText || `HTTP ${status}`;
+      throw new Error(msg);
     }
     return data;
   });

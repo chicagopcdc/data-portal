@@ -528,7 +528,6 @@ function FilterGroup({
           // Age calculator: only when dependency is active AND field is listed as "age"
           const nameCandidates = [section.title, filterName];
           const isAgeField =
-            hasFilterDependency &&
             Array.isArray(unitCalcTitles?.age) &&
             nameCandidates.some((n) => unitCalcTitles.age.includes(n));
 

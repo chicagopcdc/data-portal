@@ -18,7 +18,7 @@ const filterConfig = {
   Role: false,
   Actions: false,
 };
-export default function UserAccessTable({ projectId, setActionType }) {
+export default function UserAccessTable({ projectId, setActionType, onAction }) {
   const dispatch = useAppDispatch();
 
   const {
@@ -78,6 +78,7 @@ export default function UserAccessTable({ projectId, setActionType }) {
     ).then((action) => {
       if (!action.payload.isError) {
         setSuccessMsg(`Role updated successfully for ${email}`);
+        onAction?.('SUCCESSFUL_USER_ACCESS_CHANGE');
         setErrorMsg('');
       } else {
         setErrorMsg(action.payload.message);

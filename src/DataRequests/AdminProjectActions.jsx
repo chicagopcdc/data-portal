@@ -182,6 +182,7 @@ export default function AdminProjectActions({
               <UserAccessTable
                 projectId={project.id}
                 setActionType={setActionType}
+                onAction={onAction}
               />
             );
           case 'PROJECT_USERS_ADD':

@@ -55,7 +55,7 @@ export default function CovarCard({
               ? { label: covariates[postion].name, value: covariates[postion] }
               : null
           }
-          // This disables the option
+          isOptionDisabled={(option) => option.isDisabled} // This disables the option
         />
       </div>
 

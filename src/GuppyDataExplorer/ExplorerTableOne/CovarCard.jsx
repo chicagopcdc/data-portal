@@ -64,17 +64,49 @@ export default function CovarCard({
         <div className='covar_card_check_group'>
           <div className='covar_card_check_header'>
             <span className='covar_card_check_label'>Values:</span>
-            {covariates[postion].values.length > 5 && (
+            <div>
+              {covariates[postion].values.length > 5 && (
+                <button
+                  type='button'
+                  className='covar_card_toggle_button'
+                  onClick={() => setShowAllValues(!showAllValues)}
+                >
+                  {showAllValues
+                    ? 'Show Less'
+                    : `Show All (${covariates[postion].values.length})`}
+                </button>
+              )}
               <button
                 type='button'
                 className='covar_card_toggle_button'
-                onClick={() => setShowAllValues(!showAllValues)}
+                onClick={() => {
+                  const allValues = covariates[postion].values;
+                  const currentSelectedKeys =
+                    covariates[postion].selectedKeys || [];
+                  const allSelected =
+                    allValues.length === currentSelectedKeys.length;
+
+                  updateCovariates((prevCovariates) => {
+                    const newCovariates = [...prevCovariates];
+                    const currentCovariate = { ...newCovariates[postion] };
+
+                    if (allSelected) {
+                      currentCovariate.selectedKeys = [];
+                    } else {
+                      currentCovariate.selectedKeys = [...allValues];
+                    }
+
+                    newCovariates[postion] = currentCovariate;
+                    return newCovariates;
+                  });
+                }}
               >
-                {showAllValues
-                  ? 'Show Less'
-                  : `Show All (${covariates[postion].values.length})`}
+                {(covariates[postion].selectedKeys || []).length ===
+                covariates[postion].values.length
+                  ? 'Unselect All'
+                  : 'Select All'}
               </button>
-            )}
+            </div>
           </div>
           <div className='covar_card_check_list'>
             {(showAllValues

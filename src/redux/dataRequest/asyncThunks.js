@@ -112,6 +112,21 @@ export const createProject = createAsyncThunk(
       });
 
       if (statusCategory(status) !== '2XX') {
+        // if error
+        if (
+          status === 400 &&
+          data &&
+          typeof data === 'object' &&
+          typeof data.message === 'string'
+        ) {
+          return {
+            isError: true,
+            message: data.message,
+            data: null,
+          };
+        }
+
+        // Fallback for all other errors
         return handleRequestError(status, response);
       }
 

@@ -69,7 +69,10 @@ const slice = createSlice({
     builder.addCase(createProject.fulfilled, (state, action) => {
       state.isCreatePending = false;
 
-      if (action.payload === null) return;
+      // Check if asyncThunk passed null or error payload
+      if (!action.payload || action.payload.isError) {
+        return;
+      }
 
       const {
         meta: {

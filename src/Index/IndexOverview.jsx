@@ -41,7 +41,7 @@ function CountsDataView({ counts }) {
     <>
       {data.map(({ count, faIcon, name }) => (
         <div className='index-overview__count' key={name.singular}>
-          <h3>{count}</h3>
+          <h3>{Number(count).toLocaleString()}</h3>
           <div>
             <FontAwesomeIcon icon={faIcon} size='lg' />
             {count > 1 ? name.plural : name.singular}

@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import Tooltip from 'rc-tooltip';
 import 'rc-tooltip/assets/bootstrap_white.css';
-import Select from 'react-select';
+import Select, { components as selectComponents } from 'react-select';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Button from '../../gen3-ui-component/components/Button';
 import SimpleInputField from '../../components/SimpleInputField';
+import SimplePopup from '../../components/SimplePopup';
 import { useAppSelector } from '../../redux/hooks';
 import { overrideSelectTheme } from '../../utils';
 import FilterSetCard from './FilterSetCard';
@@ -79,6 +80,20 @@ export const defaultFilterSet = {
   id: -1,
 };
 
+// Disbable-state helper + reason for UI
+function getFilterSetDisableInfo({ isUsed, inScope, isDisallowedVariables }) {
+  const isDisabled = Boolean(
+    isUsed || inScope === false || isDisallowedVariables,
+  );
+  if (!isDisabled) return { isDisabled, reason: undefined };
+  const reason = isUsed
+    ? 'This Filter Set is already in use.'
+    : inScope === false
+      ? 'This Filter Set contains out of scope consortia.'
+      : 'This Filter Set includes disallowed variables and cannot be used for survival analysis.';
+  return { isDisabled, reason };
+}
+
 /**
  * @param {React.FocusEvent<HTMLInputElement>} e
  * @param {React.Dispatch<React.SetStateAction<number>>} setStateAction
@@ -98,7 +113,7 @@ function validateNumberInput(e, setStateAction) {
  * @param {ParsedSurvivalAnalysisResult['count']} [prop.countByFilterSet]
  * @param {UserInputSubmitHandler} prop.onSubmit
  */
-function ControlForm({ countByFilterSet, onSubmit }) {
+function ControlForm({ countByFilterSet, requestError, onSubmit }) {
   const consortiums = useAppSelector(
     (state) => state.explorer.config.survivalAnalysisConfig.consortium ?? [],
   );
@@ -124,38 +139,154 @@ function ControlForm({ countByFilterSet, onSubmit }) {
     {},
   );
 
-  // Add effect to check scope when filter sets change
+  const [disabledReason, setDisabledReason] = useState(null);
+
+  const getRequestErrorMessage = (err) => {
+    if (!err) return null;
+    // Backend throws response.statusText, e.g. 'NOT FOUND' for 404.
+    if (String(err).toUpperCase().includes('NOT FOUND')) {
+      return 'Unable to generate a survival curve. Check your filter criteria and try again.';
+    }
+    return 'We could not generate a survival curve at this time. Please review your filters and try again.';
+  };
+
+  // If the survival POST fails (non-200), open the overlay with a message.
   useEffect(() => {
-    if (!selectFilterSet) {
+    const msg = getRequestErrorMessage(requestError);
+    if (msg) setDisabledReason(msg);
+  }, [requestError]);
+
+  // Custom <Option> to open an overlay when a disabled item is clicked
+  const DisabledReasonOption = (props) => {
+    const { isDisabled, data } = props;
+    const origOnMouseDown = props.innerProps?.onMouseDown;
+    const innerProps = {
+      ...props.innerProps,
+      onMouseDown: (e) => {
+        if (isDisabled && data?.disabledOverlay) {
+          e.preventDefault();
+          e.stopPropagation();
+          props.selectProps.onDisabledOptionClick?.(data.disabledOverlay);
+          return;
+        }
+        origOnMouseDown?.(e);
+      },
+    };
+    return <selectComponents.Option {...props} innerProps={innerProps} />;
+  };
+
+  // Track previous state so we only notify when it becomes disabled
+  const prevSelectedKeyRef = useRef(null);
+  const prevWasDisabledRef = useRef(false);
+  // Prevent auto-notify from firing when scope-check already opened overlay
+  const suppressAutoNotifyRef = useRef(false);
+  const filterSetOptions = [];
+  const usedFilterSets = [];
+
+  // If a previously valid selection becomes disabled, notify automatically
+  useEffect(() => {
+    if (!selectFilterSet) return;
+    const selectedValue = selectFilterSet?.value;
+    if (suppressAutoNotifyRef.current) {
+      suppressAutoNotifyRef.current = false;
+      prevSelectedKeyRef.current = selectedValue;
+      prevWasDisabledRef.current = false;
       return;
     }
-    const checkFilterSetScopes = async () => {
-      setIsCheckingScope(true);
-      const scopes = { ...filterSetsConsortiumScope };
-      try {
-        if (selectFilterSet.value in scopes) return;
 
+    const isOutOfScope = filterSetsConsortiumScope?.[selectedValue] === false;
+    if (isOutOfScope) {
+      prevSelectedKeyRef.current = selectedValue;
+      prevWasDisabledRef.current = true;
+      return;
+    }
+
+    const selectedOption =
+      Array.isArray(filterSetOptions) &&
+      filterSetOptions.find((o) => o?.value === selectedValue);
+
+    const nowDisabled = Boolean(selectedOption?.isDisabled);
+    const prevWasDisabled = prevWasDisabledRef.current;
+    const prevKey = prevSelectedKeyRef.current;
+
+    if (
+      selectedOption &&
+      selectedOption.isDisabled &&
+      selectedOption.disabledOverlay &&
+      (selectedValue !== prevKey
+        ? nowDisabled
+        : !prevWasDisabled && nowDisabled)
+    ) {
+      setDisabledReason(selectedOption.disabledOverlay);
+    }
+
+    // Update refs for next comparison
+    prevSelectedKeyRef.current = selectedValue;
+    prevWasDisabledRef.current = nowDisabled;
+  }, [selectFilterSet, filterSetOptions, filterSetsConsortiumScope]);
+
+  // Validate consortium scope when selection changes
+  useEffect(() => {
+    if (!selectFilterSet) return;
+    const checkFilterSetScopes = async () => {
+      const key = selectFilterSet.value;
+      // If we already know the scope for this key, handle and exit WITHOUT updating state.
+      if (
+        Object.prototype.hasOwnProperty.call(filterSetsConsortiumScope, key)
+      ) {
+        if (filterSetsConsortiumScope[key] === false) {
+          suppressAutoNotifyRef.current = true;
+          // Reuse your centralized message if present
+          const { reason } = getFilterSetDisableInfo({
+            isUsed: usedFilterSetIds.includes(key),
+            inScope: false,
+            isDisallowedVariables: checkIfFilterHasDisallowedVariables(
+              disallowedVariables,
+              selectFilterSet.filter,
+            ),
+          });
+          setDisabledReason(reason);
+          setSelectFilterSet(null);
+        }
+        return;
+      }
+
+      setIsCheckingScope(true);
+      let scopes = filterSetsConsortiumScope;
+      let didChange = false;
+      try {
         const inScope = await checkIfFilterInScope(
           consortiums,
           selectFilterSet.filter,
         );
-        scopes[selectFilterSet.value] = inScope;
+        scopes = { ...filterSetsConsortiumScope, [key]: inScope };
+        didChange = true;
       } catch (error) {
         console.error('Error checking filter scope:', error);
-        scopes[selectFilterSet.value] = false;
+        scopes = { ...filterSetsConsortiumScope, [key]: false };
+        didChange = true;
       } finally {
-        if (scopes[selectFilterSet.value] === false) {
+        if (scopes[key] === false) {
+          suppressAutoNotifyRef.current = true;
+          const { reason } = getFilterSetDisableInfo({
+            isUsed: usedFilterSetIds.includes(key),
+            inScope: false,
+            isDisallowedVariables: checkIfFilterHasDisallowedVariables(
+              disallowedVariables,
+              selectFilterSet.filter,
+            ),
+          });
+          setDisabledReason(reason);
           setSelectFilterSet(null);
         }
-        setFilterSetsConsortiumScope(scopes);
+        // Only update state if we actually changed the map (avoids infinite loop)
+        if (didChange) setFilterSetsConsortiumScope(scopes);
         setIsCheckingScope(false);
       }
     };
     checkFilterSetScopes();
-  }, [selectFilterSet, consortiums]);
+  }, [selectFilterSet, consortiums, filterSetsConsortiumScope]);
 
-  const filterSetOptions = [];
-  const usedFilterSets = [];
   for (const filterSet of [defaultFilterSet, ...savedFilterSets]) {
     const { filter, name: label, id: value } = filterSet;
     const isUsed = usedFilterSetIds.includes(value);
@@ -163,22 +294,20 @@ function ControlForm({ countByFilterSet, onSubmit }) {
       disallowedVariables,
       filterSet.filter,
     );
-    const inScope =
-      value in filterSetsConsortiumScope && !filterSetsConsortiumScope[value];
+    // True/false if known, otherwise undefined (unknown yet)
+    const inScope = Object.prototype.hasOwnProperty.call(
+      filterSetsConsortiumScope,
+      value,
+    )
+      ? filterSetsConsortiumScope[value]
+      : undefined;
 
-    const isDisabled = isUsed || isDisallowedVariables || inScope;
-
-    let disabledOverlay;
-    if (isUsed) {
-      disabledOverlay = 'This Filter Set is already in use.';
-    } else if (inScope) {
-      disabledOverlay = 'This Filter Set contains out of scope consortia.';
-    } else if (isDisallowedVariables) {
-      disabledOverlay =
-        'This Filter Set includes disallowed variables and cannot be used for survival analysis.';
-    } else {
-      disabledOverlay = '';
-    }
+    // Single source of truth for disabled state + message
+    const { isDisabled, reason: disabledOverlay } = getFilterSetDisableInfo({
+      isUsed,
+      inScope,
+      isDisallowedVariables,
+    });
 
     filterSetOptions.push({
       label: isDisabled ? (
@@ -196,6 +325,7 @@ function ControlForm({ countByFilterSet, onSubmit }) {
       value,
       filter,
       isDisabled,
+      ...(disabledOverlay ? { disabledOverlay } : {}),
     });
 
     if (isUsed) {
@@ -213,6 +343,7 @@ function ControlForm({ countByFilterSet, onSubmit }) {
   }, [countByFilterSet]);
 
   const submitUserInput = () => {
+    setDisabledReason(null);
     setIsInputChanged(false);
     gaEvents.clickApplySurvivalButtonEvent();
     onSubmit({
@@ -374,6 +505,9 @@ function ControlForm({ countByFilterSet, onSubmit }) {
             value={selectFilterSet}
             theme={overrideSelectTheme}
             menuPlacement='auto'
+            // Only open overlay if a reason was provided
+            onDisabledOptionClick={(msg) => msg && setDisabledReason(msg)}
+            components={{ Option: DisabledReasonOption }}
           />
           <Button
             label='Add'
@@ -425,6 +559,21 @@ function ControlForm({ countByFilterSet, onSubmit }) {
           }
         />
       </div>
+      {Boolean(disabledReason) && (
+        <SimplePopup>
+          <div className='explorer-filter-set-form'>
+            <h4>Filter Set unavailable</h4>
+            <p>{disabledReason}</p>
+            <div>
+              <Button
+                buttonType='default'
+                label='OK'
+                onClick={() => setDisabledReason(null)}
+              />
+            </div>
+          </div>
+        </SimplePopup>
+      )}
     </form>
   );
 }
@@ -436,6 +585,7 @@ ControlForm.propTypes = {
       total: PropTypes.number,
     }),
   ),
+  requestError: PropTypes.any,
   onSubmit: PropTypes.func.isRequired,
 };
 

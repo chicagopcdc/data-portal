@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import cloneDeep from 'lodash.clonedeep';
 import Select from 'react-select';
-import { overrideSelectTheme } from '../../../../utils';
+import { overrideSelectTheme, capitalizeFirstLetter } from '../../../../utils';
 import AnchorFilter from '../AnchorFilter';
 import FilterSection from '../FilterSection';
 import PatientIdFilter from '../PatientIdFilter';
@@ -20,7 +20,6 @@ import {
   updateSelectedValue,
   removeEmptyFilter,
 } from './utils';
-import { capitalizeFirstLetter } from '../../../../utils';
 import './FilterGroup.css';
 
 /** @param {string} label */
@@ -145,8 +144,47 @@ function FilterGroup({
     return capitalizeFirstLetter(newFilterName);
   }
 
-  const filterToRelation = filterConfig.filterDependencyConfig.filterToRelation;
-  const relations = filterConfig.filterDependencyConfig.relations;
+  /**
+   * --- Dependency Feature Rules ---
+   * If `filterToRelation` is missing or empty:
+   *  Do NOT attempt dependent-filter logic
+   *  Do NOT show age calculator (falls back to "number")
+   *  Avoid lookups like filterToRelation[filterName] to prevent crashes
+   */
+
+  // Dependency config from gitops (may be missing)
+  const filterToRelation =
+    filterConfig?.filterDependencyConfig?.filterToRelation ?? null;
+
+  // Relations are optional; only used when filterToRelation is valid
+  const relations = filterConfig?.filterDependencyConfig?.relations ?? {};
+
+  // Dependency feature is only ON if filterToRelation exists and has keys
+  const hasFilterDependency =
+    !!filterToRelation &&
+    typeof filterToRelation === 'object' &&
+    Object.keys(filterToRelation).length > 0;
+
+  // Returns a safe dependentFilters value or false.
+  // - Disables the feature if filterToRelation is missing (hasFilterDependency === false)
+  // - Uses only relation entries that are known filter keys to avoid submission errors
+  function getSafeDependentFilters(filterName, relationName) {
+    if (!hasFilterDependency) return false;
+
+    const list = relations?.[relationName];
+    if (!Array.isArray(list) || list.length === 0) return false;
+
+    // Only allow filter keys we actually know about (from tabs + info)
+    const known = new Set([
+      ...filterTabs.flatMap((t) => t.fields),
+      ...Object.keys(filterConfig.info ?? {}),
+    ]);
+
+    const cleaned = list.filter((f) => typeof f === 'string' && known.has(f));
+    return cleaned.length
+      ? createDependentFiltersArr(cleaned, filterName)
+      : false;
+  }
 
   const [filterStatus, setFilterStatus] = useState(
     getFilterStatus({
@@ -478,8 +516,27 @@ function FilterGroup({
         )}
         {tabs[tabIndex].map((section, index) => {
           const filterName = filterTabs[tabIndex].fields[index];
-          const relationName = filterToRelation[filterName];
-          const depFilters = Object.keys(filterToRelation);
+          /**
+           * Dependent filters:
+           * Only touch dependency structures when hasFilterDependency is true.
+           * Prevents unsafe lookups like filterToRelation[filterName]
+           */
+          const relationName = hasFilterDependency
+            ? filterToRelation[filterName]
+            : undefined;
+
+          // Age calculator: only when dependency is active AND field is listed as "age"
+          const nameCandidates = [section.title, filterName];
+          const isAgeField =
+            Array.isArray(unitCalcTitles?.age) &&
+            nameCandidates.some((n) => unitCalcTitles.age.includes(n));
+
+          const unitCalcType = isAgeField ? 'age' : 'number';
+          const unitCalcCfg =
+            unitCalcType === 'age' && filterConfig.unitCalcConfig
+              ? filterConfig.unitCalcConfig.ageUnits
+              : null;
+
           return (
             <FilterSection
               key={section.title}
@@ -508,24 +565,12 @@ function FilterGroup({
               options={section.options}
               title={section.title}
               tooltip={section.tooltip}
-              dependentFilters={
-                depFilters.includes(filterName)
-                  ? createDependentFiltersArr(
-                      relations[relationName],
-                      filterName,
-                    )
-                  : false
-              }
-              unitCalcType={
-                unitCalcTitles.age.includes(filterTabs[tabIndex].fields[index])
-                  ? 'age'
-                  : 'number'
-              }
-              unitCalcConfig={
-                filterConfig.unitCalcConfig
-                  ? filterConfig.unitCalcConfig.ageUnits
-                  : null
-              }
+              dependentFilters={getSafeDependentFilters(
+                filterName,
+                relationName,
+              )}
+              unitCalcType={unitCalcType}
+              unitCalcConfig={unitCalcCfg}
             />
           );
         })}

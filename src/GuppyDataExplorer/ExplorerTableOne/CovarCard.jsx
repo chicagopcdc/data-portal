@@ -1,10 +1,9 @@
-import { useState } from 'react';
 import { overrideSelectTheme } from '../../utils';
 import './ExplorerTableOne.css';
 import Select from 'react-select';
-import Button from '../../gen3-ui-component/components/Button';
-import '../ExplorerSurvivalAnalysis/ExplorerSurvivalAnalysis.css';
-
+import './CovarCard.css';
+import CatagorialCovariate from './CatagoricalCovariate';
+import ContinuousCovariate from './ContinuousCovariate';
 export default function CovarCard({
   postion,
   covariates,
@@ -13,7 +12,6 @@ export default function CovarCard({
   setSelectedCovariates,
   option,
 }) {
-  const [showAllValues, setShowAllValues] = useState(false);
   const filterFinderOptions = Object.keys(option).map((group) => ({
     label: group,
     options: option[group].map((item) => ({
@@ -22,14 +20,34 @@ export default function CovarCard({
       isDisabled: selectedCovariates.has(item.name), // Disable if already selected
     })),
   }));
-
   return (
-    <div className='explorer-survival-analysis__filter-set-card'>
-      <h2>Covariate {postion + 1}</h2>
+    <div className='explorer-table-one__covar-card-card'>
+      <header>
+        <h2>Covariate {postion + 1}</h2>
+        <button
+          aria-label='Clear'
+          type='button'
+          onClick={() => {
+            const covariateName = covariates[postion].name;
+            setSelectedCovariates((prev) => {
+              const newSet = new Set(prev);
+              newSet.delete(covariateName);
+              return newSet;
+            });
+            updateCovariates((prevCovariates) => {
+              const newCovariates = [...prevCovariates];
+              newCovariates.splice(postion, 1);
+              return newCovariates;
+            });
+          }}
+        >
+          <i className='g3-icon g3-icon--sm g3-icon--cross' />
+        </button>
+      </header>
       <div className='covar_card_form_controls'>
         <Select
           className='g3-filter-group__filter-finder'
-          placeholder='Find filter to use'
+          placeholder='Find Covariate to use'
           onChange={(e) => {
             setSelectedCovariates((prev) => {
               const newSet = new Set(prev);
@@ -55,119 +73,52 @@ export default function CovarCard({
               ? { label: covariates[postion].name, value: covariates[postion] }
               : null
           }
-          isOptionDisabled={(option) => option.isDisabled} // This disables the option
+          styles={{
+            control: (provided, state) => ({
+              ...provided,
+              backgroundColor:
+                !state.hasValue && !state.isFocused
+                  ? 'var(--g3-primary-btn__bg-color)'
+                  : provided.backgroundColor,
+              borderColor:
+                !state.hasValue && !state.isFocused
+                  ? 'black'
+                  : state.isFocused
+                    ? 'var(--pcdc-color__primary-light)'
+                    : provided.borderColor,
+              boxShadow: state.isFocused
+                ? '0 0 0 2px rgba(0,0,0,0.06)'
+                : provided.boxShadow,
+              // Constrain the height to match the button
+              height: '40px', // Set specific height
+              minHeight: '40px', // Prevent it from getting smaller
+              maxHeight: '40px', // Prevent it from getting larger
+            }),
+            placeholder: (provided, state) => ({
+              ...provided,
+              color:
+                !state.hasValue && !state.isFocused ? 'black' : provided.color,
+              fontWeight: 600,
+            }),
+          }}
         />
       </div>
 
-      {covariates[postion].type == 'categorical' &&
-      covariates[postion].values ? (
-        <div className='covar_card_check_group'>
-          <div className='covar_card_check_header'>
-            <span className='covar_card_check_label'>Values:</span>
-            <div>
-              {covariates[postion].values.length > 5 && (
-                <button
-                  type='button'
-                  className='covar_card_toggle_button'
-                  onClick={() => setShowAllValues(!showAllValues)}
-                >
-                  {showAllValues
-                    ? 'Show Less'
-                    : `Show All (${covariates[postion].values.length})`}
-                </button>
-              )}
-              <button
-                type='button'
-                className='covar_card_toggle_button'
-                onClick={() => {
-                  const allValues = covariates[postion].values;
-                  const currentSelectedKeys =
-                    covariates[postion].selectedKeys || [];
-                  const allSelected =
-                    allValues.length === currentSelectedKeys.length;
+      {covariates[postion].type == 'categorical' && (
+        <CatagorialCovariate
+          postion={postion}
+          covariate={covariates[postion]}
+          updateCovariates={updateCovariates}
+        />
+      )}
 
-                  updateCovariates((prevCovariates) => {
-                    const newCovariates = [...prevCovariates];
-                    const currentCovariate = { ...newCovariates[postion] };
-
-                    if (allSelected) {
-                      currentCovariate.selectedKeys = [];
-                    } else {
-                      currentCovariate.selectedKeys = [...allValues];
-                    }
-
-                    newCovariates[postion] = currentCovariate;
-                    return newCovariates;
-                  });
-                }}
-              >
-                {(covariates[postion].selectedKeys || []).length ===
-                covariates[postion].values.length
-                  ? 'Unselect All'
-                  : 'Select All'}
-              </button>
-            </div>
-          </div>
-          <div className='covar_card_check_list'>
-            {(showAllValues
-              ? covariates[postion].values
-              : covariates[postion].values.slice(0, 5)
-            ).map((k) => {
-              return (
-                <label className='covar_card_check_item' key={k.toString()}>
-                  <input
-                    type='checkbox'
-                    value={k}
-                    className='covar_card_checkbox'
-                    checked={
-                      covariates[postion].selectedKeys?.includes(k) || false
-                    }
-                    onChange={(e) => {
-                      var v = e.target.value;
-                      updateCovariates((prevCovariates) => {
-                        const newCovariates = [...prevCovariates];
-                        const currentCovariate = { ...newCovariates[postion] };
-                        const selectedKeys =
-                          currentCovariate.selectedKeys || [];
-
-                        if (e.target.checked) {
-                          currentCovariate.selectedKeys = [...selectedKeys, v];
-                        } else {
-                          currentCovariate.selectedKeys = selectedKeys.filter(
-                            (key) => key !== v,
-                          );
-                        }
-
-                        newCovariates[postion] = currentCovariate;
-                        return newCovariates;
-                      });
-                    }}
-                  />
-                  <span className='covar_card_check_text'>{k}</span>
-                </label>
-              );
-            })}
-          </div>
-        </div>
+      {covariates[postion].type == 'continuous' ? (
+        <ContinuousCovariate
+          position={postion}
+          covariate={covariates[postion]}
+          updateCovariates={updateCovariates}
+        />
       ) : null}
-
-      <Button
-        label='delete'
-        buttonType='primary'
-        onClick={() => {
-          const covariateName = covariates[postion].name;
-          setSelectedCovariates((prev) => {
-            const newSet = new Set(prev);
-            newSet.delete(covariateName);
-            return newSet;
-          });
-          updateCovariates((prevCovariates) => {
-            const newCovariates = [...prevCovariates];
-            newCovariates.splice(postion, 1);
-            return newCovariates;
-          });
-        }}
-      />
     </div>
   );
 }

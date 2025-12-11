@@ -1,0 +1,50 @@
+.explorer-table-one__control-form {
+  margin: 12px;
+  text-align: center;
+  width: 100%;
+}
+
+.explorer-table-one__filter-group {
+  background-color: var(--g3-color__bg-cloud);
+  padding: 1rem;
+}
+
+.explorer-table-one__filter-set-select {
+  margin: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.explorer-table-one__filter-set-select > div:first-child {
+  flex-grow: 1;
+  margin-right: 1rem;
+}
+
+.explorer-table-one__button-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem 2rem;
+  gap: 10px;
+}
+
+.explorer-table-one__add-variable-section {
+  margin-bottom: 2rem; /* Creates the space block */
+}
+
+.explorer-table-one__action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+@media screen and (max-width: 1090px) {
+  .explorer-table-one__button-group {
+    padding-left: 0;
+    padding-bottom: 4rem;
+    justify-content: center;
+  }
+}

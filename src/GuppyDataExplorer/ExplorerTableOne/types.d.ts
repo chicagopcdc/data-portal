@@ -1,44 +1,51 @@
 export type { GqlFilter } from '../../GuppyComponents/types';
-export type { ExplorerFilterSet, SavedExplorerFilterSet } from '../types';
 
 export type TableOneBaseVariable = {
   name: string;
   type: 'categorical' | 'continuous';
-  missingFromTotal: string;
-  missingFromTotalCount: number;
-  missingFromTrue: string;
+  missingFromEverythingElsePercent: string;
+  missingFromEverythingElseCount: number;
+  missingFromTruePercent: string;
   missingFromTrueCount: number;
 };
 
 export type TableOneCategoricalData = {
   data: {
-    true: string;
+    truePercent: string;
     trueCount: number;
-    total: string;
-    totalCount: number;
+    everythingElsePercent: string;
+    everythingElseCount: number;
+  };
+  name: string;
+};
+
+export type TableOneContinuousBucketData = {
+  data: {
+    trueMean: string;
+    trueCount: number;
+    everythingElseMean: string;
+    everythingElseCount: number;
   };
   name: string;
 };
 
 export type TableOneContinuousData = {
   mean: {
-    true: number;
-    trueCount: number;
-    total: number;
-    totalCount: number;
+    trueMean: string;
+    everythingElseMean: string;
   };
 };
 
-export type TableOneContinuesVariable = TableOneBaseVariable &
-  TableOneContinuousData;
+export type TableOneContinuousVariable = TableOneBaseVariable &
+  (TableOneContinuousData | { buckets: TableOneContinuousBucketData[] });
 
 export type TableOneCategoricalVariable = TableOneBaseVariable & {
   keys: TableOneCategoricalData[];
 };
 
 export type TableOneResult = {
-  variables: (TableOneCategoricalVariable | TableOneContinuesVariable)[];
-  totalCount: number;
+  variables: (TableOneCategoricalVariable | TableOneContinousVariable)[];
+  everythingElseCount: number;
   trueCount: number;
 };
 
@@ -58,6 +65,10 @@ export type CovariateCategorical = {
 export type CovariateContinuous = {
   type: 'continuous';
   label: string;
+  buckets?: {
+    splitValue: number;
+    inclusiveLower: boolean;
+  }[];
 };
 
 export type Covariate = CovariateCategorical | CovariateContinuous;
@@ -71,4 +82,4 @@ export type UserInput = {
   covariates: Covariates;
 };
 
-export type UserInputSubmitHandler = (userInput: UserInput) => void;
+export type UserInputSubmitHandler = (userInput: UserInput) => Promise<void>;

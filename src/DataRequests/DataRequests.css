@@ -6,7 +6,7 @@
   margin-bottom: 20px;
 }
 
-.data-requests__header>h1 {
+.data-requests__header > h1 {
   font-size: 24px;
   letter-spacing: 0.02rem;
   line-height: 80px;
@@ -53,7 +53,7 @@
   flex-grow: 1;
 }
 
-.data-requests__table-actions> :not(:last-child) {
+.data-requests__table-actions > :not(:last-child) {
   margin-right: 10px;
 }
 
@@ -75,7 +75,7 @@
   text-align: center;
 }
 
-.data-requests__error>h2 {
+.data-requests__error > h2 {
   display: block !important;
 }
 
@@ -191,6 +191,16 @@
 }
 
 .data-request__multi-value-row:last-of-type {
+  margin-bottom: 0;
+}
+
+.data-request__request-error-modal {
+  align-items: center;
+  min-height: 40px;
+  margin-bottom: 15px;
+}
+
+.data-request__request-error-modal:last-of-type {
   margin-bottom: 0;
 }
 

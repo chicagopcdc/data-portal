@@ -101,6 +101,8 @@ function DataRequestCreate({ isCreatePending }) {
     isError: false,
     message: '',
   });
+  const [isRequestCreateErrorModalOpen, setRequestCreateErrorModalOpen] =
+    useState(false);
 
   const initialValues = {
     name: '',
@@ -133,8 +135,11 @@ function DataRequestCreate({ isCreatePending }) {
 
           createRequest.then((action) => {
             if (!action.payload.isError) {
-
-              const handle = window.open(getAccessButtonLink, '_blank', 'popup');
+              const handle = window.open(
+                getAccessButtonLink,
+                '_blank',
+                'popup',
+              );
               handle?.blur();
               window.focus();
               navigate('/requests', {
@@ -147,6 +152,15 @@ function DataRequestCreate({ isCreatePending }) {
 
             const { isError, message } = action.payload;
             setRequestCreateError({ isError, message });
+
+            // If backend tells there is an error, show a modal
+            if (
+              isError &&
+              typeof message === 'string' &&
+              message.toLowerCase().includes('already exists')
+            ) {
+              setRequestCreateErrorModalOpen(true);
+            }
           });
         }}
       >
@@ -388,6 +402,19 @@ function DataRequestCreate({ isCreatePending }) {
               <span className='data-request__request-error'>
                 {createRequestError.message}
               </span>
+            )}
+            {isRequestCreateErrorModalOpen && (
+              <SimplePopup>
+                <div className='data-request__request-error-modal'>
+                  <h3>Oops, there was an error in the form.</h3>
+                  <p>{createRequestError.message}</p>
+                  <p>&nbsp;</p>
+                  <Button
+                    label='Close'
+                    onClick={() => setRequestCreateErrorModalOpen(false)}
+                  />
+                </div>
+              </SimplePopup>
             )}
           </Form>
         )}

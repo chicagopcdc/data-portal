@@ -15,6 +15,7 @@ export default function DataRequestFilterSets({
   projectId,
   savedFilterSets,
   onAction,
+  admin = false,
 }) {
   const dispatch = useAppDispatch();
   const [changeFilterSetRequestError, setChangeFilterSetRequestError] =
@@ -25,6 +26,7 @@ export default function DataRequestFilterSets({
   ] = useState({ isError: false, message: '' });
 
   const [selectedFiltersetId, setSelectedFiltersetId] = useState(undefined);
+  const [copyFilterAsJson, setCopyFilterAsJson] = useState(false);
   const [projectFilterSets, setProjectFilterSets] = useState([]);
 
   const fetchProjectFilterSets = (projectId) => {
@@ -130,7 +132,20 @@ export default function DataRequestFilterSets({
           <div className='data-request__form'>
             <div className='data-request__header'>
               <h3>Current Filters:</h3>
+ 
+              {admin && (
+                <Button
+                  label={copyFilterAsJson ? 'Close JSON' : 'Open JSON'}
+                  onClick={() => setCopyFilterAsJson(!copyFilterAsJson)}
+                />
+              )}
             </div>
+            {admin && copyFilterAsJson && (
+              <pre>
+                {JSON.stringify(projectFilterSets, null, 2)}
+              </pre>
+            )}
+
             <div className='data-request__fields'>
               {projectFilterSets.some(
                 (filterSet) => filterSet.filter_object,

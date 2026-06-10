@@ -384,6 +384,7 @@ export default function AdminProjectActions({
                 projectId={project.id}
                 savedFilterSets={savedFilterSets}
                 onAction={onAction}
+                admin={true}
               />
             );
           }

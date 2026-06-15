@@ -12,20 +12,12 @@ import './DataRequests.css';
 import Spinner from '../gen3-ui-component/components/Spinner/Spinner';
 import Tooltip from 'rc-tooltip';
 import 'rc-tooltip/assets/bootstrap_white.css';
+import StatusExplainerModal from './StatusExplainerModal';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 /** @typedef {import("../redux/types").RootState} RootState */
 /** @typedef {import("../redux/dataRequest/types").ResearcherInfo} ResearcherInfo */
 /** @typedef {import("../redux/dataRequest/types").DataRequestProject} DataRequestProject */
-
-const tableHeader = [
-  'ID',
-  'Research Title',
-  'Description',
-  'Researcher',
-  'Submitted Date',
-  'Status',
-  'Consortia',
-];
 
 /** @param {ResearcherInfo} researcher */
 function parseResearcherInfo(researcher) {
@@ -162,6 +154,31 @@ function DataRequestsTable({
   const [projectDisplayOptions, setProjectDisplayOptions] = useState(null);
   const [isMoreActionsPopupOpen, setMoreActionsPopupOpen] = useState(false);
   const [isVerifyPopupOpen, setVerifyPopupOpen] = useState(false);
+  const[statusExplainer, setStatusExplainer] = useState(false);
+  const statusFlow = useAppSelector(
+    (state) => state.explorer.config.dataRequests?.statusFlow,
+  );
+
+  const tableHeader = [
+    'ID',
+    'Research Title',
+    'Description',
+    'Researcher',
+    'Submitted Date',
+    <span className='data-request_status-header'>
+      Status
+      <button
+        type='button'
+        className='data-request__status-info-icon'
+        aria-label='Show status explainer modal'
+        onClick={() => setStatusExplainer(true)}
+      >
+        <FontAwesomeIcon icon='circle-info' />
+      </button>
+    </span>,
+    'Consortia',
+  ];
+
   const tableData = useMemo(
     () =>
       parseTableData({
@@ -310,6 +327,11 @@ function DataRequestsTable({
           </Popup>
         )}
       </div>
+      <StatusExplainerModal
+        isOpen={statusExplainer}
+        onClose={() => setStatusExplainer(false)}
+        statusFlow={statusFlow}
+      />
       {isLoading ? (
         <Spinner />
       ) : (

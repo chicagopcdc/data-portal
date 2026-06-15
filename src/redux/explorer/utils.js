@@ -163,6 +163,7 @@ export function getCurrentConfig(explorerId) {
       unitCalcConfig: unitCalcConfig,
     },
     getAccessButtonLink: config.getAccessButtonLink,
+    dataRequests: config.dataRequests,
     guppyConfig: config.guppyConfig,
     hideGetAccessButton: config.hideGetAccessButton,
     patientIdsConfig: config.patientIds,

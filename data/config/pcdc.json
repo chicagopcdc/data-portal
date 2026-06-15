@@ -733,7 +733,40 @@
         ]
       },
       "dataRequests": {
-        "enabled": false
+        "enabled": false,
+        "statusFlow": {
+          "states": [
+            { "id": "draft", "label": "Draft", "x": 1, "y": 2 },
+            { "id": "in_review", "label": "In Review", "x": 3, "y": 2 },
+            { "id": "rejected", "label": "Rejected", "x": 3, "y": 1 }, 
+            { "id": "in_revision", "label": "In Revision", "x": 3, "y": 4 },
+            { "id": "withdrawn", "label": "Withdrawn", "x": 2, "y": 5 },
+            { "id": "approved", "label": "Approved", "x": 5, "y": 2 },
+            { "id": "approved_with_feedback", "label": "Approved with Feedback", "x": 5, "y": 3 },
+            { "id": "request_criteria_finalized", "label": "Request Criteria Finalized", "x": 7, "y": 2 },
+            { "id": "contracting_requirements_met", "label": "Contracting and other requirements met", "x": 7, "y": 3 },
+            { "id": "data_available", "label": "Data available", "x": 7, "y": 4.3 },
+            { "id": "data_downloaded", "label": "Data Downloaded", "x": 7, "y": 5.3 },
+            { "id": "paper_published", "label": "Paper Published", "x": 5, "y": 5.3 }
+          ],
+          "transitions": [
+            { "from": "start", "to": "draft", "label": "START", "x": 1, "y": 1 },
+            { "from": "draft", "to": "in_review" },
+            { "from": "in_review", "to": "withdrawn", "label": "Withdraw" },
+            { "from": "in_review", "to": "rejected" },
+            { "from": "in_review", "to": "approved" },
+            { "from": "in_review", "to": "approved_with_feedback" },
+            { "from": "in_review", "to": "in_revision", "label": "Re-review Requested" },
+            { "from": "in_revision", "to": "in_review", "label": "Submit" },
+            { "from": "in_revision", "to": "withdrawn" },
+            { "from": "approved", "to": "request_criteria_finalized" },
+            { "from": "approved_with_feedback", "to": "request_criteria_finalized" },
+            { "from": "request_criteria_finalized", "to": "contracting_requirements_met" },
+            { "from": "contracting_requirements_met", "to": "data_available" },
+            { "from": "data_available", "to": "data_downloaded" },
+            { "from": "data_downloaded", "to": "paper_published" }
+          ]
+        }
       },
       "getAccessButtonLink": "https://docs.pedscommons.org/PCDCProjectRequestForm/"
     },

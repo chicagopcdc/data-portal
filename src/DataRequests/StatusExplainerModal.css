@@ -1,0 +1,96 @@
+.status-explainer-modal__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 40%);
+}
+
+.status-explainer-modal {
+  width: 94vw;
+  max-width: 1500px;
+  max-height: 88vh;
+  overflow: auto;
+  padding: 20px 24px;
+  background: white;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.status-explainer-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.status-explainer-modal__close-button {
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.status-flow-diagram {
+  position: relative;
+  width: 1340px;
+  height: 540px;
+  margin: 12px auto 0;
+}
+
+.status-flow-diagram__state {
+  position: absolute;
+  z-index: 2;
+  width: 165px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 58px;
+  padding: 8px 14px;
+  text-align: center;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background: white;
+  font-size: 15px;
+  box-sizing: border-box;
+}
+
+.status-flow-diagram__start {
+  position: absolute;
+  z-index: 2;
+  left: 116px;
+  top: 46px;
+  transform: translateX(-50%);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.status-flow-diagram__transition-label {
+  position: absolute;
+  z-index: 3;
+  transform: translate(-50%, -120%);
+  padding: 2px 6px;
+  background: white;
+  font-size: 14px;
+  font-style: italic;
+  color: #555;
+  white-space: nowrap;
+}
+
+.status-flow-diagram__arrows {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  overflow: visible;
+}
+
+.status-flow-diagram__arrow-line {
+  stroke: #333;
+  stroke-width: 1.5;
+  fill: none;
+}
+
+.status-flow-diagram__arrows marker path {
+  fill: #333;
+}

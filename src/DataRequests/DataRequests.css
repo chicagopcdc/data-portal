@@ -13,6 +13,31 @@
   color: inherit;
 }
 
+.data-request__status-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.data-request__status-info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 10px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #2f6287;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.data-request__status-info-icon:hover {
+  color: #1f4f6d;
+}
+
 .data-requests__status-approved,
 .data-requests__status-data-available {
   color: var(--pcdc-color__primary);

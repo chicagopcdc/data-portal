@@ -2,7 +2,7 @@ import { useState } from 'react';
 import * as Yup from 'yup';
 import Select from 'react-select';
 import { Formik, Field, Form, FieldArray } from 'formik';
-import { useAppDispatch } from '../redux/hooks';
+import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import Button from '../gen3-ui-component/components/Button';
 import IconComponent from '../components/Icon';
 import SimpleInputField from '../components/SimpleInputField';
@@ -21,6 +21,8 @@ import UserAccessTable from './UserAccessTable';
 import DataRequestFilterSets from './DataRequestFilterSets';
 import DataRequestApprovedUrl from './DataRequestApprovedUrl';
 import ViewProjectStatusHistory from './ViewProjectStatusHistory';
+import StatusExplainerModal from './StatusExplainerModal';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 const dataAccessSchema = Yup.object().shape({
   email: Yup.string().email().required('Must be a valid email address'),
@@ -58,9 +60,13 @@ export default function AdminProjectActions({
   onClose,
 }) {
   const dispatch = useAppDispatch();
+  const statusFlow = useAppSelector(
+    (state) => state.explorer.config.dataRequests?.statusFlow,
+  );
   const [actionType, setActionType] = useState('');
   const [currentEmailInput, setCurrentEmailInput] = useState('');
   const [isActionPending, setActionPending] = useState(false);
+  const [statusExplainer, setStatusExplainer] = useState(false);
   const [actionRequestError, setRequestactionError] = useState({
     isError: false,
     message: '',
@@ -133,8 +139,24 @@ export default function AdminProjectActions({
                 {({ values, errors, touched }) => (
                   <Form className='data-request__form'>
                     <div className='data-request__header'>
-                      <h2>Change Project State</h2>
+                      <h2>Change Project State
+                        <button
+                          type='button'
+                          className='data-request__status-info-icon'
+                          aria-label='Show status explainer modal'
+                          onClick={() => setStatusExplainer(true)}
+                        >
+                          <FontAwesomeIcon icon='circle-info' />
+                        </button>
+                      </h2>
                     </div>
+
+                    <StatusExplainerModal
+                      isOpen={statusExplainer}
+                      onClose={() => setStatusExplainer(false)}
+                      statusFlow={statusFlow}
+                    />
+
                     <div className='data-request__fields'>
                       <Field name='state'>
                         {({ field }) => (

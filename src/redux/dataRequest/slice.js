@@ -13,6 +13,7 @@ const slice = createSlice({
     projects: [],
     userRoles: [],
     projectStates: {},
+    paginationLinks: {},
     isError: false,
     isAdminActive: false,
     isProjectsReloading: false,
@@ -35,7 +36,8 @@ const slice = createSlice({
       state.isProjectsReloading = false;
       if (action.payload === null) return;
 
-      state.projects = action.payload;
+      state.projects = action.payload.projects;
+      state.paginationLinks = action.payload.paginationLinks;
     });
     builder.addCase(fetchProjects.rejected, (state) => {
       state.isProjectsReloading = false;

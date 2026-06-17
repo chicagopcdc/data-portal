@@ -147,6 +147,45 @@
   transform: rotate(90deg);
 }
 
+.data-requests__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.data-requests__pagination-page {
+  font-weight: 600;
+}
+
+.data-requests__table-wrapper {
+  position: relative;
+}
+
+.data-requests__table-loading-overlay {
+  position: absolute;
+  top: -72px;
+  right: 0;
+  left: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.data-requests__page-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 12px;
+  font-weight: 600;
+}
+
+.data-requests__page-size select {
+  padding: 4px 8px;
+}
+
 .data-request__request-error {
   color: red;
 }

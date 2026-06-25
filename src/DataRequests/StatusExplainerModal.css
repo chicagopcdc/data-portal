@@ -31,10 +31,13 @@
   cursor: pointer;
 }
 
+.status-flow-diagram-wrapper {
+  max-height: 65vh;
+  overflow: auto;
+}
+
 .status-flow-diagram {
   position: relative;
-  width: 1340px;
-  height: 540px;
   margin: 12px auto 0;
 }
 
@@ -58,9 +61,11 @@
 .status-flow-diagram__start {
   position: absolute;
   z-index: 2;
-  left: 116px;
-  top: 46px;
-  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 70px;
+  height: 30px;
   font-size: 14px;
   font-weight: 600;
 }
@@ -68,7 +73,7 @@
 .status-flow-diagram__transition-label {
   position: absolute;
   z-index: 3;
-  transform: translate(-50%, -120%);
+  transform: translate(-50%, -50%);
   padding: 2px 6px;
   background: white;
   font-size: 14px;

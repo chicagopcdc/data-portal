@@ -154,7 +154,7 @@ function DataRequestsTable({
   const [projectDisplayOptions, setProjectDisplayOptions] = useState(null);
   const [isMoreActionsPopupOpen, setMoreActionsPopupOpen] = useState(false);
   const [isVerifyPopupOpen, setVerifyPopupOpen] = useState(false);
-  const[statusExplainer, setStatusExplainer] = useState(false);
+  const [statusExplainer, setStatusExplainer] = useState(false);
   const statusFlow = useAppSelector(
     (state) => state.explorer.config.dataRequests?.statusFlow,
   );
@@ -165,7 +165,7 @@ function DataRequestsTable({
     'Description',
     'Researcher',
     'Submitted Date',
-    <span className='data-request_status-header'>
+    <span className='data-request__status-header'>
       Status
       <button
         type='button'

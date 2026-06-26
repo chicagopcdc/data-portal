@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { useAppSelector, useAppDispatch } from '../redux/hooks';
@@ -9,9 +9,11 @@ import DataRequestsTable from './DataRequestsTable';
 import { toggleAdminActive } from '../redux/dataRequest/slice';
 import {
   fetchProjects,
+  fetchProjectConsortiums,
   fetchProjectStates,
   getUserRoles,
 } from '../redux/dataRequest/asyncThunks';
+import { adminFetchUsers } from '../redux/user/asyncThunks';
 import { fetchFilterSets } from '../redux/explorer/asyncThunks';
 import './DataRequests.css';
 import { isAdminUser } from '../utils';
@@ -19,6 +21,17 @@ import { isAdminUser } from '../utils';
 /** @typedef {import("../redux/dataRequest/types").DataRequestProject} DataRequestProject */
 
 /** @typedef {import("../redux/types").RootState} RootState */
+
+const emptyFilters = {
+  id: '',
+  name: '',
+  description: '',
+  researcherIds: [],
+  statuses: [],
+  consortiums: [],
+  submittedAtStart: '',
+  submittedAtEnd: '',
+};
 
 /**
  * @param {RootState} state
@@ -57,6 +70,9 @@ function DataRequests({
   const isAdmin = isAdminUser(authz);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(25);
+  const [filters, setFilters] = useState(emptyFilters);
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
 
   function getPageFromLink(link) {
     if (!link) {
@@ -67,8 +83,8 @@ function DataRequests({
     const nextPage = Number(url.searchParams.get('page'));
     return Number.isNaN(nextPage) ? null : nextPage;
   }
-  
-  function loadProjects(nextPage) {
+
+  function loadProjects(nextPage, nextPerPage = perPage, nextFilters = filtersRef.current) {
     if (!nextPage) {
       return;
     }
@@ -78,20 +94,21 @@ function DataRequests({
       fetchProjects({
         triggerReloading: true,
         page: nextPage,
-        perPage,
+        perPage: nextPerPage,
+        filters: nextFilters,
       }),
     );
   }
+
   function changePageSize(nextPerPage) {
     setPerPage(nextPerPage);
-    setPage(1);
-    dispatch(
-      fetchProjects({
-        triggerReloading: true,
-        page: 1,
-        perPage: nextPerPage,
-      }),
-    );
+    loadProjects(1, nextPerPage);
+  }
+
+  function changeFilters(nextFilters) {
+    setFilters(nextFilters);
+    filtersRef.current = nextFilters;
+    loadProjects(1, perPage, nextFilters);
   }
 
   return (
@@ -125,13 +142,17 @@ function DataRequests({
             projects={projects}
             projectStates={projectStates}
             savedFilterSets={savedFilterSets}
+            filters={filters}
+            onFiltersChange={changeFilters}
             onToggleAdmin={(isActive) => {
               dispatch(toggleAdminActive());
               searchParams.delete('admin');
               if (isActive) {
+                dispatch(fetchProjectConsortiums());
                 dispatch(fetchProjectStates());
                 dispatch(fetchFilterSets());
                 dispatch(getUserRoles());
+                dispatch(adminFetchUsers());
                 setSearchParams(
                   new URLSearchParams([
                     ...Array.from(searchParams.entries()),
@@ -141,23 +162,19 @@ function DataRequests({
               } else {
                 setSearchParams(searchParams);
               }
-              setPage(1);
-              dispatch(
-                fetchProjects({ 
-                  triggerReloading: true,
-                  page: 1,
-                  perPage,
-                }),
-              );
+              const nextFilters = isActive
+                ? filtersRef.current
+                : {
+                    ...filtersRef.current,
+                    researcherIds: [],
+                  };
+
+              setFilters(nextFilters);
+              filtersRef.current = nextFilters;
+              loadProjects(1, perPage, nextFilters);
             }}
             reloadProjects={() => {
-              dispatch(
-                fetchProjects({ 
-                  triggerReloading: true,
-                  page,
-                  perPage,
-                }),
-              );
+              loadProjects(page);
             }}
             isAdminActive={isAdminActive}
             isAdmin={isAdmin}

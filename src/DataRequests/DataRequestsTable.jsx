@@ -12,6 +12,7 @@ import './DataRequests.css';
 import Spinner from '../gen3-ui-component/components/Spinner/Spinner';
 import Tooltip from 'rc-tooltip';
 import 'rc-tooltip/assets/bootstrap_white.css';
+import DataRequestsTableHead from './DataRequestsTableHead';
 
 /** @typedef {import("../redux/types").RootState} RootState */
 /** @typedef {import("../redux/dataRequest/types").ResearcherInfo} ResearcherInfo */
@@ -150,6 +151,8 @@ function DataRequestsTable({
   projects,
   projectStates,
   savedFilterSets,
+  filters,
+  onFiltersChange,
   isAdmin,
   isAdminActive,
   onToggleAdmin,
@@ -167,6 +170,12 @@ function DataRequestsTable({
   const navigate = useNavigate();
   const transitionTo = useNavigate();
   const userId = useAppSelector((state) => state.user.user_id);
+  const projectConsortiums = useAppSelector(
+    (state) => state.dataRequest.projectConsortiums,
+  );
+  const adminUsers = useAppSelector(
+    (state) => state.user.admin_user_list || [],
+  );
   const [projectDisplayOptions, setProjectDisplayOptions] = useState(null);
   const [isMoreActionsPopupOpen, setMoreActionsPopupOpen] = useState(false);
   const [isVerifyPopupOpen, setVerifyPopupOpen] = useState(false);
@@ -323,8 +332,23 @@ function DataRequestsTable({
           <div className='data-requests__table-loading-overlay'>
             <Spinner />
           </div>
-        )}  
-        <Table header={tableHeader} data={tableData} />
+        )}
+        <Table
+          customHead={
+            <DataRequestsTableHead
+              adminUsers={adminUsers}
+              cols={tableHeader}
+              filters={filters}
+              isAdminActive={isAdminActive}
+              onFiltersChange={onFiltersChange}
+              projectConsortiums={projectConsortiums}
+              projectStates={projectStates}
+            />
+          }
+          data={tableData}
+          disableClientFiltering
+          header={tableHeader}
+        />
       </div>
       <div className='data-requests__pagination'>
         <label className='data-requests__page-size'>
@@ -370,6 +394,8 @@ DataRequestsTable.propTypes = {
   className: PropTypes.string,
   projects: PropTypes.array.isRequired,
   projectStates: PropTypes.object.isRequired,
+  filters: PropTypes.object.isRequired,
+  onFiltersChange: PropTypes.func.isRequired,
   isAdmin: PropTypes.bool,
   isAdminActive: PropTypes.bool,
   onToggleAdmin: PropTypes.func,

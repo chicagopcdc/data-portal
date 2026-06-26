@@ -35,6 +35,7 @@ export type ExplorerConfig = {
   survivalAnalysisConfig: SurvivalAnalysisConfig & { enabled: Boolean };
   tableConfig: TableConfig;
   tableOneConfig: TableOneConfig;
+  heatmapConfig?: { enabled: boolean };
 };
 
 export type ExplorerFilter = ExplorerFilter;

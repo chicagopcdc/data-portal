@@ -112,4 +112,5 @@ export type DataRequestState = {
   isCreatePending: boolean;
   isProjectUsersPending: boolean;
   isUserRolesPending: boolean;
+  userRolesError: boolean;
 };

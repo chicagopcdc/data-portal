@@ -1,0 +1,21 @@
+{
+  "name": "portal-selenium",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "test": "mocha \"selenium/integration_tests/**/*.spec.js\" --timeout 120000",
+    "test:headless": "HEADLESS=true mocha \"selenium/integration_tests/**/*.spec.js\" --timeout 120000",
+    "test:version": "mocha \"selenium/integration_tests/versionFooter.spec.js\" --timeout 120000",
+    "test:dictionary": "mocha \"selenium/integration_tests/dictionary.spec.js\" --timeout 120000",
+    "test:dataRequest": "mocha \"selenium/integration_tests/dataRequests.spec.js\" --timeout 120000",
+    "test:explorer": "mocha \"selenium/integration_tests/explorer.spec.js\" --timeout 120000",
+    "test:exportToPfb": "mocha \"selenium/integration_tests/exportToPfb.spec.js\" --timeout 120000",
+    "test:survival": "mocha \"selenium/integration_tests/survival.spec.js\" --timeout 120000"
+  },
+  "devDependencies": {
+    "chai": "^4.4.1",
+    "dotenv": "^16.4.5",
+    "mocha": "^10.7.3",
+    "selenium-webdriver": "^4.25.0"
+  }
+}

@@ -45,6 +45,7 @@ import {
 import {
   fetchProjects as fetchDataRequestProjects,
   fetchProjectStates,
+  getUserRoles,
 } from './redux/dataRequest/asyncThunks';
 import { toggleAdminActive } from './redux/dataRequest/slice';
 import { useAppDispatch } from './redux/hooks';
@@ -279,6 +280,7 @@ function App() {
                         fetchDataRequestProjects({ triggerReloading: false }),
                       ),
                       dispatch(fetchProjectStates()),
+                      dispatch(getUserRoles()),
                     ]);
                   }
                   return dispatch(

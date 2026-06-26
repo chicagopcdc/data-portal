@@ -11,6 +11,9 @@ import Button from '../Button';
  * @param {Function} props.handlePatientIdsChange
  * @param {Function} props.handleClearPatientIds
  */
+
+// Patient ID upload filter
+// Disabled when configuration is incomplete to prevent crashes
 function PatientIdFilter({
   getPatientIds,
   handlePatientIdsChange,
@@ -112,7 +115,14 @@ function PatientIdFilter({
           </div>
         </div>
 
-        <Button label='Upload IDs' rightIcon='upload' onClick={openModal} />
+        <button
+          type='button'
+          className='g3-button g3-button--primary'
+          title='Upload a list of Patient IDs'
+          onClick={openModal}
+        >
+          Upload IDs
+        </button>
       </div>
       {isModalOpen && (
         <Popup

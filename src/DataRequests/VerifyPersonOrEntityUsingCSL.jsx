@@ -28,8 +28,8 @@ export default function VerifyPersonOrEntityUsingCSL() {
       const response = await fetch(
         `/amanuensis/admin/run-csl-verification?name=${input}`,
       );
-      const data = await response.json();
-      if (!data.isError) {
+      if(response.status === 200) {
+        const data = await response.json();
         if (data.total === 0) {
           setResponseJson([]);
         } else {
@@ -41,13 +41,15 @@ export default function VerifyPersonOrEntityUsingCSL() {
           setResponseJson(extracted);
         }
       } else {
-        setRequestActionError({ isError: true, message: data.message });
+        setResponseJson([]);
+        setRequestActionError({ isError: true, message: data});
       }
     } catch (error) {
       setRequestActionError({
         isError: true,
         message: 'Sorry something went wrong',
       });
+      setResponseJson([]);
     }
     setActionPending(false);
   };

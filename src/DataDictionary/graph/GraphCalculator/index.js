@@ -24,7 +24,7 @@ function initializeLayout() {
       const { ddgraph, submission } = getState();
       const { graphvizLayout } = ddgraph;
       const { dictionary } = submission;
-      const isLoaded = dictionary !== undefined && graphvizLayout !== undefined;
+      const isLoaded = dictionary != null && graphvizLayout != null;
       return { dictionary, graphvizLayout, isLoaded };
     }
 
@@ -66,21 +66,21 @@ const ReduxGraphCalculator = (() => {
       dispatch(setRelatedNodeIDs(relatedNodeIDs)),
     /** @param {RootState['ddgraph']['secondHighlightingNodeCandidateIDs']} secondHighlightingNodeCandidateIDs */
     onSecondHighlightingNodeCandidateIDsCalculated: (
-      secondHighlightingNodeCandidateIDs
+      secondHighlightingNodeCandidateIDs,
     ) =>
       dispatch(
         setSecondHighlightingNodeCandidateIDs(
-          secondHighlightingNodeCandidateIDs
-        )
+          secondHighlightingNodeCandidateIDs,
+        ),
       ),
     /** @param {RootState['ddgraph']['pathRelatedToSecondHighlightingNode']} pathRelatedToSecondHighlightingNode */
     onPathRelatedToSecondHighlightingNodeCalculated: (
-      pathRelatedToSecondHighlightingNode
+      pathRelatedToSecondHighlightingNode,
     ) =>
       dispatch(
         setPathRelatedToSecondHighlightingNode(
-          pathRelatedToSecondHighlightingNode
-        )
+          pathRelatedToSecondHighlightingNode,
+        ),
       ),
     /**
      * @param {RootState['ddgraph']['dataModelStructure']} dataModelStructure
@@ -90,14 +90,14 @@ const ReduxGraphCalculator = (() => {
     onDataModelStructureCalculated: (
       dataModelStructure,
       dataModelStructureRelatedNodeIDs,
-      routesBetweenStartEndNodes
+      routesBetweenStartEndNodes,
     ) =>
       dispatch(
         setDataModelStructure({
           dataModelStructure,
           dataModelStructureRelatedNodeIDs,
           routesBetweenStartEndNodes,
-        })
+        }),
       ),
   });
 

@@ -1,6 +1,6 @@
 /* eslint-disable no-shadow */
 import { memo, useState, useEffect } from 'react';
-import '../ExplorerSurvivalAnalysis/ExplorerSurvivalAnalysis.css';
+import './ExplorerTableOne.css';
 import Spinner from '../../components/Spinner';
 import ErrorBoundary from '../../components/ErrorBoundary';
 import { contactEmail } from '../../localconf';
@@ -63,12 +63,12 @@ function ExplorerTableOne() {
   }
 
   return (
-    <div className='table-one'>
+    <div className='explorer-table-one'>
       <UserAgreementGate isCompliant={isCompliant} onAgree={agree}>
-        <div className='table-one__column-left'>
+        <div className='explorer-table-one__column-left'>
           <CovarForm onSubmit={handleSubmit} options={options} />
         </div>
-        <div className='table-one__column-right'>
+        <div className='explorer-table-one__column-right'>
           {result.isPending ? (
             <Spinner />
           ) : (

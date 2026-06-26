@@ -1,0 +1,56 @@
+.data-request-filter-sets {
+  width: 100%;
+  text-align: center;
+}
+
+/* Keep the existing DataRequests layout, but make the inner form align consistently */
+.data-request-filter-sets .data-request__form.data-request-filter-sets__form {
+  align-items: center;
+  gap: 2rem;
+  justify-content: flex-start;
+  padding: 2rem 0;
+}
+
+.data-request-filter-sets .data-request__header {
+  text-align: center;
+  width: 100%;
+}
+
+.data-request-filter-sets
+  .data-request__fields.data-request-filter-sets__fields {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Constrain the embedded form so labels/inputs line up within the same column */
+.data-request-filter-sets
+  .data-request__fields.data-request-filter-sets__fields
+  > form {
+  width: 100%;
+  max-width: 720px;
+}
+
+/* Ensure common controls fill the available width */
+.data-request-filter-sets
+  .data-request__fields.data-request-filter-sets__fields
+  textarea,
+.data-request-filter-sets
+  .data-request__fields.data-request-filter-sets__fields
+  input[type='text'] {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Keep the submit button aligned with the form column */
+.data-request-filter-sets .data-request-filter-sets__submit {
+  align-self: center;
+  margin-top: 0;
+}
+
+/* Error message styling */
+.data-request-filter-sets .data-request__request-error {
+  text-align: center;
+  width: 100%;
+  align-self: center;
+}

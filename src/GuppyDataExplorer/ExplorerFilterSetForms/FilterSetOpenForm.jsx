@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
 import SimpleInputField from '../../components/SimpleInputField';
@@ -26,6 +26,7 @@ function useSharedFilterSet(fetcher) {
 
   /** @param {string} token */
   function refresh(token) {
+    if (!fetcher) return;
     if (token === lastToken) return;
 
     setData(null);
@@ -49,19 +50,14 @@ function useSharedFilterSet(fetcher) {
 }
 
 /**
- * @param {Object} prop
- * @param {ExplorerFilterSet} prop.currentFilterSet
- * @param {ExplorerFilterSet[]} prop.filterSets
- * @param {(token: string) => Promise<SavedExplorerFilterSet>} [prop.fetchWithToken]
- * @param {(opened: ExplorerFilterSet, isShared?: boolean) => void} prop.onAction
- * @param {() => void} prop.onClose
+ * Presentational component: renders the <form> contents for opening a filter set.
+ * Kept separate to allow reuse in contexts that already have a surrounding form.
  */
-function FilterSetOpenForm({
+function FilterSetOpenFormFields({
   currentFilterSet,
   filterSets,
   fetchWithToken,
-  onAction,
-  onClose,
+  onActionStateChange,
 }) {
   const initialSource = /** @type {keyof FILTER_SET_SOURCE} */ (
     FILTER_SET_SOURCE.saved
@@ -92,103 +88,145 @@ function FilterSetOpenForm({
     : shared.data !== null;
   const value = isSourceSaved ? selected.value : shared.data;
 
+  useEffect(() => {
+    onActionStateChange?.({
+      value,
+      isSourceShared,
+      isActionEnabled,
+    });
+  }, [onActionStateChange, value, isSourceShared, isActionEnabled]);
+
+  return (
+    <form onSubmit={(e) => e.preventDefault()}>
+      {fetchWithToken && (
+        <SimpleInputField
+          label='Source'
+          input={
+            <>
+              <label style={{ display: 'block', textAlign: 'initial' }}>
+                <input
+                  type='radio'
+                  value={FILTER_SET_SOURCE.saved}
+                  checked={source === FILTER_SET_SOURCE.saved}
+                  onChange={() => setSource(FILTER_SET_SOURCE.saved)}
+                  style={{ marginRight: '0.5rem' }}
+                />
+                Saved by me
+              </label>
+              <label style={{ display: 'block', textAlign: 'initial' }}>
+                <input
+                  type='radio'
+                  value={FILTER_SET_SOURCE.shared}
+                  checked={source === FILTER_SET_SOURCE.shared}
+                  onChange={() => setSource(FILTER_SET_SOURCE.shared)}
+                  style={{ marginRight: '0.5rem' }}
+                />
+                Shared via token
+              </label>
+            </>
+          }
+        />
+      )}
+      {isSourceSaved ? (
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <SimpleInputField
+            label='Name'
+            input={
+              <Select
+                inputId='open-filter-set-name'
+                options={options}
+                value={selected}
+                isClearable={false}
+                theme={overrideSelectTheme}
+                onChange={(e) => setSelected(e)}
+              />
+            }
+          />
+          <SimpleInputField
+            label='Description'
+            input={
+              <textarea
+                id='open-filter-set-description'
+                disabled
+                placeholder='No description'
+                value={selected.value.description}
+              />
+            }
+          />
+        </div>
+      ) : (
+        <>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <SimpleInputField
+              label='Token'
+              input={
+                <input
+                  id='open-filter-set-token'
+                  type='text'
+                  value={token}
+                  onChange={(e) => setToken(e.target.value)}
+                />
+              }
+              error={{
+                isError: shared.isError,
+                message: 'Error: Check your token and try again.',
+              }}
+            />
+          </div>
+          <div style={{ marginLeft: '1rem' }}>
+            <Button
+              buttonType='secondary'
+              label='Use token'
+              enabled={token !== '' && !shared.isPending}
+              onClick={handleUseToken}
+            />
+          </div>
+        </>
+      )}
+      <ExplorerFilterDisplay filter={value?.filter} />
+    </form>
+  );
+}
+
+/**
+ * @param {Object} prop
+ * @param {ExplorerFilterSet} prop.currentFilterSet
+ * @param {ExplorerFilterSet[]} prop.filterSets
+ * @param {(token: string) => Promise<SavedExplorerFilterSet>} [prop.fetchWithToken]
+ * @param {(opened: ExplorerFilterSet, isShared?: boolean) => void} prop.onAction
+ * @param {() => void} prop.onClose
+ */
+function FilterSetOpenForm({
+  currentFilterSet,
+  filterSets,
+  fetchWithToken,
+  onAction,
+  onClose,
+}) {
+  const [actionState, setActionState] = useState({
+    value: /** @type {ExplorerFilterSet} */ (null),
+    isSourceShared: false,
+    isActionEnabled: false,
+  });
+
   return (
     <div className='explorer-filter-set-form'>
       <h4>Select a saved Filter Set to open</h4>
-      <form onSubmit={(e) => e.preventDefault()}>
-        {fetchWithToken && 
-          <SimpleInputField
-            label='Source'
-            input={
-              <>
-                <label style={{ display: 'block', textAlign: 'initial' }}>
-                  <input
-                    type='radio'
-                    value={FILTER_SET_SOURCE.saved}
-                    checked={source === FILTER_SET_SOURCE.saved}
-                    onChange={() => setSource(FILTER_SET_SOURCE.saved)}
-                    style={{ marginRight: '0.5rem' }}
-                  />
-                  Saved by me
-                </label>
-                <label style={{ display: 'block', textAlign: 'initial' }}>
-                  <input
-                    type='radio'
-                    value={FILTER_SET_SOURCE.shared}
-                    checked={source === FILTER_SET_SOURCE.shared}
-                    onChange={() => setSource(FILTER_SET_SOURCE.shared)}
-                    style={{ marginRight: '0.5rem' }}
-                  />
-                  Shared via token
-                </label>
-              </>
-            }
-          />
-        }
-        {isSourceSaved ? (
-          <div style={{ height: '8rem' }}>
-            <SimpleInputField
-              label='Name'
-              input={
-                <Select
-                  inputId='open-filter-set-name'
-                  options={options}
-                  value={selected}
-                  isClearable={false}
-                  theme={overrideSelectTheme}
-                  onChange={(e) => setSelected(e)}
-                />
-              }
-            />
-            <SimpleInputField
-              label='Description'
-              input={
-                <textarea
-                  id='open-filter-set-description'
-                  disabled
-                  placeholder='No description'
-                  value={selected.value.description}
-                />
-              }
-            />
-          </div>
-        ) : (
-          <>
-            <div style={{ height: '4rem' }}>
-              <SimpleInputField
-                label='Token'
-                input={
-                  <input
-                    id='open-filter-set-token'
-                    type='text'
-                    value={token}
-                    onChange={(e) => setToken(e.target.value)}
-                  />
-                }
-                error={{
-                  isError: shared.isError,
-                  message: 'Error: Check your token and try again.',
-                }}
-              />
-            </div>
-            <div style={{ height: '4rem', marginLeft: '1rem' }}>
-              <Button
-                buttonType='secondary'
-                label='Use token'
-                enabled={token !== '' && !shared.isPending}
-                onClick={handleUseToken}
-              />
-            </div>
-          </>
-        )}
-        <ExplorerFilterDisplay filter={value?.filter} />
-      </form>
+      <FilterSetOpenFormFields
+        currentFilterSet={currentFilterSet}
+        filterSets={filterSets}
+        fetchWithToken={fetchWithToken}
+        onActionStateChange={setActionState}
+      />
+
       <div>
         <Button buttonType='default' label='Back to page' onClick={onClose} />
         <Button
           label='Open Filter Set'
-          enabled={isActionEnabled}
-          onClick={() => onAction(value, isSourceShared)}
+          enabled={actionState.isActionEnabled}
+          onClick={() =>
+            onAction(actionState.value, actionState.isSourceShared)
+          }
         />
       </div>
     </div>
@@ -208,11 +246,13 @@ FilterSetOpenForm.propTypes = {
       description: PropTypes.string,
       filter: PropTypes.object,
       id: PropTypes.number,
-    })
+    }),
   ),
   fetchWithToken: PropTypes.func,
   onAction: PropTypes.func,
   onClose: PropTypes.func,
 };
+
+export { FilterSetOpenFormFields };
 
 export default FilterSetOpenForm;

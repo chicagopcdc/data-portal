@@ -1,0 +1,32 @@
+.table-one__table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  max-width: 800px;
+}
+
+.table-one__table th {
+  background-color: #f4f4f4;
+  padding: 12px;
+  border: 1px solid #ddd;
+  text-align: left;
+  font-weight: bold;
+}
+
+.table-one__table td {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  vertical-align: top;
+}
+
+.table-one__table tbody tr:hover {
+  background-color: #f0f8ff;
+}
+
+.table-one__table td.table-one__indent {
+  padding-left: 20px;
+}
+
+.table-one__table tr.covariante-name {
+  background-color: #f2f2f2;
+}

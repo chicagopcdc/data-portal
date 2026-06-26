@@ -299,7 +299,8 @@ function DataRequestsTable({
                   type === 'PROJECT_STATE' ||
                   type === 'DELETE_REQUEST' ||
                   type === 'SUCCESSFUL_FILTER_SET_CHANGE' ||
-                  type === 'SUCCESSFUL_APPROVED_URL_CHANGE'
+                  type === 'SUCCESSFUL_APPROVED_URL_CHANGE' ||
+                  type === 'SUCCESSFUL_USER_ACCESS_CHANGE'
                 ) {
                   shouldReloadProjectsOnActionClose = true;
                 }

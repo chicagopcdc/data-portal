@@ -120,6 +120,7 @@ function FilterDisplay({
               filterInfo={filterInfo}
               combineMode={__combineMode}
               patientIdsConfig={patientIdsConfig}
+              manual={manual}
               onClickCombineMode={onClickCombineMode}
               onClickFilter={onClickFilter}
               onCloseFilter={onCloseFilter}

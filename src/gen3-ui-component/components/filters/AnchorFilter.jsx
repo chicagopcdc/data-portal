@@ -44,7 +44,7 @@ function AnchorFilter({
   );
 
   return (
-    <div className='g3-filter-section'>
+    <div className='g3-filter-section' data-tour-anchor-filter>
       <div
         className='g3-filter-section__header'
         style={{ marginBottom: '0.875rem' }}

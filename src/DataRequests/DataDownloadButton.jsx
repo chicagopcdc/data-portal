@@ -11,13 +11,22 @@ function DataDownloadButton({ project }) {
     if (isError) setIsError(false);
     setIsLoading(true);
     fetch(`/amanuensis/download-urls/${project.id}`)
-      .then((res) => res.json())
-      .then((data) =>
-        window.open(data.download_url, '_blank', 'noopener, noreferrer'),
-      )
-      .catch((err) => {
+      .then((res) => {
+      if (!res.ok) {
         setIsError(true);
-        throw err;
+        return;
+      }
+      return res.json();
+      })
+      .then((data) => {
+      if (!data.download_url) {
+        setIsError(true);
+        return;
+      }
+      window.open(data.download_url, '_blank', 'noopener, noreferrer');
+      })
+      .catch((err) => {
+      setIsError(true);
       })
       .finally(() => setIsLoading(false));
   }

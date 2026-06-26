@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import Tooltip from 'rc-tooltip';
 import 'rc-tooltip/assets/bootstrap_white.css';
+import './CovarForm.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Select from 'react-select';
 import Button from '../../gen3-ui-component/components/Button';
-import { useAppSelector } from '../../redux/hooks';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { overrideSelectTheme } from '../../utils';
 import {
   defaultFilterSet,
@@ -12,12 +14,11 @@ import {
 import FilterSetCard from '../ExplorerSurvivalAnalysis/FilterSetCard';
 import CovarCard from './CovarCard';
 import { getGQLFilter } from '../../GuppyComponents/Utils/queries';
-import './ExplorerTableOne.css';
+import { resetTableOneResult } from '../../redux/explorer/slice';
 import {
   checkIfFilterHasDisallowedVariables,
   checkIfFilterInScope,
 } from '../ExplorerSurvivalAnalysis/utils';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 /** @typedef {import('./types').ExplorerFilterSet} ExplorerFilterSet */
 
@@ -26,6 +27,7 @@ const emptyFilterSetIds = [];
 
 function CovarForm({ onSubmit, options }) {
   // Start here
+  const dispatch = useAppDispatch();
 
   const savedFilterSets = useAppSelector(
     (state) => state.explorer.savedFilterSets.data,
@@ -102,7 +104,7 @@ function CovarForm({ onSubmit, options }) {
       disabledOverlay = 'This Filter Set contains out of scope consortia.';
     } else if (isDisallowedVariables) {
       disabledOverlay =
-        'This Filter Set includes disallowed variables and cannot be used for survival analysis.';
+        'This Filter Set includes disallowed variables and cannot be used for table one.';
     } else {
       disabledOverlay = '';
     }
@@ -158,6 +160,9 @@ function CovarForm({ onSubmit, options }) {
       if (covariate.type === 'categorical') {
         covariates[covariate.name].selectedKeys = covariate.selectedKeys; // ✅ Fixed!
       }
+      if (covariate.type === 'continuous' && covariate.buckets) {
+        covariates[covariate.name].buckets = covariate.buckets;
+      }
     }
 
     onSubmit({
@@ -173,6 +178,9 @@ function CovarForm({ onSubmit, options }) {
     setUsedFilterSetIds([]);
     setIsInputChanged(false);
     setFilterSetsConsortiumScope({});
+
+    // Reset the Redux state
+    dispatch(resetTableOneResult());
   };
 
   const enableApplyButton =
@@ -187,14 +195,14 @@ function CovarForm({ onSubmit, options }) {
     );
 
   return (
-    <form className='explorer-survival-analysis__control-form'>
+    <form className='explorer-table-one__control-form'>
       <ControlFormSelect
         inputId='allowed-consortium'
         label={
           <Tooltip
             arrowContent={<div className='rc-tooltip-arrow-inner' />}
             mouseLeaveDelay={0}
-            overlay='Survival curves can only be generated for Filter Sets that include patients from allowed consortia.'
+            overlay='Table ones can only be generated for Filter Sets that include patients from allowed consortia.'
             placement='left'
           >
             <span>
@@ -221,7 +229,7 @@ function CovarForm({ onSubmit, options }) {
           <Tooltip
             arrowContent={<div className='rc-tooltip-arrow-inner' />}
             mouseLeaveDelay={0}
-            overlay='Filter sets that use disallowed variables cannot be utilized for survival analysis'
+            overlay='Filter sets that use disallowed variables cannot be utilized for Table One analysis.'
             placement='left'
           >
             <span>
@@ -242,17 +250,61 @@ function CovarForm({ onSubmit, options }) {
         value={disallowedVariables}
         theme={overrideSelectTheme}
       />
-      <div className='explorer-survival-analysis__filter-group'>
-        <div className='explorer-survival-analysis__filter-set-select'>
+      <div className='explorer-table-one__filter-group'>
+        <div className='explorer-table-one__filter-set-select'>
           <Select
-            inputId='survival-filter-sets'
+            inputId='table-one-filter-sets'
             placeholder='Select Filter Set to analyze'
             options={filterSetOptions}
             onChange={setSelectedFilterSet}
             maxMenuHeight={160}
-            value={selectedFilterSet}
             theme={overrideSelectTheme}
-            menuPlacement='auto'
+            value={selectedFilterSet}
+            styles={{
+              control: (provided, state) => ({
+                ...provided,
+                backgroundColor:
+                  !state.hasValue &&
+                  !state.isFocused &&
+                  usedFilterSetIds.length === 0
+                    ? 'var(--g3-primary-btn__bg-color)'
+                    : provided.backgroundColor,
+                borderColor:
+                  !state.hasValue &&
+                  !state.isFocused &&
+                  usedFilterSetIds.length === 0
+                    ? 'black'
+                    : state.isFocused
+                      ? 'var(--pcdc-color__primary-light)'
+                      : provided.borderColor,
+                boxShadow: state.isFocused
+                  ? '0 0 0 2px rgba(0,0,0,0.06)'
+                  : provided.boxShadow,
+                // Constrain the height to match the button
+                height: '40px', // Set specific height
+                minHeight: '40px', // Prevent it from getting smaller
+                maxHeight: '40px', // Prevent it from getting larger
+              }),
+              placeholder: (provided, state) => ({
+                ...provided,
+                color:
+                  !state.hasValue &&
+                  !state.isFocused &&
+                  usedFilterSetIds.length === 0
+                    ? 'black'
+                    : provided.color,
+                fontWeight: 600,
+              }),
+              valueContainer: (provided) => ({
+                ...provided,
+                padding: '6px 8px',
+                height: '100%', // Ensure content fills the container
+              }),
+              indicatorsContainer: (provided) => ({
+                ...provided,
+                height: '100%', // Ensure indicators fill the container
+              }),
+            }}
           />
           {usedFilterSetIds.length >= 1 ? (
             <Tooltip
@@ -269,7 +321,7 @@ function CovarForm({ onSubmit, options }) {
             <span>
               <Button
                 label='Add'
-                buttonType='default'
+                buttonType='primary'
                 isPending={isCheckingScope}
                 enabled={
                   !isCheckingScope &&
@@ -290,7 +342,7 @@ function CovarForm({ onSubmit, options }) {
         </div>
         {usedFilterSets.length === 0 ? (
           <span style={{ fontStyle: 'italic' }}>
-            Nothing to show here. Try select and use Filter Sets for survival
+            Nothing to show here. Try select and use Filter Sets for Table One
             analysis.
           </span>
         ) : (
@@ -322,35 +374,41 @@ function CovarForm({ onSubmit, options }) {
       })}
 
       <div className='explorer-table-one__button-group'>
-        <Button
-          label='Add Variable'
-          buttonType='default'
-          onClick={() => setCovariatesList((prev) => [...prev, {}])}
-        />
-      </div>
-      <div className='explorer-table-one__button-group'>
-        <Button label='Reset' buttonType='default' onClick={resetUserInput} />
-        {enableApplyButton ? (
-          <span>
+        {/* Add Variable button in its own container */}
+        <div className='explorer-table-one__add-variable-section'>
+          <Button
+            label='Add Variable'
+            buttonType={
+              usedFilterSetIds.length >= 1 &&
+              selectedCovariatesList.length === 0
+                ? 'primary'
+                : 'default'
+            }
+            onClick={() => setCovariatesList((prev) => [...prev, {}])}
+          />
+        </div>
+        <div className='explorer-table-one__action-buttons'>
+          <Button label='Reset' buttonType='default' onClick={resetUserInput} />
+          {enableApplyButton ? (
             <Button
               label='Apply'
               buttonType='primary'
               onClick={submitUserInput}
               enabled={true}
             />
-          </span>
-        ) : (
-          <Tooltip
-            arrowContent={<div className='rc-tooltip-arrow-inner' />}
-            mouseLeaveDelay={0}
-            overlay={'You are missing some required fields'}
-            placement='right'
-          >
-            <span>
-              <Button label='Add' buttonType='default' enabled={false} />
-            </span>
-          </Tooltip>
-        )}
+          ) : (
+            <Tooltip
+              arrowContent={<div className='rc-tooltip-arrow-inner' />}
+              mouseLeaveDelay={0}
+              overlay={'You are missing some required fields'}
+              placement='right'
+            >
+              <span>
+                <Button label='Apply' buttonType='default' enabled={false} />
+              </span>
+            </Tooltip>
+          )}
+        </div>
       </div>
     </form>
   );

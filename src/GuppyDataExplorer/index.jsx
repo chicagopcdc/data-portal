@@ -64,7 +64,10 @@ function ExplorerDashboard() {
     : explorerIds[0];
   useEffect(() => {
     // sync search param with explorer id state
-    setSearchParams(`id=${searchParamId.current}`, { replace: true });
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
+    nextSearchParams.set('id', searchParamId.current);
+    if (nextSearchParams.toString() !== searchParams.toString())
+      setSearchParams(nextSearchParams, { replace: true });
     if (explorerId !== searchParamId.current)
       dispatch(useExplorerById(searchParamId.current));
 

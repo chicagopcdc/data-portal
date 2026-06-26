@@ -24,9 +24,14 @@ export default function DataRequestApprovedUrl({
     isError: false,
     message: '',
   });
+  const [fetchApprovedUrlError, setFetchApprovedUrlError] = useState({
+    isError: false,
+    message: '',
+  });
   useEffect(() => {
     if (!projectId) return;
     setApprovedUrl('');
+    setFetchApprovedUrlError({ isError: false, message: '' });
     const fetchUrl = async () => {
       try {
         setActionPending(true);
@@ -34,11 +39,21 @@ export default function DataRequestApprovedUrl({
           path: `/amanuensis/admin/project/approved-url/${projectId}`,
           method: 'GET',
         });
-        if (result.data && result.data.approved_url) {
+        if (result.status === 200 && result.data) {
           setApprovedUrl(result.data.approved_url);
+        } else {
+          setApprovedUrl('');
+          setFetchApprovedUrlError({
+            isError: true,
+            message: `Failed to fetch approved URL please try again later`,
+          });
         }
       } catch {
         setApprovedUrl('');
+        setFetchApprovedUrlError({
+          isError: true,
+          message: `Failed to fetch approved URL please try again later`,
+        });
       } finally {
         setActionPending(false);
       }
@@ -69,6 +84,7 @@ export default function DataRequestApprovedUrl({
           if (!action.payload.isError) {
             onAction?.('SUCCESSFUL_APPROVED_URL_CHANGE');
             setActionType('ACTION_SUCCESS');
+            setRequestactionError({ isError: false, message: '' });
             return;
           }
 
@@ -86,19 +102,21 @@ export default function DataRequestApprovedUrl({
           {isActionPending ? (
             <Spinner />
           ) : (
-            <div
-              className={`data-request__approved-url ${
-                approvedUrl
-                  ? 'data-request__approved-url--has-url'
-                  : 'data-request__approved-url--no-url'
-              }`}
-            >
-              {approvedUrl ? (
-                <span>Current Approved URL: {approvedUrl}</span>
-              ) : (
-                <span>No current approved URL</span>
-              )}
-            </div>
+            !fetchApprovedUrlError.isError && (
+              <div
+                className={`data-request__approved-url ${
+                  approvedUrl
+                    ? 'data-request__approved-url--has-url'
+                    : 'data-request__approved-url--no-url'
+                }`}
+              >
+                {approvedUrl ? (
+                  <span>Current Approved URL: {approvedUrl}</span>
+                ) : (
+                  <span>No current approved URL</span>
+                )}
+              </div>
+            )
           )}
           <div className='data-request__fields'>
             <Field name='approved_url'>
@@ -114,9 +132,13 @@ export default function DataRequestApprovedUrl({
           </div>
 
           <Button submit className='data-request__submit' label='Submit' />
-          {actionRequestError.isError && (
+          {(fetchApprovedUrlError.isError || actionRequestError.isError) && (
             <span className='data-request__request-error'>
-              {actionRequestError.message}
+              {fetchApprovedUrlError.isError && actionRequestError.isError
+                ? fetchApprovedUrlError.message
+                : fetchApprovedUrlError.isError
+                  ? fetchApprovedUrlError.message
+                  : actionRequestError.message}
             </span>
           )}
         </Form>

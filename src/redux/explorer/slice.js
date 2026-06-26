@@ -276,6 +276,13 @@ const slice = createSlice({
       const { filter } = workspace.all[newActiveId];
       state.explorerFilter = dereferenceFilter(filter, workspace);
     },
+    resetTableOneResult(state) {
+      state.tableOneResult = {
+        data: null,
+        error: null,
+        isPending: false,
+      };
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -427,6 +434,7 @@ export const {
   duplicateWorkspaceFilterSet,
   loadWorkspaceFilterSet,
   removeWorkspaceFilterSet,
+  resetTableOneResult,
   updateExplorerFilter,
   useExplorerById,
   useWorkspaceFilterSet,

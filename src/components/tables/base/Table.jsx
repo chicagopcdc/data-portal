@@ -33,15 +33,19 @@ function Table({ title, header, data, footer, filterConfig }) {
             if (filterValue.length === 0) {
               return true;
             }
-            return filterValue.some(
-              (filterString) =>
-                value.includes?.(filterString) || text.includes(filterString),
-            );
+            return filterValue.some((filterString) => {
+              const searchText = String(filterString || '').toLowerCase();
+              return (
+                String(value || '').toLowerCase().includes(searchText) ||
+                text.toLowerCase().includes(searchText)
+              );
+            });
           }
           if (typeof filterValue === 'number') {
             return filterValue > 0 && value <= filterValue;
           }
-          return text.includes(filterArray[j]);
+          const searchText = String(filterArray[j] || '').toLowerCase();
+          return text.toLowerCase().includes(searchText);
         }),
       ),
     );

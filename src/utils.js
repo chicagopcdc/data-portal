@@ -264,7 +264,7 @@ export function formatLocalTime(datetime) {
   return `${date.toLocaleString()} UTC${offset < 0 ? '' : '+'}${offset}`;
 }
 
-export function isAdminUser(authz) {
+export function isAdminUser(authz = {}) {
   const {
     '/services/amanuensis': serviceAccessMethods,
     '/services/fence/admin': fenceAdminMethods,

@@ -817,11 +817,143 @@ export function getGQLFilter(filterState) {
 }
 
 /**
+ * Recursively extract all IN filter options from a filter node, prefixing
+ * nested path fields with their path (e.g. "histologies.disease_phase").
+ * @param {object} filterNode
+ * @param {string} [prefix]
+ * @returns {object}
+ */
+function extractINOptions(filterNode, prefix = '') {
+  if (!filterNode || typeof filterNode !== 'object') return {};
+  let result = {};
+
+  const combinator = Object.keys(filterNode)[0];
+  if (!combinator) return result;
+
+  if (combinator === 'AND' || combinator === 'OR') {
+    for (const item of filterNode[combinator]) {
+      const extracted = extractINOptions(item, prefix);
+      for (const field of Object.keys(extracted)) {
+        if (
+          result[field] &&
+          result[field].__type === 'RANGE' &&
+          extracted[field].__type === 'RANGE'
+        ) {
+          // Merge GTE/LTE siblings for the same field into one RANGE filter
+          result[field] = { __type: 'RANGE', ...result[field], ...extracted[field] };
+        } else {
+          result[field] = extracted[field];
+        }
+      }
+    }
+  } else if (combinator === 'IN') {
+    const value = filterNode['IN'];
+    for (const field of Object.keys(value)) {
+      const fullField = prefix ? `${prefix}.${field}` : field;
+      result[fullField] = {
+        __type: 'OPTION',
+        selectedValues: value[field],
+        isExclusion: false,
+      };
+    }
+  } else if (combinator === 'GTE') {
+    const value = filterNode['GTE'];
+    for (const field of Object.keys(value)) {
+      const fullField = prefix ? `${prefix}.${field}` : field;
+      result[fullField] = { __type: 'RANGE', lowerBound: value[field] };
+    }
+  } else if (combinator === 'LTE') {
+    const value = filterNode['LTE'];
+    for (const field of Object.keys(value)) {
+      const fullField = prefix ? `${prefix}.${field}` : field;
+      result[fullField] = { __type: 'RANGE', upperBound: value[field] };
+    }
+  } else if (combinator === 'EQ') {
+    const value = filterNode['EQ'];
+    for (const field of Object.keys(value)) {
+      const fullField = prefix ? `${prefix}.${field}` : field;
+      result[fullField] = {
+        __type: 'RANGE',
+        lowerBound: value[field],
+        upperBound: value[field],
+      };
+    }
+  } else if (combinator === 'nested') {
+    const nested = filterNode['nested'];
+    const path = nested.path;
+    const newPrefix = prefix ? `${prefix}.${path}` : path;
+    const innerCombinator = Object.keys(nested).find((k) => k !== 'path');
+    if (innerCombinator) {
+      Object.assign(
+        result,
+        extractINOptions({ [innerCombinator]: nested[innerCombinator] }, newPrefix),
+      );
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Try to extract an ANCHORED filter state from a GQL nested block.
+ * Returns a map of anchor keys to ANCHORED filter values, or null if not applicable.
+ * @param {{ nested: object }} nestedNode
+ * @param {{ field: string, options: string[] }} anchorConfig
+ * @returns {object|null}
+ */
+function tryExtractAnchoredFromNested(nestedNode, anchorConfig) {
+  const nested = nestedNode.nested;
+  if (!nested || !anchorConfig) return null;
+
+  const path = nested.path;
+  const innerCombinator = Object.keys(nested).find((k) => k !== 'path');
+  const innerList = nested[innerCombinator];
+  if (!Array.isArray(innerList)) return null;
+
+  const result = {};
+
+  for (const item of innerList) {
+    const itemKey = Object.keys(item)[0];
+    if (itemKey !== 'AND' && itemKey !== 'OR') return null;
+
+    const conditions = item[itemKey];
+    let anchorValue = null;
+    const remainingConditions = [];
+
+    for (const cond of conditions) {
+      const condKey = Object.keys(cond)[0];
+      if (
+        condKey === 'IN' &&
+        Object.keys(cond.IN)[0] === anchorConfig.field &&
+        anchorConfig.options.includes(cond.IN[anchorConfig.field]?.[0])
+      ) {
+        anchorValue = cond.IN[anchorConfig.field][0];
+      } else {
+        remainingConditions.push(cond);
+      }
+    }
+
+    if (anchorValue === null) return null;
+
+    const anchorKey = `${anchorConfig.field}:${anchorValue}`;
+    const anchoredValue = {};
+    for (const cond of remainingConditions) {
+      Object.assign(anchoredValue, extractINOptions(cond, path));
+    }
+
+    result[anchorKey] = { __type: 'ANCHORED', value: anchoredValue };
+  }
+
+  return Object.keys(result).length > 0 ? result : null;
+}
+
+/**
  * Convert filter obj into GQL filter format
  * @param {GqlFilter} gqlFilter
+ * @param {{ field: string, options: string[] }} [anchorConfig]
  * @returns {FilterState}
  */
-export function getFilterState(gqlFilter) {
+export function getFilterState(gqlFilter, anchorConfig) {
   const combinator = Object.keys(gqlFilter)[0];
   const filterValues = gqlFilter[combinator];
 
@@ -854,13 +986,68 @@ export function getFilterState(gqlFilter) {
         }
 
         values = { ...option, ...values };
+      } else if (valueCombinator === 'nested') {
+        const anchored = anchorConfig
+          ? tryExtractAnchoredFromNested(filterValue, anchorConfig)
+          : null;
+        if (anchored) {
+          Object.assign(values, anchored);
+        } else {
+          const extracted = extractINOptions(filterValue);
+          for (const field of Object.keys(extracted)) {
+            if (
+              values[field] &&
+              values[field].__type === 'RANGE' &&
+              extracted[field].__type === 'RANGE'
+            ) {
+              values[field] = { __type: 'RANGE', ...values[field], ...extracted[field] };
+            } else {
+              values[field] = extracted[field];
+            }
+          }
+        }
+      } else if (valueCombinator === 'AND' || valueCombinator === 'OR') {
+        const extracted = extractINOptions(filterValue);
+        for (const field of Object.keys(extracted)) {
+          if (
+            values[field] &&
+            values[field].__type === 'RANGE' &&
+            extracted[field].__type === 'RANGE'
+          ) {
+            values[field] = { __type: 'RANGE', ...values[field], ...extracted[field] };
+          } else {
+            values[field] = extracted[field];
+          }
+        }
+      } else if (valueCombinator === 'GTE') {
+        for (const field of Object.keys(value)) {
+          const existing = values[field];
+          values[field] = {
+            __type: 'RANGE',
+            ...(existing && existing.__type === 'RANGE' ? existing : {}),
+            lowerBound: value[field],
+          };
+        }
+      } else if (valueCombinator === 'LTE') {
+        for (const field of Object.keys(value)) {
+          const existing = values[field];
+          values[field] = {
+            __type: 'RANGE',
+            ...(existing && existing.__type === 'RANGE' ? existing : {}),
+            upperBound: value[field],
+          };
+        }
+      } else if (valueCombinator === 'EQ') {
+        for (const field of Object.keys(value)) {
+          values[field] = {
+            __type: 'RANGE',
+            lowerBound: value[field],
+            upperBound: value[field],
+          };
+        }
       }
       // else if (valueCombinator === '!=') {
       // TODO: handle not filter here
-      // } else if (valueCombinator === 'GTE' || valueCombinator === 'LTE') {
-      // TODO: handle range filter here
-      // } else if (valueCombinator === 'AND' || valueCombinator === 'OR') {
-      // TODO: handle anchor filter here
       // }
     }
 

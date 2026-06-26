@@ -19,6 +19,7 @@ import IconComponent from '../components/Icon';
 import dictIcons from '../img/icons/index';
 import './create.css';
 import './DataRequests.css';
+import { fetchWithToken } from '../redux/explorer/filterSetsAPI';
 
 function mapPropsToState(state) {
   return {
@@ -79,7 +80,7 @@ function DataRequestCreate({ isCreatePending }) {
     (state) => state.explorer.savedFilterSets.data,
   );
   const userList =
-    [...admin_user_list].sort((a, b) => {
+    [...(Array.isArray(admin_user_list) ? admin_user_list : [])].sort((a, b) => {
       if (a.username < b.username) {
         return -1;
       }
@@ -87,7 +88,7 @@ function DataRequestCreate({ isCreatePending }) {
         return 1;
       }
       return 0;
-    }) ?? [];
+    });
 
   const navigate = useNavigate();
   const goBack = () => {
@@ -101,6 +102,9 @@ function DataRequestCreate({ isCreatePending }) {
     isError: false,
     message: '',
   });
+  const [filterSetCache, setFilterSetCache] = useState({});
+  const [isRequestCreateErrorModalOpen, setRequestCreateErrorModalOpen] =
+    useState(false);
 
   const initialValues = {
     name: '',
@@ -133,10 +137,13 @@ function DataRequestCreate({ isCreatePending }) {
 
           createRequest.then((action) => {
             if (!action.payload.isError) {
-
-              const handle = window.open(getAccessButtonLink, '_blank', 'popup');
-              handle?.blur();
-              window.focus();
+              if (!isAdmin) {
+                window.open(
+                  getAccessButtonLink,
+                  '_blank',
+                  'noopener,noreferrer',
+                );
+              }
               navigate('/requests', {
                 // Set success message
                 state: { successMessage: 'Data request created successfully!' },
@@ -147,6 +154,15 @@ function DataRequestCreate({ isCreatePending }) {
 
             const { isError, message } = action.payload;
             setRequestCreateError({ isError, message });
+
+            // If backend tells there is an error, show a modal
+            if (
+              isError &&
+              typeof message === 'string' &&
+              message.toLowerCase().includes('already exists')
+            ) {
+              setRequestCreateErrorModalOpen(true);
+            }
           });
         }}
       >
@@ -295,6 +311,10 @@ function DataRequestCreate({ isCreatePending }) {
                   const addFilter = (filterSet) => {
                     if (!filterSet) return;
                     unshift(filterSet.id);
+                    setFilterSetCache((prevState) => ({
+                      ...prevState,
+                      [filterSet.id]: filterSet,
+                    }));
                     setOpenAddFilter(false);
                   };
                   return (
@@ -315,9 +335,7 @@ function DataRequestCreate({ isCreatePending }) {
                             {...valueContainerProps}
                           >
                             {values.filter_set_ids.map((filterId, index) => {
-                              const filter = savedFilterSets.find(
-                                (item) => item.id === filterId,
-                              );
+                              const filter = filterSetCache[filterId];
                               return (
                                 <span key={index} {...valueProps}>
                                   <Pill
@@ -329,6 +347,14 @@ function DataRequestCreate({ isCreatePending }) {
                                         false,
                                       );
                                       remove(index);
+                                      filterSetCache[filterId] &&
+                                        setFilterSetCache((prevState) => {
+                                          const newState = {
+                                            ...prevState,
+                                          };
+                                          delete newState[filterId];
+                                          return newState;
+                                        });
                                     }}
                                   >
                                     {filter.name}
@@ -353,6 +379,7 @@ function DataRequestCreate({ isCreatePending }) {
                                   description: '',
                                   filter: {},
                                 }}
+                                fetchWithToken={fetchWithToken}
                                 filterSets={savedFilterSets}
                                 onAction={addFilter}
                                 onClose={() => setOpenAddFilter(false)}
@@ -388,6 +415,19 @@ function DataRequestCreate({ isCreatePending }) {
               <span className='data-request__request-error'>
                 {createRequestError.message}
               </span>
+            )}
+            {isRequestCreateErrorModalOpen && (
+              <SimplePopup>
+                <div className='data-request__request-error-modal'>
+                  <h3>Oops, there was an error in the form.</h3>
+                  <p>{createRequestError.message}</p>
+                  <p>&nbsp;</p>
+                  <Button
+                    label='Close'
+                    onClick={() => setRequestCreateErrorModalOpen(false)}
+                  />
+                </div>
+              </SimplePopup>
             )}
           </Form>
         )}

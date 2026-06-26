@@ -1,0 +1,19 @@
+# --- Selenium / Node ---
+node_modules/
+
+# npm / node logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS noise
+.DS_Store
+
+# Selenium artifacts (future-proofing)
+screenshots/
+videos/
+downloads/
+
+# Environment files
+.env
+.env.local

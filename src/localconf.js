@@ -1,4 +1,9 @@
-const { components, requiredCerts, config, dictionaryUrl } = require('./params');
+const {
+  components,
+  requiredCerts,
+  config,
+  dictionaryUrl,
+} = require('./params');
 
 /**
  * Setup configuration variables based on the "app" the data-portal is
@@ -13,7 +18,7 @@ function buildConfig(opts) {
     basename: process.env.BASENAME ?? '/',
     hostname:
       typeof window !== 'undefined'
-        ? `${window.location.protocol}//${window.location.hostname}/`
+        ? `${window.location.protocol}//${window.location.host}/`
         : 'http://localhost/',
     fenceURL: process.env.FENCE_URL,
     indexdURL: process.env.INDEXD_URL,
@@ -138,9 +143,12 @@ function buildConfig(opts) {
     Accept: 'application/json',
     'Content-Type': 'application/json',
     'x-csrf-token': document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("csrftoken=") && row.length > "csrftoken=".length)
-      ?.split("=")[1],
+      .split('; ')
+      .find(
+        (row) =>
+          row.startsWith('csrftoken=') && row.length > 'csrftoken='.length,
+      )
+      ?.split('=')[1],
   };
 
   return {

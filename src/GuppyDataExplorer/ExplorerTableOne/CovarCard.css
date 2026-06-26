@@ -1,0 +1,49 @@
+.explorer-table-one__covar-card-card {
+  background-color: var(--g3-color__bg-cloud);
+  margin-top: 1rem;
+  padding: 0.75rem;
+}
+
+.explorer-table-one__covar-card-card > header {
+  align-items: center;
+  display: flex;
+  font-weight: var(--g3-font__semi-bold-weight);
+  justify-content: space-between;
+}
+
+.explorer-table-one__covar-card-card > header > h2 {
+  color: var(--g3-color__bg-coal);
+}
+
+.explorer-table-one__covar-card-card > header > button {
+  background-color: initial;
+  border: initial;
+  border-radius: initial;
+  height: initial;
+  margin: 0.25rem;
+  padding: initial;
+  width: initial;
+  transition: transform 0.2s;
+}
+
+.explorer-table-one__covar-card-card > header > button:hover {
+  transform: scale(1.15);
+  filter: brightness(0.2);
+}
+
+.explorer-table-one__covar-card-card > header > button > i {
+  background-color: var(--g3-color__bg-coal);
+}
+
+.explorer-table-one__covar-card-card > header > *:first-child {
+  align-items: center;
+  display: flex;
+  flex-grow: 1;
+  padding: 0.25rem;
+  justify-content: center;
+}
+
+.covar_card_form_controls {
+  max-width: 400px;
+  margin: 0 auto;
+}

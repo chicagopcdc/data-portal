@@ -72,24 +72,24 @@ export type GqlNestedAnchoredFilter = {
   nested: {
     path: string;
     AND:
-    | [GqlInFilter]
-    | [GqlInFilter, { AND: GqlFilter[] } | { OR: GqlFilter[] }];
+      | [GqlInFilter]
+      | [GqlInFilter, { AND: GqlFilter[] } | { OR: GqlFilter[] }];
   };
 };
 
 export type GqlNestedFilter =
   | GqlNestedAnchoredFilter
   | {
-    nested:
-    | {
-      path: string;
-      AND: GqlFilter[];
-    }
-    | {
-      path: string;
-      OR: GqlFilter[];
+      nested:
+        | {
+            path: string;
+            AND: GqlFilter[];
+          }
+        | {
+            path: string;
+            OR: GqlFilter[];
+          };
     };
-  };
 
 export type GqlSearchFilter = {
   search: {
@@ -144,6 +144,11 @@ export type FilterConfig = {
   };
   tabs: FilterTabsOption[];
   unitCalcConfig?: UnitCalcConfig;
+  // Optional dependency feature config (may be missing in gitops)
+  filterDependencyConfig?: {
+    filterToRelation?: Record<string, string>;
+    relations?: Record<string, string[]>;
+  };
 };
 
 export type GuppyConfig = {
@@ -192,10 +197,10 @@ export type SimpleAggsData = {
 
 export type AggsData = {
   [x: string]:
-  | {
-    histogram: AggsCount[];
-  }
-  | SimpleAggsData;
+    | {
+        histogram: AggsCount[];
+      }
+    | SimpleAggsData;
 };
 
 export type FilterChangeHandler = (filter: FilterState) => void;
@@ -222,11 +227,11 @@ export type GuppyData = {
   downloadRawDataByTypeAndFilter: (
     type: string,
     filter: FilterState,
-    fields: string[]
+    fields: string[],
   ) => Promise<void>;
   getTotalCountsByTypeAndFilter: (
     type: string,
-    filter: FilterState
+    filter: FilterState,
   ) => Promise<void>;
   fetchAndUpdateRawData: (args: {
     offset: number;

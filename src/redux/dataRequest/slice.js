@@ -5,24 +5,20 @@ import {
   fetchProjectStates,
   getProjectUsers,
   getUserRoles,
-  deleteProjectUser,
-  getProjectFilterSets,
-  addFiltersetToRequest,
 } from './asyncThunks';
 
 const slice = createSlice({
   name: 'dataRequest',
   initialState: /** @type {import("./types").DataRequestState} */ ({
     projects: [],
-    projectUsers: [],
     userRoles: [],
     projectStates: {},
-    projectFilterSets: [],
     isError: false,
     isAdminActive: false,
     isProjectsReloading: false,
     isCreatePending: false,
     isUserRolesPending: false,
+    userRolesError: false,
   }),
   reducers: {
     toggleAdminActive(state) {
@@ -69,7 +65,10 @@ const slice = createSlice({
     builder.addCase(createProject.fulfilled, (state, action) => {
       state.isCreatePending = false;
 
-      if (action.payload === null) return;
+      // Check if asyncThunk passed null or error payload
+      if (!action.payload || action.payload.isError) {
+        return;
+      }
 
       const {
         meta: {
@@ -104,43 +103,20 @@ const slice = createSlice({
       state.isCreatePending = false;
       state.isError = true;
     });
-    builder.addCase(getProjectUsers.pending, (state) => {
-      state.isProjectUsersPending = true;
-    });
-    builder.addCase(getProjectUsers.rejected, (state) => {
-      state.isProjectUsersPending = false;
-      state.isError = true;
-    });
-    builder.addCase(getProjectUsers.fulfilled, (state, action) => {
-      state.isProjectUsersPending = false;
-      if (action.payload) {
-        state.projectUsers = action.payload;
-      }
-    });
     builder.addCase(getUserRoles.pending, (state) => {
       state.isUserRolesPending = true;
+      state.userRolesError = false;
     });
     builder.addCase(getUserRoles.rejected, (state) => {
+      state.userRoles = [];
       state.isUserRolesPending = false;
-      state.isError = true;
+      state.userRolesError = true;
     });
     builder.addCase(getUserRoles.fulfilled, (state, action) => {
       state.isUserRolesPending = false;
       if (action.payload) {
         state.userRoles = action.payload;
       }
-    });
-    builder.addCase(getProjectFilterSets.rejected, (state) => {
-      state.isError = true;
-    });
-    builder.addCase(getProjectFilterSets.fulfilled, (state, action) => {
-      if (action.payload) {
-        state.projectFilterSets = action.payload.data;
-        state.isError = false;
-      }
-    });
-    builder.addCase(addFiltersetToRequest.rejected, (state) => {
-      state.isError = true;
     });
   },
 });

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import cloneDeep from 'lodash.clonedeep';
 import Select from 'react-select';
-import { overrideSelectTheme } from '../../../../utils';
+import { overrideSelectTheme, capitalizeFirstLetter } from '../../../../utils';
 import AnchorFilter from '../AnchorFilter';
 import FilterSection from '../FilterSection';
 import PatientIdFilter from '../PatientIdFilter';
@@ -16,9 +16,10 @@ import {
   updateCombineMode,
   updateRangeValue,
   updateSelectedValue,
-  removeEmptyFilter, updateFilterMode, getFilterModeStatus
+  removeEmptyFilter,
+  updateFilterMode,
+  getFilterModeStatus,
 } from './utils';
-import { capitalizeFirstLetter } from '../../../../utils';
 import './FilterGroup.css';
 
 /** @param {string} label */
@@ -78,18 +79,16 @@ function FilterGroup({
   hideZero = true,
   filter = defaultExplorerFilter,
   lockedTooltipMessage,
-  onAnchorValueChange = () => {
-  },
-  onFilterChange = () => {
-  },
-  tabs
+  onAnchorValueChange = () => {},
+  onFilterChange = () => {},
+  tabs,
 }) {
   const filterTabs = filterConfig.tabs.map(
     ({ title, fields, searchFields }) => ({
       title,
       // If there are any search fields, insert them at the top of each tab's fields.
-      fields: searchFields ? searchFields.concat(fields) : fields
-    })
+      fields: searchFields ? searchFields.concat(fields) : fields,
+    }),
   );
 
   // pulls info about which range filters use what quantity (e.g. age or number) from pcdc.json
@@ -107,8 +106,13 @@ function FilterGroup({
   const showAnchorFilter =
     filterConfig.anchor !== undefined &&
     filterConfig.anchor.tabs.includes(tabTitle);
+
+  // Feature is only shown when enabled AND fully configured
   const showPatientIdsFilter =
-    patientIdsConfig?.filter === true && tabTitle === 'Subject';
+    patientIdsConfig?.filter === true &&
+    !!patientIdsConfig?.filterName &&
+    !!patientIdsConfig?.displayName &&
+    tabTitle === 'Subject';
 
   const anchorLabel =
     filterConfig.anchor !== undefined && anchorValue !== '' && showAnchorFilter
@@ -120,13 +124,13 @@ function FilterGroup({
     ? 'Collapse all'
     : 'Open all';
   const [expandedStatus, setExpandedStatus] = useState(
-    getExpandedStatus(filterTabs, false)
+    getExpandedStatus(filterTabs, false),
   );
 
   const [filterResults, setFilterResults] = useState(filter);
 
   const [filterModeStatus, setFilterModeStatus] = useState(
-    getFilterModeStatus(filterTabs, filterResults)
+    getFilterModeStatus(filterTabs, filterResults),
   );
 
   /** Takes in a filter's filter name and returns its display name
@@ -146,15 +150,54 @@ function FilterGroup({
     return capitalizeFirstLetter(newFilterName);
   }
 
-  const filterToRelation = filterConfig.filterDependencyConfig.filterToRelation;
-  const relations = filterConfig.filterDependencyConfig.relations;
+  /**
+   * --- Dependency Feature Rules ---
+   * If `filterToRelation` is missing or empty:
+   *  Do NOT attempt dependent-filter logic
+   *  Do NOT show age calculator (falls back to "number")
+   *  Avoid lookups like filterToRelation[filterName] to prevent crashes
+   */
+
+  // Dependency config from gitops (may be missing)
+  const filterToRelation =
+    filterConfig?.filterDependencyConfig?.filterToRelation ?? null;
+
+  // Relations are optional; only used when filterToRelation is valid
+  const relations = filterConfig?.filterDependencyConfig?.relations ?? {};
+
+  // Dependency feature is only ON if filterToRelation exists and has keys
+  const hasFilterDependency =
+    !!filterToRelation &&
+    typeof filterToRelation === 'object' &&
+    Object.keys(filterToRelation).length > 0;
+
+  // Returns a safe dependentFilters value or false.
+  // - Disables the feature if filterToRelation is missing (hasFilterDependency === false)
+  // - Uses only relation entries that are known filter keys to avoid submission errors
+  function getSafeDependentFilters(filterName, relationName) {
+    if (!hasFilterDependency) return false;
+
+    const list = relations?.[relationName];
+    if (!Array.isArray(list) || list.length === 0) return false;
+
+    // Only allow filter keys we actually know about (from tabs + info)
+    const known = new Set([
+      ...filterTabs.flatMap((t) => t.fields),
+      ...Object.keys(filterConfig.info ?? {}),
+    ]);
+
+    const cleaned = list.filter((f) => typeof f === 'string' && known.has(f));
+    return cleaned.length
+      ? createDependentFiltersArr(cleaned, filterName)
+      : false;
+  }
 
   const [filterStatus, setFilterStatus] = useState(
     getFilterStatus({
       anchorConfig: filterConfig.anchor,
       filterResults: filter,
-      filterTabs
-    })
+      filterTabs,
+    }),
   );
   const isInitialRenderRef = useRef(true);
   useEffect(() => {
@@ -166,7 +209,7 @@ function FilterGroup({
     const newFilterStatus = getFilterStatus({
       anchorConfig: filterConfig.anchor,
       filterResults: filter,
-      filterTabs
+      filterTabs,
     });
     const newFilterResults = filter;
 
@@ -198,7 +241,7 @@ function FilterGroup({
       filterTabs,
       tabIndex,
       anchorLabel,
-      sectionIndex
+      sectionIndex,
     });
     setFilterResults(updated.filterResults);
     setFilterStatus(updated.filterStatus);
@@ -213,7 +256,7 @@ function FilterGroup({
   function handleToggleCombineMode(
     sectionIndex,
     combineModeFieldName,
-    combineModeValue
+    combineModeValue,
   ) {
     const updated = updateCombineMode({
       filterStatus,
@@ -223,7 +266,7 @@ function FilterGroup({
       anchorLabel,
       sectionIndex,
       combineModeFieldName,
-      combineModeValue
+      combineModeValue,
     });
     setFilterStatus(updated.filterStatus);
     setFilterResults(updated.filterResults);
@@ -253,7 +296,7 @@ function FilterGroup({
       anchorLabel,
       sectionIndex,
       selectedValue,
-      filterMode
+      filterMode,
     });
     setFilterStatus(updated.filterStatus);
     setFilterResults(updated.filterResults);
@@ -317,10 +360,11 @@ function FilterGroup({
       tabIndex,
       anchorLabel,
       sectionIndex,
-      filterMode
+      filterMode,
     });
     setFilterModeStatus(
-      getFilterModeStatus(filterTabs, updated.filterResults, filterModeStatus));
+      getFilterModeStatus(filterTabs, updated.filterResults, filterModeStatus),
+    );
     const emptyFilterRemoved = removeEmptyFilter(updated.filterResults);
     setFilterResults(emptyFilterRemoved);
     onFilterChange(emptyFilterRemoved);
@@ -340,7 +384,7 @@ function FilterGroup({
     upperBound,
     minValue,
     maxValue,
-    rangeStep = 1
+    rangeStep = 1,
   ) {
     const updated = updateRangeValue({
       filterStatus,
@@ -353,7 +397,7 @@ function FilterGroup({
       upperBound,
       minValue,
       maxValue,
-      rangeStep
+      rangeStep,
     });
     setFilterStatus(updated.filterStatus);
     setFilterResults(updated.filterResults);
@@ -370,8 +414,8 @@ function FilterGroup({
     label: tab.title,
     options: tabs[index].map((section) => ({
       label: section.title,
-      value: { index, title: section.title }
-    }))
+      value: { index, title: section.title },
+    })),
   }));
   const filterToFind = useRef('');
   useEffect(() => {
@@ -405,19 +449,20 @@ function FilterGroup({
   return (
     <div className={`g3-filter-group ${className}`}>
       <Select
-        className="g3-filter-group__filter-finder"
-        placeholder="Find filter to use"
+        className='g3-filter-group__filter-finder'
+        placeholder='Find filter to use'
         onChange={handleFindFilter}
         options={filterFinderOptions}
         theme={overrideSelectTheme}
         value={null}
       />
-      <div className="g3-filter-group__tabs">
+      <div className='g3-filter-group__tabs'>
         {tabs.map((_, index) => (
           <div
             key={index}
+            data-tour-filter-tab={filterTabs[index].title}
             className={'g3-filter-group__tab'.concat(
-              tabIndex === index ? ' g3-filter-group__tab--selected' : ''
+              tabIndex === index ? ' g3-filter-group__tab--selected' : '',
             )}
             onClick={() => setTabIndex(index)}
             onKeyPress={(e) => {
@@ -426,7 +471,7 @@ function FilterGroup({
                 setTabIndex(index);
               }
             }}
-            role="button"
+            role='button'
             tabIndex={0}
             aria-label={`Filter group tab: ${filterTabs[index].title}`}
           >
@@ -442,9 +487,9 @@ function FilterGroup({
           </div>
         ))}
       </div>
-      <div className="g3-filter-group__collapse">
+      <div className='g3-filter-group__collapse'>
         <span
-          className="g3-link g3-filter-group__collapse-link"
+          className='g3-link g3-filter-group__collapse-link'
           onClick={toggleSections}
           onKeyPress={(e) => {
             if (e.charCode === 13 || e.charCode === 32) {
@@ -452,14 +497,14 @@ function FilterGroup({
               toggleSections();
             }
           }}
-          role="button"
+          role='button'
           tabIndex={0}
           aria-label={expandedStatusText}
         >
           {expandedStatusText}
         </span>
       </div>
-      <div className="g3-filter-group__filter-area">
+      <div className='g3-filter-group__filter-area'>
         {showAnchorFilter && (
           <AnchorFilter
             anchorField={filterConfig.anchor.field}
@@ -471,6 +516,8 @@ function FilterGroup({
           />
         )}
         {showPatientIdsFilter && (
+          // Patient ID filter is only rendered when enabled AND fully configured.
+          // Prevents UI crashes caused by incomplete gitops configuration.
           <PatientIdFilter
             getPatientIds={retrieveFilterPatientIds}
             handlePatientIdsChange={handlePatientIdsChange}
@@ -479,11 +526,31 @@ function FilterGroup({
         )}
         {tabs[tabIndex].map((section, index) => {
           const filterName = filterTabs[tabIndex].fields[index];
-          const relationName = filterToRelation[filterName];
-          const depFilters = Object.keys(filterToRelation);
+          /**
+           * Dependent filters:
+           * Only touch dependency structures when hasFilterDependency is true.
+           * Prevents unsafe lookups like filterToRelation[filterName]
+           */
+          const relationName = hasFilterDependency
+            ? filterToRelation[filterName]
+            : undefined;
+
+          // Age calculator: only when dependency is active AND field is listed as "age"
+          const nameCandidates = [section.title, filterName];
+          const isAgeField =
+            Array.isArray(unitCalcTitles?.age) &&
+            nameCandidates.some((n) => unitCalcTitles.age.includes(n));
+
+          const unitCalcType = isAgeField ? 'age' : 'number';
+          const unitCalcCfg =
+            unitCalcType === 'age' && filterConfig.unitCalcConfig
+              ? filterConfig.unitCalcConfig.ageUnits
+              : null;
+
           return (
             <FilterSection
               key={section.title}
+              dataTourTitle={section.title}
               sectionTitle={section.title}
               disabledTooltipMessage={disabledTooltipMessage}
               filterMode={filterModeStatus[tabIndex][index]}
@@ -503,29 +570,18 @@ function FilterGroup({
               onToggleCombineMode={(...args) =>
                 handleToggleCombineMode(index, ...args)
               }
-              onFilterModeChange={(filterMode) => handleFilterModeChange(index,
-                filterMode)}
+              onFilterModeChange={(filterMode) =>
+                handleFilterModeChange(index, filterMode)
+              }
               options={section.options}
               title={section.title}
               tooltip={section.tooltip}
-              dependentFilters={
-                depFilters.includes(filterName)
-                  ? createDependentFiltersArr(
-                    relations[relationName],
-                    filterName
-                  )
-                  : false
-              }
-              unitCalcType={
-                unitCalcTitles.age.includes(filterTabs[tabIndex].fields[index])
-                  ? 'age'
-                  : 'number'
-              }
-              unitCalcConfig={
-                filterConfig.unitCalcConfig
-                  ? filterConfig.unitCalcConfig.ageUnits
-                  : null
-              }
+              dependentFilters={getSafeDependentFilters(
+                filterName,
+                relationName,
+              )}
+              unitCalcType={unitCalcType}
+              unitCalcConfig={unitCalcCfg}
             />
           );
         })}
@@ -544,21 +600,21 @@ FilterGroup.propTypes = {
       field: PropTypes.string,
       options: PropTypes.arrayOf(PropTypes.string),
       tabs: PropTypes.arrayOf(PropTypes.string),
-      tooltip: PropTypes.string
+      tooltip: PropTypes.string,
     }),
     tabs: PropTypes.arrayOf(
       PropTypes.shape({
         title: PropTypes.string,
         fields: PropTypes.arrayOf(PropTypes.string),
-        searchFields: PropTypes.arrayOf(PropTypes.string)
-      })
-    )
+        searchFields: PropTypes.arrayOf(PropTypes.string),
+      }),
+    ),
   }).isRequired,
   hideZero: PropTypes.bool,
   lockedTooltipMessage: PropTypes.string,
   onAnchorValueChange: PropTypes.func,
   onFilterChange: PropTypes.func,
-  tabs: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.object)).isRequired
+  tabs: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.object)).isRequired,
 };
 
 export default FilterGroup;

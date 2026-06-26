@@ -5,7 +5,7 @@ function statusCategory(status) {
   return `${Math.floor(status / 100)}XX`;
 }
 
-function handleRequestError(status, response) {
+function handleRequestError(status, response, data = null) {
   switch (statusCategory(status)) {
     case '5XX':
       return {
@@ -17,6 +17,7 @@ function handleRequestError(status, response) {
       return {
         isError: true,
         message:
+          data ||
           'We were unable to process your request; make sure you have the right permissions',
         data: null,
       };
@@ -112,7 +113,8 @@ export const createProject = createAsyncThunk(
       });
 
       if (statusCategory(status) !== '2XX') {
-        return handleRequestError(status, response);
+        // Fallback for all other errors
+        return handleRequestError(status, response, data);
       }
 
       const {
@@ -142,7 +144,7 @@ export const updateProjectState = createAsyncThunk(
       });
 
       if (statusCategory(status) !== '2XX') {
-        return handleRequestError(status, response);
+        return handleRequestError(status, response, data);
       }
       return { data, isError: false, message: '' };
     } catch (e) {
@@ -163,7 +165,7 @@ export const updateProjectUsers = createAsyncThunk(
       });
 
       if (statusCategory(status) !== '2XX') {
-        return handleRequestError(status, response);
+        return handleRequestError(status, response, data);
       }
       return { data, isError: false, message: '' };
     } catch (e) {
@@ -182,9 +184,8 @@ export const updateProjectApprovedUrl = createAsyncThunk(
         method: 'PUT',
         body: JSON.stringify(updateParams),
       });
-
       if (statusCategory(status) !== '2XX') {
-        handleRequestError(status, response);
+        return handleRequestError(status, response, data);
       }
       return { data, isError: false, message: '' };
     } catch (e) {
@@ -205,7 +206,7 @@ export const updateUserDataAccess = createAsyncThunk(
       });
 
       if (statusCategory(status) !== '2XX') {
-        return handleRequestError(status, response);
+        return handleRequestError(status, response, data);
       }
       return { data, isError: false, message: '' };
     } catch (e) {
@@ -226,7 +227,7 @@ export const addFiltersetToRequest = createAsyncThunk(
       });
 
       if (statusCategory(status) !== '2XX') {
-        return handleRequestError(status, response);
+        return handleRequestError(status, response, data);
       }
       return { data, isError: false, message: '', status: status };
     } catch (e) {
@@ -246,7 +247,7 @@ export const deleteRequest = createAsyncThunk(
         body: JSON.stringify(deleteParams),
       });
       if (statusCategory(status) !== '2XX') {
-        return handleRequestError(status, response);
+        return handleRequestError(status, response, data);
       }
       return { data, isError: false, message: '' };
     } catch (e) {
@@ -266,7 +267,7 @@ export const deleteProjectUser = createAsyncThunk(
         body: JSON.stringify(deleteParams),
       });
       if (statusCategory(status) !== '2XX') {
-        return handleRequestError(status, response);
+        return handleRequestError(status, response, data);
       }
       return { data, isError: false, message: '' };
     } catch (e) {
@@ -286,8 +287,7 @@ export const getProjectUsers = createAsyncThunk(
       });
 
       if (status !== 200) {
-        console.error(`WARNING: failed to with status ${response.statusText}`);
-        return null;
+        return handleRequestError(status, response, data);
       }
       return data;
     } catch (e) {
@@ -306,8 +306,7 @@ export const getUserRoles = createAsyncThunk(
       });
 
       if (status !== 200) {
-        console.error(`WARNING: failed to with status ${response.statusText}`);
-        return null;
+        throw new Error(data || 'Failed to fetch user roles');
       }
       return data;
     } catch (e) {
@@ -327,12 +326,7 @@ export const getProjectFilterSets = createAsyncThunk(
       });
 
       if (statusCategory(status) !== '2XX') {
-        return {
-          data: [],
-          isError: true,
-          message: 'Failed to fetch filter sets',
-          status: status,
-        };
+        return handleRequestError(status, response, data);
       }
       return { data, isError: false, message: '', status: status };
     } catch (e) {

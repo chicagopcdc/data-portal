@@ -5,8 +5,8 @@ import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import {
   deleteProjectUser,
   getProjectUsers,
-  getUserRoles,
   updateUserDataAccess,
+  getUserRoles,
 } from '../redux/dataRequest/asyncThunks';
 import Spinner from '../components/Spinner';
 import Table from '../components/tables/base/Table';
@@ -18,28 +18,102 @@ const filterConfig = {
   Role: false,
   Actions: false,
 };
-export default function UserAccessTable({ projectId, setActionType }) {
+export default function UserAccessTable({
+  projectId,
+  setActionType,
+  onAction,
+}) {
   const dispatch = useAppDispatch();
 
-  const {
-    projectUsers,
-    isError,
-    isProjectUsersPending,
-    userRoles,
-    isUserRolesPending,
-  } = useAppSelector((state) => state.dataRequest);
+  const { userRoles, isUserRolesPending, userRolesError } = useAppSelector(
+    (state) => state.dataRequest,
+  );
 
   const [selectedRoles, setSelectedRoles] = useState({});
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const timeoutRef = useRef(null);
+  const [fetchProjectUsersError, setFetchProjectUsersError] = useState(false);
+  const [projectUsersPending, setProjectUsersPending] = useState(false);
+  const [projectUsers, setProjectUsers] = useState([]);
+
+  const submitGetProjectUsers = () => {
+    setProjectUsersPending(true);
+    const actionRequest =
+      /** @type {import("../redux/dataRequest/types").Request} */ dispatch(
+        getProjectUsers(projectId),
+      );
+    actionRequest
+      .then((action) => {
+        if (action.payload.isError) {
+          setFetchProjectUsersError(true);
+          setProjectUsers([]);
+        } else {
+          setFetchProjectUsersError(false);
+          setProjectUsers(action.payload);
+        }
+      })
+      .finally(() => {
+        setProjectUsersPending(false);
+      });
+  };
+
+  const submitUserRemoval = (email) => {
+    const actionRequest =
+      /** @type {import("../redux/dataRequest/types").Request} */
+      (dispatch(deleteProjectUser({ email, project_id: projectId })));
+    actionRequest.then((action) => {
+      if (action.payload.isError) {
+        setErrorMsg(action.payload.message);
+        setSuccessMsg('');
+      } else {
+        setSuccessMsg(`User ${email} removed successfully`);
+        setErrorMsg('');
+        onAction?.('SUCCESSFUL_USER_ACCESS_CHANGE');
+      }
+      submitGetProjectUsers();
+      timeoutRef.current = setTimeout(() => {
+        setSuccessMsg('');
+        setErrorMsg('');
+      }, 3000);
+    });
+  };
+
+  const submitRoleChange = (email) => {
+    const actionRequest =
+      /** @type {import("../redux/dataRequest/types").Request} */
+      (
+        dispatch(
+          updateUserDataAccess({
+            email,
+            project_id: projectId,
+            role: selectedRoles[email],
+          }),
+        )
+      );
+    actionRequest.then((action) => {
+      if (!action.payload.isError) {
+        setSuccessMsg(`Role updated successfully for ${email}`);
+        onAction?.('SUCCESSFUL_USER_ACCESS_CHANGE');
+        setErrorMsg('');
+      } else {
+        setErrorMsg(action.payload.message);
+        setSuccessMsg('');
+      }
+      timeoutRef.current = setTimeout(() => {
+        setSuccessMsg('');
+        setErrorMsg('');
+      }, 3000);
+    });
+  };
 
   useEffect(() => {
     if (projectId) {
-      dispatch(getProjectUsers(projectId));
-      dispatch(getUserRoles());
+      submitGetProjectUsers();
+    } else {
+      setProjectUsers([]);
     }
-  }, [projectId, dispatch]);
+  }, [projectId]);
 
   // Initialize selectedRoles when projectUsers are loaded
   useEffect(() => {
@@ -62,38 +136,18 @@ export default function UserAccessTable({ projectId, setActionType }) {
     [successMsg, errorMsg],
   );
 
-  const submitUserRemoval = (email) => {
-    dispatch(deleteProjectUser({ email, project_id: projectId })).then(() =>
-      dispatch(getProjectUsers(projectId)),
-    );
-  };
+  useEffect(() => {
+    if (userRolesError === true) {
+      dispatch(getUserRoles());
+    }
+  }, [userRolesError]);
 
-  const submitRoleChange = (email) => {
-    dispatch(
-      updateUserDataAccess({
-        email,
-        project_id: projectId,
-        role: selectedRoles[email],
-      }),
-    ).then((action) => {
-      if (!action.payload.isError) {
-        setSuccessMsg(`Role updated successfully for ${email}`);
-        setErrorMsg('');
-      } else {
-        setErrorMsg(action.payload.message);
-        setSuccessMsg('');
-      }
-      timeoutRef.current = setTimeout(() => {
-        setSuccessMsg('');
-        setErrorMsg('');
-      }, 3000);
-    });
-  };
-
-  const userRoleOptions = userRoles.map((role) => ({
-    label: role.role,
-    value: role.role,
-  }));
+  const userRoleOptions = userRoles
+    ? userRoles.map((role) => ({
+        label: role.role,
+        value: role.role,
+      }))
+    : [];
   const selectCustomStyle = {
     control: (provided) => ({
       ...provided,
@@ -124,6 +178,7 @@ export default function UserAccessTable({ projectId, setActionType }) {
         user.email,
         <Select
           key={`select-${user.email}`}
+          classNamePrefix='data-requests-select'
           options={userRoleOptions}
           value={{
             label: selectedRoles[user.email],
@@ -146,13 +201,21 @@ export default function UserAccessTable({ projectId, setActionType }) {
           />
         </div>,
       ]),
-    [projectUsers, userRoleOptions, userRoleOptions],
+    [projectUsers, userRoleOptions],
   );
 
   return (
     <>
-      {(isProjectUsersPending || isUserRolesPending) && <Spinner />}
-      {isError && <p>Error loading project users.</p>}
+      {(projectUsersPending || isUserRolesPending) && <Spinner />}
+      {fetchProjectUsersError && userRolesError && (
+        <p style={{ color: 'red' }}>Error loading project users and roles</p>
+      )}
+      {fetchProjectUsersError && !userRolesError && (
+        <p style={{ color: 'red' }}>Error loading project users</p>
+      )}
+      {!fetchProjectUsersError && userRolesError && (
+        <p style={{ color: 'red' }}>Error loading project roles</p>
+      )}
       {successMsg && <p style={{ color: 'green' }}>{successMsg}</p>}
       {errorMsg && <p style={{ color: 'red' }}>{errorMsg}</p>}
       <Table
@@ -169,6 +232,7 @@ export default function UserAccessTable({ projectId, setActionType }) {
 }
 
 UserAccessTable.propTypes = {
-  projectId: PropTypes.string.isRequired,
+  projectId: PropTypes.number.isRequired,
   setActionType: PropTypes.func.isRequired,
+  onAction: PropTypes.func.isRequired,
 };

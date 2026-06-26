@@ -130,7 +130,7 @@ class ExplorerButtonGroup extends Component {
             },
             () => {
               this.sendPFBToTerra();
-            }
+            },
           );
         } else if (this.state.exportingToSevenBridges) {
           this.setState(
@@ -141,7 +141,7 @@ class ExplorerButtonGroup extends Component {
             },
             () => {
               this.sendPFBToSevenBridges();
-            }
+            },
           );
         } else {
           this.setState((prevState) => ({
@@ -226,8 +226,8 @@ class ExplorerButtonGroup extends Component {
     ) {
       return Promise.reject(
         new Error(
-          'No "guppyConfig.manifestMapping" or "guppyConfig.manifestMapping.referenceIdFieldInDataIndex" defined in config'
-        )
+          'No "guppyConfig.manifestMapping" or "guppyConfig.manifestMapping.referenceIdFieldInDataIndex" defined in config',
+        ),
       );
     }
     const refField =
@@ -282,17 +282,17 @@ class ExplorerButtonGroup extends Component {
           refFieldInResourceIndex,
           resourceFieldInResourceIndex,
           ...additionalFields,
-        ]
+        ],
       );
     } catch (err) {
       resultManifest = await this.props.downloadRawDataByTypeAndFilter(
         resourceType,
         filter,
-        [refFieldInResourceIndex, resourceFieldInResourceIndex]
+        [refFieldInResourceIndex, resourceFieldInResourceIndex],
       );
     }
     resultManifest = resultManifest.filter(
-      (x) => !!x[resourceFieldInResourceIndex]
+      (x) => !!x[resourceFieldInResourceIndex],
     );
     /* eslint-disable no-param-reassign */
     resultManifest.forEach((x) => {
@@ -413,7 +413,7 @@ class ExplorerButtonGroup extends Component {
         this.setState({
           isDownloadingData: false,
           downloadDataCount: this.props.accessibleCount,
-        })
+        }),
       );
   };
 
@@ -515,7 +515,7 @@ class ExplorerButtonGroup extends Component {
     } else {
       this.exportToWorkspaceMessageHandler(
         400,
-        'There were no data files found matching the cohort you created.'
+        'There were no data files found matching the cohort you created.',
       );
     }
   };
@@ -573,7 +573,7 @@ class ExplorerButtonGroup extends Component {
       this.props.buttonConfig &&
       this.props.buttonConfig.buttons &&
       this.props.buttonConfig.buttons.some(
-        (btnCfg) => this.isFileButton(btnCfg) && btnCfg.enabled
+        (btnCfg) => this.isFileButton(btnCfg) && btnCfg.enabled,
       )
     ) {
       if (this.props.guppyConfig.fileCountField) {
@@ -601,7 +601,7 @@ class ExplorerButtonGroup extends Component {
               [caseFieldInFileIndex]: {
                 selectedValues: caseIDList,
               },
-            }
+            },
           );
           this.setState({
             manifestEntryCount: countResult,
@@ -617,7 +617,7 @@ class ExplorerButtonGroup extends Component {
   /** @param {SingleButtonConfig} buttonConfig */
   isButtonDisplayed = (buttonConfig) => {
     if (buttonConfig.type === 'export-to-pfb') {
-      return '/services/amanuensis' in this.props.user.authz ?? {};
+      return '/services/amanuensis' in (this.props.user.authz ?? {});
     }
 
     if (
@@ -650,7 +650,7 @@ class ExplorerButtonGroup extends Component {
       if (!this.props.buttonConfig.terraExportURL) {
         // eslint-disable-next-line no-console
         console.error(
-          'Export to Terra button is present, but there is no `terraExportURL` specified in the portal config. Disabling the export to Terra button.'
+          'Export to Terra button is present, but there is no `terraExportURL` specified in the portal config. Disabling the export to Terra button.',
         );
         return false;
       }
@@ -666,7 +666,7 @@ class ExplorerButtonGroup extends Component {
       if (!this.props.buttonConfig.sevenBridgesExportURL) {
         // eslint-disable-next-line no-console
         console.error(
-          'Export to Terra button is present, but there is no `terraExportURL` specified in the portal config. Disabling the export to Terra button.'
+          'Export to Terra button is present, but there is no `terraExportURL` specified in the portal config. Disabling the export to Terra button.',
         );
         return false;
       }
@@ -735,7 +735,7 @@ class ExplorerButtonGroup extends Component {
       this.state.manifestEntryCount > 0
     ) {
       buttonTitle = `${buttonConfig.title} (${humanizeNumber(
-        this.state.manifestEntryCount
+        this.state.manifestEntryCount,
       )})`;
     }
     const btnTooltipText = this.props.isLocked
@@ -762,7 +762,7 @@ class ExplorerButtonGroup extends Component {
 
   render() {
     const dropdownConfigs = calculateDropdownButtonConfigs(
-      this.props.buttonConfig
+      this.props.buttonConfig,
     );
     return (
       <>
@@ -859,7 +859,7 @@ class ExplorerButtonGroup extends Component {
                 (buttonConfig) =>
                   !dropdownConfigs ||
                   !buttonConfig.dropdownId ||
-                  dropdownConfigs[buttonConfig.dropdownId].cnt === 1
+                  dropdownConfigs[buttonConfig.dropdownId].cnt === 1,
               )
               .filter((buttonConfig) => buttonConfig.enabled)
               .map((buttonConfig) => this.renderButton(buttonConfig))

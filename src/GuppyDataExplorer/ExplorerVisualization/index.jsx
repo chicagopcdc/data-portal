@@ -16,7 +16,9 @@ import ExplorerFilterSetWorkspace from '../ExplorerFilterSetWorkspace';
 import ExplorerTable from '../ExplorerTable';
 import ExplorerSurvivalAnalysis from '../ExplorerSurvivalAnalysis';
 import ExplorerTableOne from '../ExplorerTableOne';
+import ExplorerDensityHeatmap from '../ExplorerDensityHeatmap';
 import ReduxExplorerButtonGroup from '../ExplorerButtonGroup/ReduxExplorerButtonGroup';
+import ExplorerWizard, { OPEN_EXPLORER_WIZARD_EVENT } from '../ExplorerWizard';
 import './ExplorerVisualization.css';
 import { FILTER_TYPE } from '../ExplorerFilterSetWorkspace/utils';
 
@@ -144,6 +146,13 @@ function openLink(link) {
   }
 }
 
+function getInitialExplorerWizardCompleted() {
+  return (
+    window.localStorage.getItem(ExplorerWizard.COMPLETION_STORAGE_KEY) ===
+    'true'
+  );
+}
+
 /**
  * @typedef {Object} ExplorerVisualizationProps
  * @property {number} accessibleCount
@@ -184,6 +193,9 @@ function ExplorerVisualization({
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [isRequestAccessModalOpen, setRequestAccessModalOpen] = useState(false);
+  const isExplorerWizardEnabled =
+    Array.isArray(config.explorerWizard?.steps) &&
+    config.explorerWizard.steps.length > 0;
 
   const {
     buttonConfig,
@@ -196,12 +208,14 @@ function ExplorerVisualization({
     survivalAnalysisConfig,
     tableConfig,
     tableOneConfig,
+    heatmapConfig,
   } = useAppSelector((state) => state.explorer.config);
 
   const nodeCountTitle =
     guppyConfig.nodeCountTitle || capitalizeFirstLetter(guppyConfig.dataType);
 
   const explorerViews = ['summary view'];
+  if (heatmapConfig.enabled) explorerViews.push('density heatmap');
   if (tableConfig.enabled) explorerViews.push('table view');
   if (survivalAnalysisConfig.enabled) explorerViews.push('survival analysis');
   if (tableOneConfig.enabled) explorerViews.push('table one');
@@ -209,7 +223,7 @@ function ExplorerVisualization({
   const explorerView = searchParams.get('view') ?? explorerViews[0];
   // State for external commons config and result data
   const [externalConfig, setExternalConfig] = useState(
-    /** @type {ExternalConfig} */(null),
+    /** @type {ExternalConfig} */ (null),
   );
   // State for popup UI passing to child
   const [isLoadingExploreButton, setIsLoadingExploreButton] = useState(false);
@@ -228,13 +242,18 @@ function ExplorerVisualization({
   function updateExplorerView(view) {
     const newSearchParams = new URLSearchParams(searchParams.toString());
     newSearchParams.set('view', view);
-    navigate(`?${decodeURIComponent(newSearchParams.toString())}`, {
-      state: { scrollY: window.scrollY },
-    });
+    if (newSearchParams.toString() !== searchParams.toString())
+      navigate(`?${decodeURIComponent(newSearchParams.toString())}`, {
+        state: { scrollY: window.scrollY },
+      });
   }
+
   useEffect(() => {
     // Load config on first mount of parent, then pass to child.
     handleFetchExternalConfig();
+
+    if (isExplorerWizardEnabled && !getInitialExplorerWizardCompleted())
+      window.dispatchEvent(new Event(OPEN_EXPLORER_WIZARD_EVENT));
 
     if (!explorerViews.includes(explorerView))
       updateExplorerView(explorerViews[0]);
@@ -295,7 +314,7 @@ function ExplorerVisualization({
   // Loop through each resource name and match it with data from ES histogram
   const selectedCommonsCounts = resourceNames.map((name) => {
     // Find the matching bucket from the histogram
-    const bucket = externalResourceData.find(b => b.key === name);
+    const bucket = externalResourceData.find((b) => b.key === name);
 
     // If a bucket is found, use its count; otherwise, set count to 0
     const count = bucket ? bucket.count : 0;
@@ -310,11 +329,15 @@ function ExplorerVisualization({
   return (
     <div className={className}>
       <div className='explorer-visualization__top'>
-        <div className='explorer-visualization__view-group'>
+        <div
+          className='explorer-visualization__view-group'
+          data-tour-explorer-view-group
+        >
           {explorerViews.map((view) => (
             <button
               key={view}
               className={explorerView === view ? 'active' : ''}
+              data-tour-explorer-view={view}
               onClick={() => updateExplorerView(view)}
               type='button'
             >
@@ -323,6 +346,17 @@ function ExplorerVisualization({
           ))}
         </div>
         <div className='explorer-visualization__button-group'>
+          {isExplorerWizardEnabled && (
+            <button
+              className='explorer-visualization__guide-button'
+              onClick={() =>
+                window.dispatchEvent(new Event(OPEN_EXPLORER_WIZARD_EVENT))
+              }
+              type='button'
+            >
+              Guide
+            </button>
+          )}
           {accessibleCount < totalCount && !hideGetAccessButton && (
             <>
               <ExplorerRequestAccessButton
@@ -421,6 +455,18 @@ function ExplorerVisualization({
           </div>
         )}
       </ViewContainer>
+      {heatmapConfig.enabled && (
+        <ViewContainer
+          showIf={explorerView === 'density heatmap'}
+          isLoading={isLoadingRawData}
+        >
+          <ExplorerDensityHeatmap
+            fields={allFields}
+            accessibleCount={accessibleCount}
+            totalCount={totalCount}
+          />
+        </ViewContainer>
+      )}
       {tableConfig.enabled && (
         <ViewContainer
           showIf={explorerView === 'table view'}

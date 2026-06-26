@@ -18,15 +18,17 @@ export default function ExplorerTabs() {
   const dispatch = useAppDispatch();
   const explorerId = useAppSelector((state) => state.explorer.explorerId);
 
-  // eslint-disable-next-line no-unused-vars
-  const [_, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   function updateExplorerId(id) {
     dispatch(useExplorerById(id));
-    setSearchParams(`id=${id}`);
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
+    nextSearchParams.set('id', id);
+    if (nextSearchParams.toString() !== searchParams.toString())
+      setSearchParams(nextSearchParams);
   }
 
   const currentExplorer = explorerOptions.find(
-    (o) => o.value === String(explorerId)
+    (o) => o.value === String(explorerId),
   );
   return explorerOptions.length > 1 ? (
     <div className='explorer-select'>

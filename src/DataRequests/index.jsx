@@ -9,6 +9,7 @@ import { toggleAdminActive } from '../redux/dataRequest/slice';
 import {
   fetchProjects,
   fetchProjectStates,
+  getUserRoles,
 } from '../redux/dataRequest/asyncThunks';
 import { fetchFilterSets } from '../redux/explorer/asyncThunks';
 import './DataRequests.css';
@@ -88,6 +89,7 @@ function DataRequests({
               if (isActive) {
                 dispatch(fetchProjectStates());
                 dispatch(fetchFilterSets());
+                dispatch(getUserRoles());
                 setSearchParams(
                   new URLSearchParams([
                     ...Array.from(searchParams.entries()),

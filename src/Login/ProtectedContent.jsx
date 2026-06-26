@@ -158,7 +158,12 @@ function ProtectedContent({
 
           if (!shouldPreload || shouldRedirect) updateState(newState);
           else {
-            setState({ ...state, dataLoaded: false });
+            // Only hide children (show Spinner) on the first load when data hasn't
+            // been loaded yet. On subsequent navigations the children stay mounted
+            // while the preload refreshes data in the background, preventing the
+            // unmount→abort→remount cycle that causes double guppy fetches.
+            if (!state.dataLoaded)
+              setState({ ...state, dataLoaded: false });
             preload({ location, state: reduxStore.getState() }).finally(() =>
               updateState(newState),
             );

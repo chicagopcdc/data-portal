@@ -1,0 +1,98 @@
+.covar_card_catagorical_container {
+  margin: 16px 0;
+  padding: 12px;
+  border: 1px solid var(--g3-color__silver);
+  background-color: var(--g3-color__white);
+}
+
+.covar_card_catagorical_container--empty {
+  border-color: var(--g3-primary-btn__bg-color);
+  animation: pulse-once 0.6s ease-in-out;
+}
+
+.covar_card_catagorical_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.covar_card_check_label {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.covar_card_toggle_button {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+  margin-left: 8px;
+  outline: none;
+}
+
+.covar_card_toggle_button:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.covar_card_toggle_button:hover {
+  color: #0056b3;
+}
+
+.covar_card_check_list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.covar_card_check_item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.covar_card_check_item:hover {
+  background-color: #f5f5f5;
+  border-color: #007bff;
+}
+
+.covar_card_checkbox {
+  margin-right: 10px;
+  transform: scale(1.1);
+  outline: none; /* Removes the border when clicked/focused */
+}
+
+/* Optional: You can also remove box-shadow if it appears */
+.covar_card_checkbox:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.covar_card_check_text {
+  color: #555;
+  font-size: 14px;
+  user-select: none;
+}
+
+@keyframes pulse-once {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 var(--g3-primary-btn__bg-color);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 4px rgba(var(--g3-primary-btn__bg-color), 0.3);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 var(--g3-primary-btn__bg-color);
+  }
+}

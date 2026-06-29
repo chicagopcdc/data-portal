@@ -6,6 +6,7 @@ import useLatestDocuments from '../../hooks/useDocumentItems';
 import { TopBarLink } from './TopBarItems';
 import TopBarMenu from './TopBarMenu';
 import Banner from './Banner';
+import { OPEN_EXPLORER_WIZARD_EVENT } from '../../GuppyDataExplorer/ExplorerWizard';
 import './TopBar.css';
 
 /**
@@ -65,49 +66,61 @@ function TopBar({ config, isAdminUser, onLogoutClick, username }) {
           </div>
         </div>
         <div className='top-bar__menu-group'>
-          {(documents.data?.length > 0 || documents.isError) && (
-            <TopBarMenu
-              buttonIcon={<FontAwesomeIcon icon='circle-info' />}
-              title='Documents'
-              isOpen={openMenu === 'documents'}
-              onToggle={() =>
-                setOpenMenu(openMenu === 'documents' ? null : 'documents')
-              }
-              onClose={() => setOpenMenu(null)}
-            >
-              {documents.isError ? (
-                <>
-                  <TopBarMenu.Item>
-                    <small>
-                      <FontAwesomeIcon
-                        icon='triangle-exclamation'
-                        color='var(--g3-primary-btn__bg-color)'
-                      />{' '}
-                      Error in fetching documents...
-                    </small>
-                  </TopBarMenu.Item>
-                  <TopBarMenu.Item>
-                    <button onClick={documents.refresh} type='button'>
-                      Refresh documents
-                    </button>
-                  </TopBarMenu.Item>
-                </>
-              ) : (
-                documents.data.map((item) => (
-                  <TopBarMenu.Item key={item.formatted}>
-                    <a
-                      href={item.formatted}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                    >
-                      {item.name}
-                      <i className='g3-icon g3-icon--external-link' />
-                    </a>
-                  </TopBarMenu.Item>
-                ))
-              )}
-            </TopBarMenu>
-          )}
+          <TopBarMenu
+            buttonIcon={<FontAwesomeIcon icon='circle-info' />}
+            title='Help and Documents'
+            isOpen={openMenu === 'documents'}
+            onToggle={() =>
+              setOpenMenu(openMenu === 'documents' ? null : 'documents')
+            }
+            onClose={() => setOpenMenu(null)}
+          >
+            <TopBarMenu.Item>
+              <button
+                onClick={() => {
+                  window.dispatchEvent(new Event(OPEN_EXPLORER_WIZARD_EVENT));
+                  setOpenMenu(null);
+                }}
+                type='button'
+              >
+                Guide
+              </button>
+            </TopBarMenu.Item>
+
+            {(documents.data?.length > 0 || documents.isError) && <hr />}
+
+            {documents.isError ? (
+              <>
+                <TopBarMenu.Item>
+                  <small>
+                    <FontAwesomeIcon
+                      icon='triangle-exclamation'
+                      color='var(--g3-primary-btn__bg-color)'
+                    />{' '}
+                    Error in fetching documents...
+                  </small>
+                </TopBarMenu.Item>
+                <TopBarMenu.Item>
+                  <button onClick={documents.refresh} type='button'>
+                    Refresh documents
+                  </button>
+                </TopBarMenu.Item>
+              </>
+            ) : (
+              documents.data?.map((item) => (
+                <TopBarMenu.Item key={item.formatted}>
+                  <a
+                    href={item.formatted}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                  >
+                    {item.name}
+                    <i className='g3-icon g3-icon--external-link' />
+                  </a>
+                </TopBarMenu.Item>
+              ))
+            )}
+          </TopBarMenu>
           {(location.pathname !== '/login' || username !== undefined) && (
             <TopBarMenu
               buttonIcon={<FontAwesomeIcon icon='circle-user' />}

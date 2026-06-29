@@ -346,17 +346,6 @@ function ExplorerVisualization({
           ))}
         </div>
         <div className='explorer-visualization__button-group'>
-          {isExplorerWizardEnabled && (
-            <button
-              className='explorer-visualization__guide-button'
-              onClick={() =>
-                window.dispatchEvent(new Event(OPEN_EXPLORER_WIZARD_EVENT))
-              }
-              type='button'
-            >
-              Guide
-            </button>
-          )}
           {accessibleCount < totalCount && !hideGetAccessButton && (
             <>
               <ExplorerRequestAccessButton

@@ -1,7 +1,7 @@
 import { FILTER_TYPE } from '../Utils/const';
 import {
   getGQLFilter,
-  getQueryInfoForAggregationOptionsData,
+  getQueryInfoForAggregationOptionsData
 } from '../Utils/queries';
 
 /** @typedef {import('../types').CombineMode} CombineMode */
@@ -25,43 +25,70 @@ describe('Get GQL filter from filter object from', () => {
     expect(getGQLFilter(filterState)).toEqual(gqlFilter);
   });
 
-  test('a simple option filter', () => {
+  test('a simple CONTAINS_ANY option filter', () => {
     const filterState = {
       value: {
-        a: { __type: FILTER_TYPE.OPTION, selectedValues: ['foo', 'bar'] },
-      },
+        a: { __type: FILTER_TYPE.OPTION, selectedValues: ['foo', 'bar'] }
+      }
     };
-    const gqlFilter = { AND: [{ IN: { a: ['foo', 'bar'] } }] };
+    const gqlFilter = { AND: [{ CONTAINS_ANY: { a: ['foo', 'bar'] } }] };
     expect(getGQLFilter(filterState)).toEqual(gqlFilter);
   });
 
-  test('a simple exclusion option filter', () => {
+  test('a simple CONTAINS_ALL option filter', () => {
     const filterState = {
       value: {
         a: {
           __type: FILTER_TYPE.OPTION,
           selectedValues: ['foo', 'bar'],
-          isExclusion: true,
-        },
-      },
+          filterMode: 'CONTAINS_ALL'
+        }
+      }
+    };
+    const gqlFilter = { AND: [{ CONTAINS_ALL: { a: ['foo', 'bar'] } }] };
+    expect(getGQLFilter(filterState)).toEqual(gqlFilter);
+  });
+
+  test('a simple EXCLUDES_ANY option filter', () => {
+    const filterState = {
+      value: {
+        a: {
+          __type: FILTER_TYPE.OPTION,
+          selectedValues: ['foo', 'bar'],
+          filterMode: 'EXCLUDES_ANY'
+        }
+      }
     };
     const gqlFilter = {
       AND: [
         {
-          AND: [
-            {
-              '!=': {
-                a: 'foo',
-              },
-            },
-            {
-              '!=': {
-                a: 'bar',
-              },
-            },
-          ],
-        },
-      ],
+          EXCLUDES_ANY: {
+            a: ['foo', 'bar']
+          }
+        }
+      ]
+    };
+    expect(getGQLFilter(filterState)).toEqual(gqlFilter);
+  });
+
+  test('a simple EXCLUDES_ALL option filter', () => {
+    const filterState = {
+      value: {
+        a: {
+          __type: FILTER_TYPE.OPTION,
+          selectedValues: ['foo', 'bar'],
+          filterMode: 'EXCLUDES_ALL'
+        }
+      }
+    };
+    const gqlFilter = {
+      AND: [
+        {
+          EXCLUDES_ALL: {
+            a: ['foo', 'bar']
+          }
+        }
+      ]
     };
     expect(getGQLFilter(filterState)).toEqual(gqlFilter);
   });
@@ -72,11 +99,11 @@ describe('Get GQL filter from filter object from', () => {
         a: {
           __combineMode: /** @type {CombineMode} */ ('OR'),
           __type: FILTER_TYPE.OPTION,
-          selectedValues: ['foo', 'bar'],
-        },
-      },
+          selectedValues: ['foo', 'bar']
+        }
+      }
     };
-    const gqlFilter = { AND: [{ IN: { a: ['foo', 'bar'] } }] };
+    const gqlFilter = { AND: [{ CONTAINS_ANY: { a: ['foo', 'bar'] } }] };
     expect(getGQLFilter(filterState)).toEqual(gqlFilter);
   });
 
@@ -86,12 +113,15 @@ describe('Get GQL filter from filter object from', () => {
         a: {
           __combineMode: /** @type {CombineMode} */ ('AND'),
           __type: FILTER_TYPE.OPTION,
-          selectedValues: ['foo', 'bar'],
-        },
-      },
+          selectedValues: ['foo', 'bar']
+        }
+      }
     };
     const gqlFilter = {
-      AND: [{ AND: [{ IN: { a: ['foo'] } }, { IN: { a: ['bar'] } }] }],
+      AND: [{
+        AND: [{ CONTAINS_ANY: { a: ['foo'] } },
+          { CONTAINS_ANY: { a: ['bar'] } }]
+      }]
     };
     expect(getGQLFilter(filterState)).toEqual(gqlFilter);
   });
@@ -99,11 +129,11 @@ describe('Get GQL filter from filter object from', () => {
   test('a simple range filter', () => {
     const filterState = {
       value: {
-        a: { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 },
-      },
+        a: { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 }
+      }
     };
     const gqlFilter = {
-      AND: [{ AND: [{ GTE: { a: 0 } }, { LTE: { a: 1 } }] }],
+      AND: [{ AND: [{ GTE: { a: 0 } }, { LTE: { a: 1 } }] }]
     };
     expect(getGQLFilter(filterState)).toEqual(gqlFilter);
   });
@@ -116,68 +146,66 @@ describe('Get GQL filter from filter object from', () => {
         b: {
           __combineMode: /** @type {CombineMode} */ ('AND'),
           __type: FILTER_TYPE.OPTION,
-          selectedValues: ['foo', 'bar'],
+          selectedValues: ['foo', 'bar']
         },
-        c: { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 },
-      },
+        c: { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 }
+      }
     };
     const gqlFilter = {
       OR: [
-        { IN: { a: ['foo', 'bar'] } },
-        { AND: [{ IN: { b: ['foo'] } }, { IN: { b: ['bar'] } }] },
-        { AND: [{ GTE: { c: 0 } }, { LTE: { c: 1 } }] },
-      ],
+        { CONTAINS_ANY: { a: ['foo', 'bar'] } },
+        {
+          AND: [{ CONTAINS_ANY: { b: ['foo'] } },
+            { CONTAINS_ANY: { b: ['bar'] } }]
+        },
+        { AND: [{ GTE: { c: 0 } }, { LTE: { c: 1 } }] }
+      ]
     };
     expect(getGQLFilter(filterState)).toEqual(gqlFilter);
   });
 
-  test('simple filters with exclusion', () => {
+  test('simple filters with EXCLUDES_ANY', () => {
     const filterState = {
       __combineMode: /** @type {CombineMode} */ ('OR'),
       value: {
         a: {
           __type: FILTER_TYPE.OPTION,
           selectedValues: ['foo', 'bar'],
-          isExclusion: true,
+          filterMode: 'EXCLUDES_ANY'
         },
         b: {
           __combineMode: /** @type {CombineMode} */ ('AND'),
           __type: FILTER_TYPE.OPTION,
-          selectedValues: ['foo', 'bar'],
+          selectedValues: ['foo', 'bar']
         },
-        c: { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 },
-      },
+        c: { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 }
+      }
     };
     const gqlFilter = {
       OR: [
         {
-          AND: [
-            {
-              '!=': {
-                a: 'foo',
-              },
-            },
-            {
-              '!=': {
-                a: 'bar',
-              },
-            },
-          ],
+          EXCLUDES_ANY: {
+            a: ['foo', 'bar']
+          }
         },
-        { AND: [{ IN: { b: ['foo'] } }, { IN: { b: ['bar'] } }] },
-        { AND: [{ GTE: { c: 0 } }, { LTE: { c: 1 } }] },
-      ],
+        {
+          AND: [{ CONTAINS_ANY: { b: ['foo'] } },
+            { CONTAINS_ANY: { b: ['bar'] } }]
+        },
+        { AND: [{ GTE: { c: 0 } }, { LTE: { c: 1 } }] }
+      ]
     };
     expect(getGQLFilter(filterState)).toEqual(gqlFilter);
   });
+
   test('a combine mode only filter', () => {
     const filterState = {
       value: {
         a: {
           __combineMode: /** @type {CombineMode} */ ('OR'),
-          __type: FILTER_TYPE.OPTION,
-        },
-      },
+          __type: FILTER_TYPE.OPTION
+        }
+      }
     };
     const gqlFilter = { AND: [] };
     expect(getGQLFilter(filterState)).toEqual(gqlFilter);
@@ -197,25 +225,30 @@ describe('Get GQL filter from filter object from', () => {
     const filterState = {
       __combineMode: /** @type {CombineMode} */ ('OR'),
       value: {
-        'a.b': { __type: FILTER_TYPE.OPTION, selectedValues: ['foo', 'bar'] },
-      },
+        'a.b': { __type: FILTER_TYPE.OPTION, selectedValues: ['foo', 'bar'] }
+      }
     };
     const gqlFilter = {
-      OR: [{ nested: { path: 'a', OR: [{ IN: { b: ['foo', 'bar'] } }] } }],
+      OR: [{
+        nested: {
+          path: 'a',
+          OR: [{ CONTAINS_ANY: { b: ['foo', 'bar'] } }]
+        }
+      }]
     };
     expect(getGQLFilter(filterState)).toEqual(gqlFilter);
   });
 
-  test('a nested exclusion filter', () => {
+  test('a nested EXCLUDES_ANY filter', () => {
     const filterState = {
       __combineMode: /** @type {CombineMode} */ ('OR'),
       value: {
         'a.b': {
           __type: FILTER_TYPE.OPTION,
           selectedValues: ['foo', 'bar'],
-          isExclusion: true,
-        },
-      },
+          filterMode: 'EXCLUDES_ANY'
+        }
+      }
     };
     const gqlFilter = {
       OR: [
@@ -224,23 +257,14 @@ describe('Get GQL filter from filter object from', () => {
             path: 'a',
             OR: [
               {
-                AND: [
-                  {
-                    '!=': {
-                      b: 'foo',
-                    },
-                  },
-                  {
-                    '!=': {
-                      b: 'bar',
-                    },
-                  },
-                ],
-              },
-            ],
-          },
-        },
-      ],
+                EXCLUDES_ANY: {
+                  b: ['foo', 'bar']
+                }
+              }
+            ]
+          }
+        }
+      ]
     };
     expect(getGQLFilter(filterState)).toEqual(gqlFilter);
   });
@@ -249,8 +273,8 @@ describe('Get GQL filter from filter object from', () => {
     const filterState = {
       value: {
         'a.b': { __type: FILTER_TYPE.OPTION, selectedValues: ['foo', 'bar'] },
-        'a.c': { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 },
-      },
+        'a.c': { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 }
+      }
     };
     const gqlFilter = {
       AND: [
@@ -258,12 +282,12 @@ describe('Get GQL filter from filter object from', () => {
           nested: {
             path: 'a',
             AND: [
-              { IN: { b: ['foo', 'bar'] } },
-              { AND: [{ GTE: { c: 0 } }, { LTE: { c: 1 } }] },
-            ],
-          },
-        },
-      ],
+              { CONTAINS_ANY: { b: ['foo', 'bar'] } },
+              { AND: [{ GTE: { c: 0 } }, { LTE: { c: 1 } }] }
+            ]
+          }
+        }
+      ]
     };
     expect(getGQLFilter(filterState)).toEqual(gqlFilter);
   });
@@ -274,10 +298,10 @@ describe('Get GQL filter from filter object from', () => {
         'a.b': {
           __type: FILTER_TYPE.OPTION,
           selectedValues: ['foo', 'bar'],
-          isExclusion: true,
+          filterMode: 'EXCLUDES_ANY'
         },
-        'a.c': { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 },
-      },
+        'a.c': { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 }
+      }
     };
     const gqlFilter = {
       AND: [
@@ -286,24 +310,15 @@ describe('Get GQL filter from filter object from', () => {
             path: 'a',
             AND: [
               {
-                AND: [
-                  {
-                    '!=': {
-                      b: 'foo',
-                    },
-                  },
-                  {
-                    '!=': {
-                      b: 'bar',
-                    },
-                  },
-                ],
+                EXCLUDES_ANY: {
+                  b: ['foo', 'bar']
+                }
               },
-              { AND: [{ GTE: { c: 0 } }, { LTE: { c: 1 } }] },
-            ],
-          },
-        },
-      ],
+              { AND: [{ GTE: { c: 0 } }, { LTE: { c: 1 } }] }
+            ]
+          }
+        }
+      ]
     };
     expect(getGQLFilter(filterState)).toEqual(gqlFilter);
   });
@@ -312,24 +327,24 @@ describe('Get GQL filter from filter object from', () => {
     const filterState = {
       value: {
         'a.b': { __type: FILTER_TYPE.OPTION, selectedValues: ['foo', 'bar'] },
-        'c.d': { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 },
-      },
+        'c.d': { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 }
+      }
     };
     const gqlFilter = {
       AND: [
         {
           nested: {
             path: 'a',
-            AND: [{ IN: { b: ['foo', 'bar'] } }],
-          },
+            AND: [{ CONTAINS_ANY: { b: ['foo', 'bar'] } }]
+          }
         },
         {
           nested: {
             path: 'c',
-            AND: [{ AND: [{ GTE: { d: 0 } }, { LTE: { d: 1 } }] }],
-          },
-        },
-      ],
+            AND: [{ AND: [{ GTE: { d: 0 } }, { LTE: { d: 1 } }] }]
+          }
+        }
+      ]
     };
     expect(getGQLFilter(filterState)).toEqual(gqlFilter);
   });
@@ -340,10 +355,10 @@ describe('Get GQL filter from filter object from', () => {
         'a.b': {
           __type: FILTER_TYPE.OPTION,
           selectedValues: ['foo', 'bar'],
-          isExclusion: true,
+          filterMode: 'EXCLUDES_ALL'
         },
-        'c.d': { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 },
-      },
+        'c.d': { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 }
+      }
     };
     const gqlFilter = {
       AND: [
@@ -352,29 +367,20 @@ describe('Get GQL filter from filter object from', () => {
             path: 'a',
             AND: [
               {
-                AND: [
-                  {
-                    '!=': {
-                      b: 'foo',
-                    },
-                  },
-                  {
-                    '!=': {
-                      b: 'bar',
-                    },
-                  },
-                ],
-              },
-            ],
-          },
+                EXCLUDES_ALL: {
+                  b: ['foo', 'bar']
+                }
+              }
+            ]
+          }
         },
         {
           nested: {
             path: 'c',
-            AND: [{ AND: [{ GTE: { d: 0 } }, { LTE: { d: 1 } }] }],
-          },
-        },
-      ],
+            AND: [{ AND: [{ GTE: { d: 0 } }, { LTE: { d: 1 } }] }]
+          }
+        }
+      ]
     };
     expect(getGQLFilter(filterState)).toEqual(gqlFilter);
   });
@@ -388,16 +394,16 @@ describe('Get GQL filter from filter object from', () => {
           value: {
             'a.b': {
               __type: FILTER_TYPE.OPTION,
-              selectedValues: ['foo', 'bar'],
+              selectedValues: ['foo', 'bar']
             },
             'c.d': {
               __type: FILTER_TYPE.RANGE,
               lowerBound: 0,
-              upperBound: 1,
-            },
-          },
-        },
-      },
+              upperBound: 1
+            }
+          }
+        }
+      }
     };
     const gqlFilter = {
       OR: [
@@ -407,12 +413,12 @@ describe('Get GQL filter from filter object from', () => {
             OR: [
               {
                 AND: [
-                  { IN: { x: ['y'] } },
-                  { OR: [{ IN: { b: ['foo', 'bar'] } }] },
-                ],
-              },
-            ],
-          },
+                  { CONTAINS_ANY: { x: ['y'] } },
+                  { OR: [{ CONTAINS_ANY: { b: ['foo', 'bar'] } }] }
+                ]
+              }
+            ]
+          }
         },
         {
           nested: {
@@ -420,14 +426,14 @@ describe('Get GQL filter from filter object from', () => {
             OR: [
               {
                 AND: [
-                  { IN: { x: ['y'] } },
-                  { OR: [{ AND: [{ GTE: { d: 0 } }, { LTE: { d: 1 } }] }] },
-                ],
-              },
-            ],
-          },
-        },
-      ],
+                  { CONTAINS_ANY: { x: ['y'] } },
+                  { OR: [{ AND: [{ GTE: { d: 0 } }, { LTE: { d: 1 } }] }] }
+                ]
+              }
+            ]
+          }
+        }
+      ]
     };
     expect(getGQLFilter(filterState)).toEqual(gqlFilter);
   });
@@ -442,16 +448,16 @@ describe('Get GQL filter from filter object from', () => {
             'a.b': {
               __type: FILTER_TYPE.OPTION,
               selectedValues: ['foo', 'bar'],
-              isExclusion: true,
+              filterMode: 'EXCLUDES_ANY'
             },
             'c.d': {
               __type: FILTER_TYPE.RANGE,
               lowerBound: 0,
-              upperBound: 1,
-            },
-          },
-        },
-      },
+              upperBound: 1
+            }
+          }
+        }
+      }
     };
     const gqlFilter = {
       OR: [
@@ -461,29 +467,20 @@ describe('Get GQL filter from filter object from', () => {
             OR: [
               {
                 AND: [
-                  { IN: { x: ['y'] } },
+                  { CONTAINS_ANY: { x: ['y'] } },
                   {
                     OR: [
                       {
-                        AND: [
-                          {
-                            '!=': {
-                              b: 'foo',
-                            },
-                          },
-                          {
-                            '!=': {
-                              b: 'bar',
-                            },
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
+                        EXCLUDES_ANY: {
+                          b: ['foo', 'bar']
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           nested: {
@@ -491,17 +488,18 @@ describe('Get GQL filter from filter object from', () => {
             OR: [
               {
                 AND: [
-                  { IN: { x: ['y'] } },
-                  { OR: [{ AND: [{ GTE: { d: 0 } }, { LTE: { d: 1 } }] }] },
-                ],
-              },
-            ],
-          },
-        },
-      ],
+                  { CONTAINS_ANY: { x: ['y'] } },
+                  { OR: [{ AND: [{ GTE: { d: 0 } }, { LTE: { d: 1 } }] }] }
+                ]
+              }
+            ]
+          }
+        }
+      ]
     };
     expect(getGQLFilter(filterState)).toEqual(gqlFilter);
   });
+
   test('various filters', () => {
     const filterState = {
       value: {
@@ -509,38 +507,42 @@ describe('Get GQL filter from filter object from', () => {
         'b.c': {
           __combineMode: /** @type {CombineMode} */ ('AND'),
           __type: FILTER_TYPE.OPTION,
-          selectedValues: ['foo', 'bar'],
+          selectedValues: ['foo', 'bar']
         },
         'b.d': { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 },
         e: {
           __combineMode: /** @type {CombineMode} */ ('OR'),
-          __type: FILTER_TYPE.OPTION,
+          __type: FILTER_TYPE.OPTION
         },
-        'f.g': { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 },
-      },
+        'f.g': { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 }
+      }
     };
     const gqlFilter = {
       AND: [
-        { IN: { a: ['foo', 'bar'] } },
+        { CONTAINS_ANY: { a: ['foo', 'bar'] } },
         {
           nested: {
             path: 'b',
             AND: [
-              { AND: [{ IN: { c: ['foo'] } }, { IN: { c: ['bar'] } }] },
-              { AND: [{ GTE: { d: 0 } }, { LTE: { d: 1 } }] },
-            ],
-          },
+              {
+                AND: [{ CONTAINS_ANY: { c: ['foo'] } },
+                  { CONTAINS_ANY: { c: ['bar'] } }]
+              },
+              { AND: [{ GTE: { d: 0 } }, { LTE: { d: 1 } }] }
+            ]
+          }
         },
         {
           nested: {
             path: 'f',
-            AND: [{ AND: [{ GTE: { g: 0 } }, { LTE: { g: 1 } }] }],
-          },
-        },
-      ],
+            AND: [{ AND: [{ GTE: { g: 0 } }, { LTE: { g: 1 } }] }]
+          }
+        }
+      ]
     };
     expect(getGQLFilter(filterState)).toEqual(gqlFilter);
   });
+
   test('a simple composed filter', () => {
     const filterState = {
       __combineMode: /** @type {CombineMode} */ ('AND'),
@@ -550,27 +552,27 @@ describe('Get GQL filter from filter object from', () => {
           __combineMode: /** @type {CombineMode} */ ('AND'),
           __type: FILTER_TYPE.STANDARD,
           value: {
-            a: { __type: FILTER_TYPE.OPTION, selectedValues: ['foo', 'bar'] },
-          },
+            a: { __type: FILTER_TYPE.OPTION, selectedValues: ['foo', 'bar'] }
+          }
         },
         {
           __combineMode: /** @type {CombineMode} */ ('OR'),
           __type: FILTER_TYPE.STANDARD,
           value: {
-            b: { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 },
-          },
-        },
-      ],
+            b: { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 }
+          }
+        }
+      ]
     };
     const gqlFilter = {
       AND: [
         {
-          AND: [{ IN: { a: ['foo', 'bar'] } }],
+          AND: [{ CONTAINS_ANY: { a: ['foo', 'bar'] } }]
         },
         {
-          OR: [{ AND: [{ GTE: { b: 0 } }, { LTE: { b: 1 } }] }],
-        },
-      ],
+          OR: [{ AND: [{ GTE: { b: 0 } }, { LTE: { b: 1 } }] }]
+        }
+      ]
     };
     expect(getGQLFilter(filterState)).toEqual(gqlFilter);
   });
@@ -587,46 +589,38 @@ describe('Get GQL filter from filter object from', () => {
             a: {
               __type: FILTER_TYPE.OPTION,
               selectedValues: ['foo', 'bar'],
-              isExclusion: true,
-            },
-          },
+              filterMode: 'EXCLUDES_ANY'
+            }
+          }
         },
         {
           __combineMode: /** @type {CombineMode} */ ('OR'),
           __type: FILTER_TYPE.STANDARD,
           value: {
-            b: { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 },
-          },
-        },
-      ],
+            b: { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 }
+          }
+        }
+      ]
     };
     const gqlFilter = {
       AND: [
         {
           AND: [
             {
-              AND: [
-                {
-                  '!=': {
-                    a: 'foo',
-                  },
-                },
-                {
-                  '!=': {
-                    a: 'bar',
-                  },
-                },
-              ],
-            },
-          ],
+              EXCLUDES_ANY: {
+                a: ['foo', 'bar']
+              }
+            }
+          ]
         },
         {
-          OR: [{ AND: [{ GTE: { b: 0 } }, { LTE: { b: 1 } }] }],
-        },
-      ],
+          OR: [{ AND: [{ GTE: { b: 0 } }, { LTE: { b: 1 } }] }]
+        }
+      ]
     };
     expect(getGQLFilter(filterState)).toEqual(gqlFilter);
   });
+
   test('a higher-order composed filter', () => {
     const filterState = {
       __combineMode: /** @type {CombineMode} */ ('AND'),
@@ -642,34 +636,34 @@ describe('Get GQL filter from filter object from', () => {
               value: {
                 a: {
                   __type: FILTER_TYPE.OPTION,
-                  selectedValues: ['foo', 'bar'],
-                },
-              },
-            },
-          ],
+                  selectedValues: ['foo', 'bar']
+                }
+              }
+            }
+          ]
         },
         {
           __combineMode: /** @type {CombineMode} */ ('OR'),
           __type: FILTER_TYPE.STANDARD,
           value: {
-            b: { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 },
-          },
-        },
-      ],
+            b: { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 }
+          }
+        }
+      ]
     };
     const gqlFilter = {
       AND: [
         {
           OR: [
             {
-              AND: [{ IN: { a: ['foo', 'bar'] } }],
-            },
-          ],
+              AND: [{ CONTAINS_ANY: { a: ['foo', 'bar'] } }]
+            }
+          ]
         },
         {
-          OR: [{ AND: [{ GTE: { b: 0 } }, { LTE: { b: 1 } }] }],
-        },
-      ],
+          OR: [{ AND: [{ GTE: { b: 0 } }, { LTE: { b: 1 } }] }]
+        }
+      ]
     };
     expect(getGQLFilter(filterState)).toEqual(gqlFilter);
   });
@@ -690,20 +684,20 @@ describe('Get GQL filter from filter object from', () => {
                 a: {
                   __type: FILTER_TYPE.OPTION,
                   selectedValues: ['foo', 'bar'],
-                  isExclusion: true,
-                },
-              },
-            },
-          ],
+                  filterMode: 'EXCLUDES_ANY'
+                }
+              }
+            }
+          ]
         },
         {
           __combineMode: /** @type {CombineMode} */ ('OR'),
           __type: FILTER_TYPE.STANDARD,
           value: {
-            b: { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 },
-          },
-        },
-      ],
+            b: { __type: FILTER_TYPE.RANGE, lowerBound: 0, upperBound: 1 }
+          }
+        }
+      ]
     };
     const gqlFilter = {
       AND: [
@@ -712,27 +706,18 @@ describe('Get GQL filter from filter object from', () => {
             {
               AND: [
                 {
-                  AND: [
-                    {
-                      '!=': {
-                        a: 'foo',
-                      },
-                    },
-                    {
-                      '!=': {
-                        a: 'bar',
-                      },
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
+                  EXCLUDES_ANY: {
+                    a: ['foo', 'bar']
+                  }
+                }
+              ]
+            }
+          ]
         },
         {
-          OR: [{ AND: [{ GTE: { b: 0 } }, { LTE: { b: 1 } }] }],
-        },
-      ],
+          OR: [{ AND: [{ GTE: { b: 0 } }, { LTE: { b: 1 } }] }]
+        }
+      ]
     };
     expect(getGQLFilter(filterState)).toEqual(gqlFilter);
   });
@@ -742,12 +727,12 @@ describe('Get query info objects for aggregation options data', () => {
   const anchorConfig = {
     field: 'a',
     tabs: ['t1'],
-    options: ['a0', 'a1'],
+    options: ['a0', 'a1']
   };
   const anchorValue = anchorConfig.options[0];
   const filterTabs = [
     { title: 't0', fields: ['f0', 'f1'] },
-    { title: 't1', fields: ['f2.foo', 'f2.bar', 'f3.baz'] },
+    { title: 't1', fields: ['f2.foo', 'f2.bar', 'f3.baz'] }
   ];
   const anchoredFilterTabs = filterTabs.filter(({ title }) =>
     anchorConfig.tabs.includes(title)
@@ -759,40 +744,40 @@ describe('Get query info objects for aggregation options data', () => {
       {
         nested: {
           path: 'f2',
-          AND: [{ IN: { foo: ['y'] } }],
-        },
-      },
-    ],
+          AND: [{ IN: { foo: ['y'] } }]
+        }
+      }
+    ]
   };
   test('No filter, no anchor config', () => {
     const queryInfo = getQueryInfoForAggregationOptionsData({
-      filterTabs,
+      filterTabs
     });
     const expected = {
       fieldsByGroup: { main: ['f0', 'f1', 'f2.foo', 'f2.bar', 'f3.baz'] },
-      gqlFilterByGroup: { filter_main: undefined },
+      gqlFilterByGroup: { filter_main: undefined }
     };
     expect(queryInfo).toEqual(expected);
   });
   test('No filter, no anchor value', () => {
     const queryInfo = getQueryInfoForAggregationOptionsData({
       anchorConfig,
-      filterTabs,
+      filterTabs
     });
     const expected = {
       fieldsByGroup: { main: ['f0', 'f1', 'f2.foo', 'f2.bar', 'f3.baz'] },
-      gqlFilterByGroup: { filter_main: undefined },
+      gqlFilterByGroup: { filter_main: undefined }
     };
     expect(queryInfo).toEqual(expected);
   });
   test('No filter, no anchor value, anchored tabs only', () => {
     const queryInfo = getQueryInfoForAggregationOptionsData({
       anchorConfig,
-      filterTabs: anchoredFilterTabs,
+      filterTabs: anchoredFilterTabs
     });
     const expected = {
       fieldsByGroup: { main: ['f2.foo', 'f2.bar', 'f3.baz'] },
-      gqlFilterByGroup: { filter_main: undefined },
+      gqlFilterByGroup: { filter_main: undefined }
     };
     expect(queryInfo).toEqual(expected);
   });
@@ -800,23 +785,23 @@ describe('Get query info objects for aggregation options data', () => {
     const queryInfo = getQueryInfoForAggregationOptionsData({
       anchorConfig,
       anchorValue,
-      filterTabs,
+      filterTabs
     });
     const expected = {
       fieldsByGroup: {
         main: ['f0', 'f1'],
         f2: ['f2.foo', 'f2.bar'],
-        f3: ['f3.baz'],
+        f3: ['f3.baz']
       },
       gqlFilterByGroup: {
         filter_main: undefined,
         filter_f2: {
-          AND: [{ nested: { path: 'f2', AND: [{ IN: { a: ['a0'] } }] } }],
+          AND: [{ nested: { path: 'f2', AND: [{ CONTAINS_ANY: { a: ['a0'] } }] } }]
         },
         filter_f3: {
-          AND: [{ nested: { path: 'f3', AND: [{ IN: { a: ['a0'] } }] } }],
-        },
-      },
+          AND: [{ nested: { path: 'f3', AND: [{ CONTAINS_ANY: { a: ['a0'] } }] } }]
+        }
+      }
     };
     expect(queryInfo).toEqual(expected);
   });
@@ -824,33 +809,34 @@ describe('Get query info objects for aggregation options data', () => {
     const queryInfo = getQueryInfoForAggregationOptionsData({
       anchorConfig,
       anchorValue,
-      filterTabs: anchoredFilterTabs,
+      filterTabs: anchoredFilterTabs
     });
     const expected = {
       fieldsByGroup: {
         f2: ['f2.foo', 'f2.bar'],
-        f3: ['f3.baz'],
+        f3: ['f3.baz']
       },
       gqlFilterByGroup: {
         filter_main: undefined,
         filter_f2: {
-          AND: [{ nested: { path: 'f2', AND: [{ IN: { a: ['a0'] } }] } }],
+          AND: [{ nested: { path: 'f2', AND: [{ CONTAINS_ANY: { a: ['a0'] } }] } }]
         },
         filter_f3: {
-          AND: [{ nested: { path: 'f3', AND: [{ IN: { a: ['a0'] } }] } }],
-        },
-      },
+          AND: [{ nested: { path: 'f3', AND: [{ CONTAINS_ANY: { a: ['a0'] } }] } }]
+        }
+      }
     };
     expect(queryInfo).toEqual(expected);
   });
+
   test('With filter, no anchor config', () => {
     const queryInfo = getQueryInfoForAggregationOptionsData({
       filterTabs,
-      gqlFilter,
+      gqlFilter
     });
     const expected = {
       fieldsByGroup: { main: ['f0', 'f1', 'f2.foo', 'f2.bar', 'f3.baz'] },
-      gqlFilterByGroup: { filter_main: gqlFilter },
+      gqlFilterByGroup: { filter_main: gqlFilter }
     };
     expect(queryInfo).toEqual(expected);
   });
@@ -858,11 +844,11 @@ describe('Get query info objects for aggregation options data', () => {
     const queryInfo = getQueryInfoForAggregationOptionsData({
       anchorConfig,
       filterTabs,
-      gqlFilter,
+      gqlFilter
     });
     const expected = {
       fieldsByGroup: { main: ['f0', 'f1', 'f2.foo', 'f2.bar', 'f3.baz'] },
-      gqlFilterByGroup: { filter_main: gqlFilter },
+      gqlFilterByGroup: { filter_main: gqlFilter }
     };
     expect(queryInfo).toEqual(expected);
   });
@@ -870,11 +856,11 @@ describe('Get query info objects for aggregation options data', () => {
     const queryInfo = getQueryInfoForAggregationOptionsData({
       anchorConfig,
       filterTabs: anchoredFilterTabs,
-      gqlFilter,
+      gqlFilter
     });
     const expected = {
       fieldsByGroup: { main: ['f2.foo', 'f2.bar', 'f3.baz'] },
-      gqlFilterByGroup: { filter_main: gqlFilter },
+      gqlFilterByGroup: { filter_main: gqlFilter }
     };
     expect(queryInfo).toEqual(expected);
   });
@@ -888,24 +874,24 @@ describe('Get query info objects for aggregation options data', () => {
             path: 'f2',
             AND: [
               {
-                AND: [{ IN: { a: ['a0'] } }, { AND: [{ IN: { foo: ['y'] } }] }],
-              },
-            ],
-          },
-        },
-      ],
+                AND: [{ CONTAINS_ANY: { a: ['a0'] } }, { AND: [{ CONTAINS_ANY: { foo: ['y'] } }] }]
+              }
+            ]
+          }
+        }
+      ]
     };
     const queryInfo = getQueryInfoForAggregationOptionsData({
       anchorConfig,
       anchorValue,
       filterTabs,
-      gqlFilter: gqlFilterWithAnchor,
+      gqlFilter: gqlFilterWithAnchor
     });
     const expected = {
       fieldsByGroup: {
         main: ['f0', 'f1'],
         f2: ['f2.foo', 'f2.bar'],
-        f3: ['f3.baz'],
+        f3: ['f3.baz']
       },
       gqlFilterByGroup: {
         filter_main: gqlFilterWithAnchor,
@@ -918,23 +904,23 @@ describe('Get query info objects for aggregation options data', () => {
                 AND: [
                   {
                     AND: [
-                      { IN: { a: ['a0'] } },
-                      { AND: [{ IN: { foo: ['y'] } }] },
-                    ],
+                      { CONTAINS_ANY: { a: ['a0'] } },
+                      { AND: [{ CONTAINS_ANY: { foo: ['y'] } }] }
+                    ]
                   },
-                  { IN: { a: ['a0'] } },
-                ],
-              },
-            },
-          ],
+                  { CONTAINS_ANY: { a: ['a0'] } }
+                ]
+              }
+            }
+          ]
         },
         filter_f3: {
           AND: [
             ...gqlFilterWithAnchor.AND,
-            { nested: { path: 'f3', AND: [{ IN: { a: ['a0'] } }] } },
-          ],
-        },
-      },
+            { nested: { path: 'f3', AND: [{ CONTAINS_ANY: { a: ['a0'] } }] } }
+          ]
+        }
+      }
     };
     expect(queryInfo).toEqual(expected);
   });

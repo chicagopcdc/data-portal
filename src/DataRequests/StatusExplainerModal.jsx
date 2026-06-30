@@ -39,17 +39,15 @@ const getTransitionLabelSize = (label) => {
   };
 };
 
-export default function StatusExplainerModal({
-  isOpen,
-  onClose,
-  statusFlow,
-}) {
-  if (!isOpen) {
+export default function StatusExplainerModal(props) {
+  const states = props.statusFlow?.states || [];
+
+  if (!props.isOpen) {
     return null;
   }
 
-  const states = statusFlow?.states || [];
-  const transitions = statusFlow?.transitions || [];
+  const transitions = props.statusFlow?.transitions || [];
+  const markerId = `status-flow-arrowhead-${crypto.randomUUID()}`;
 
   const graph = new dagre.graphlib.Graph({
     multigraph: true,
@@ -144,7 +142,7 @@ export default function StatusExplainerModal({
           <button
             type='button'
             className='status-explainer-modal__close-button'
-            onClick={onClose}
+            onClick={props.onClose}
           >
             Close
           </button>
@@ -165,7 +163,7 @@ export default function StatusExplainerModal({
             >
               <defs>
                 <marker
-                  id='status-flow-arrowhead'
+                  id={markerId}
                   markerWidth='10'
                   markerHeight='10'
                   refX='8'
@@ -182,7 +180,7 @@ export default function StatusExplainerModal({
                   key={id}
                   d={getPath(points)}
                   className='status-flow-diagram__arrow-line'
-                  markerEnd='url(#status-flow-arrowhead)'
+                  markerEnd={`url(#${markerId})`}
                 />
               ))}
             </svg>

@@ -60,9 +60,12 @@ export default function AdminProjectActions({
   onClose,
 }) {
   const dispatch = useAppDispatch();
-  const statusFlow = useAppSelector(
-    (state) => state.explorer.config.dataRequests?.statusFlow,
+  const dataRequestsConfig = useAppSelector(
+    (state) => state.explorer.config.dataRequests,
   );
+  const statusFlow = dataRequestsConfig?.statusFlow;
+  const isStatusFlowEnabled =
+    dataRequestsConfig?.enabled && Boolean(statusFlow);
   const [actionType, setActionType] = useState('');
   const [currentEmailInput, setCurrentEmailInput] = useState('');
   const [isActionPending, setActionPending] = useState(false);
@@ -139,23 +142,28 @@ export default function AdminProjectActions({
                 {({ values, errors, touched }) => (
                   <Form className='data-request__form'>
                     <div className='data-request__header'>
-                      <h2>Change Project State
-                        <button
-                          type='button'
-                          className='data-request__status-info-icon'
-                          aria-label='Show status explainer modal'
-                          onClick={() => setStatusExplainer(true)}
-                        >
-                          <FontAwesomeIcon icon='circle-info' />
-                        </button>
+                      <h2>
+                        Change Project State
+                        {isStatusFlowEnabled && (
+                          <button
+                            type='button'
+                            className='data-request__status-info-icon'
+                            aria-label='Show status explainer modal'
+                            onClick={() => setStatusExplainer(true)}
+                          >
+                            <FontAwesomeIcon icon='circle-info' />
+                          </button>
+                        )}
                       </h2>
                     </div>
 
-                    <StatusExplainerModal
-                      isOpen={statusExplainer}
-                      onClose={() => setStatusExplainer(false)}
-                      statusFlow={statusFlow}
-                    />
+                    {isStatusFlowEnabled && (
+                      <StatusExplainerModal
+                        isOpen={statusExplainer}
+                        onClose={() => setStatusExplainer(false)}
+                        statusFlow={statusFlow}
+                      />
+                    )}
 
                     <div className='data-request__fields'>
                       <Field name='state'>

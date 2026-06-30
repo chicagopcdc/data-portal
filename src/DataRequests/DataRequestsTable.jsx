@@ -155,9 +155,12 @@ function DataRequestsTable({
   const [isMoreActionsPopupOpen, setMoreActionsPopupOpen] = useState(false);
   const [isVerifyPopupOpen, setVerifyPopupOpen] = useState(false);
   const [statusExplainer, setStatusExplainer] = useState(false);
-  const statusFlow = useAppSelector(
-    (state) => state.explorer.config.dataRequests?.statusFlow,
+  const dataRequestsConfig = useAppSelector(
+    (state) => state.explorer.config.dataRequests,
   );
+  const statusFlow = dataRequestsConfig?.statusFlow;
+  const isStatusFlowEnabled =
+    dataRequestsConfig?.enabled && Boolean(statusFlow);
 
   const tableHeader = [
     'ID',
@@ -167,14 +170,16 @@ function DataRequestsTable({
     'Submitted Date',
     <span className='data-request__status-header'>
       Status
-      <button
-        type='button'
-        className='data-request__status-info-icon'
-        aria-label='Show status explainer modal'
-        onClick={() => setStatusExplainer(true)}
-      >
-        <FontAwesomeIcon icon='circle-info' />
-      </button>
+      {isStatusFlowEnabled && (
+        <button
+          type='button'
+          className='data-request__status-info-icon'
+          aria-label='Show status explainer modal'
+          onClick={() => setStatusExplainer(true)}
+        >
+          <FontAwesomeIcon icon='circle-info' />
+        </button>
+      )}
     </span>,
     'Consortia',
   ];
@@ -327,11 +332,13 @@ function DataRequestsTable({
           </Popup>
         )}
       </div>
-      <StatusExplainerModal
-        isOpen={statusExplainer}
-        onClose={() => setStatusExplainer(false)}
-        statusFlow={statusFlow}
-      />
+      {isStatusFlowEnabled && (
+        <StatusExplainerModal
+          isOpen={statusExplainer}
+          onClose={() => setStatusExplainer(false)}
+          statusFlow={statusFlow}
+        />
+      )}
       {isLoading ? (
         <Spinner />
       ) : (

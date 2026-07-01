@@ -284,6 +284,7 @@ function DataRequestsTable({
         )}
         {isVerifyPopupOpen && (
           <Popup
+            className='data-request__csl-popup'
             title='Verify Person Or Entity Using The Consolidated Screening List'
             onClose={() => {
               setVerifyPopupOpen(false);

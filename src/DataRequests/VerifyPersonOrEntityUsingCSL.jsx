@@ -94,7 +94,9 @@ export default function VerifyPersonOrEntityUsingCSL() {
                 {responseJson.length === 0 ? (
                   <p>No matches found</p>
                 ) : (
-                  <Table header={tableHeader} data={responseJson} />
+                  <div className='data-request__csl-results'>
+                    <Table header={tableHeader} data={responseJson} />
+                  </div>
                 )}
               </div>
             )

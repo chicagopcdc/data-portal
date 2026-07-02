@@ -108,6 +108,7 @@
     ]
   },
   "explorerWizard": {
+    "version": 1,
     "steps": [
       {
         "route": "/explorer",

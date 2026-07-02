@@ -435,7 +435,12 @@
       },
       "patientIds": {
         "filter": true,
-        "export": true
+        "export": true,
+        "externalCommons": {
+          "idc": {
+            "code": "import time\nfrom idc_index import IDCClient\nfrom pathlib import Path\n\n\npatient_ids = None\nexport_entire_idc = False\n\nif export_entire_idc:\n    client = IDCClient()\n    client.index.to_json(\"idc_index.json\", orient=\"records\", indent=2)\n    print(\"✅ Saved full index to idc_index.json\")\n\n    client.index.to_json(\"idc_index_table.json\", orient=\"table\", indent=2)\n    print(\"✅ Saved full index to idc_index_table.json\")\n\n    import pandas as pd\n    df_records = pd.read_json(\"idc_index.json\", orient=\"records\")\n    print(df_records.shape)\n    print(df_records.head())\nelse:\n    patient_ids = [\"TCGA-3L-AA1B\", \"PANLMU\"]\n\n    def timed(label, func, *args, **kwargs):\n        start = time.perf_counter()\n        result = func(*args, **kwargs)\n        end = time.perf_counter()\n        print(f\"[⏱️] {label} took {end - start:.3f} seconds\")\n        return result\n\n\n    client = timed(\"Initialize IDCClient\", IDCClient)\n\n    total_count = timed(\"Count total records\", lambda: len(client.index))\n    print(f\"Total records: {total_count}\")\n\n    selection = timed(\n        \"Filter by PatientID\",\n        lambda: client.index[client.index[\"PatientID\"].isin(patient_ids)]\n    )\n    selection_count = timed(\"Count selection\", lambda: len(selection))\n    print(f\"Selection count: {selection_count}\")\n    # print(selection[\"PatientID\"])\n    # Save entire index DataFrame to JSON\n    timed(\n        \"Save selection to JSON\",\n        lambda: selection.to_json(\"idc_index_selection.json\", orient=\"records\", indent=2)\n    )\n    print(\"✅ Saved selection index to idc_index_selection.json\")\n\n    # Download data for selected patients\n    Path(\"files\").mkdir(exist_ok=True)\n    timed(\n        \"Download from selection\",\n        client.download_from_selection,\n        patientId=patient_ids,\n        downloadDir=\"./files\"\n    )"
+          }
+        }
       },
       "survivalAnalysis": {
         "result": {
@@ -912,7 +917,12 @@
       },
       "patientIds": {
         "filter": false,
-        "export": true
+        "export": true,
+        "externalCommons": {
+          "idc": {
+            "code": "import time\nfrom idc_index import IDCClient\nfrom pathlib import Path\n\n\npatient_ids = None\nexport_entire_idc = False\n\nif export_entire_idc:\n    client = IDCClient()\n    client.index.to_json(\"idc_index.json\", orient=\"records\", indent=2)\n    print(\"✅ Saved full index to idc_index.json\")\n\n    client.index.to_json(\"idc_index_table.json\", orient=\"table\", indent=2)\n    print(\"✅ Saved full index to idc_index_table.json\")\n\n    import pandas as pd\n    df_records = pd.read_json(\"idc_index.json\", orient=\"records\")\n    print(df_records.shape)\n    print(df_records.head())\nelse:\n    patient_ids = [\"TCGA-3L-AA1B\", \"PANLMU\"]\n\n    def timed(label, func, *args, **kwargs):\n        start = time.perf_counter()\n        result = func(*args, **kwargs)\n        end = time.perf_counter()\n        print(f\"[⏱️] {label} took {end - start:.3f} seconds\")\n        return result\n\n\n    client = timed(\"Initialize IDCClient\", IDCClient)\n\n    total_count = timed(\"Count total records\", lambda: len(client.index))\n    print(f\"Total records: {total_count}\")\n\n    selection = timed(\n        \"Filter by PatientID\",\n        lambda: client.index[client.index[\"PatientID\"].isin(patient_ids)]\n    )\n    selection_count = timed(\"Count selection\", lambda: len(selection))\n    print(f\"Selection count: {selection_count}\")\n    # print(selection[\"PatientID\"])\n    # Save entire index DataFrame to JSON\n    timed(\n        \"Save selection to JSON\",\n        lambda: selection.to_json(\"idc_index_selection.json\", orient=\"records\", indent=2)\n    )\n    print(\"✅ Saved selection index to idc_index_selection.json\")\n\n    # Download data for selected patients\n    Path(\"files\").mkdir(exist_ok=True)\n    timed(\n        \"Download from selection\",\n        client.download_from_selection,\n        patientId=patient_ids,\n        downloadDir=\"./files\"\n    )"
+          }
+        }
       },
       "survivalAnalysis": {
         "result": {

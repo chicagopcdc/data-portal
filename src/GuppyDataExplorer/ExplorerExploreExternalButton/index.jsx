@@ -45,6 +45,7 @@ async function fetchExternalCommonsInfo(payload) {
  * @param {ExplorerFilter} props.filter - Current filter object for queries
  * @param {Array<{ resourceName: string, count: number }>} props.selectedCommonsCounts - Array of commons with their subject counts
  * @param {ExternalConfig} props.externalConfig - External configuration object from commons config
+ * @param {string} props.imagingDataCommonsCode - IDC Python example from portal config
  * @param {boolean} props.isLoading - Loading state controlled by parent
  * @param {function} props.setIsLoading - Function to update loading state from parent
  */
@@ -52,6 +53,7 @@ function ExplorerExploreExternalButton({
   filter,
   selectedCommonsCounts,
   externalConfig,
+  imagingDataCommonsCode,
   isLoading,
   setIsLoading,
 }) {
@@ -65,6 +67,7 @@ function ExplorerExploreExternalButton({
   const [show, setShow] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
   const [isFileDownloaded, setIsFileDownloaded] = useState(false);
+  const [isCodeCopied, setIsCodeCopied] = useState(false);
 
   // State for external commons config and result data
   const [commonsInfo, setCommonsInfo] = useState(
@@ -107,6 +110,7 @@ function ExplorerExploreExternalButton({
     setShow(false);
     setIsLoading(false);
     setIsFileDownloaded(false);
+    setIsCodeCopied(false);
   }
 
   const { authz, user_id: currentUserId } = useAppSelector(
@@ -122,6 +126,11 @@ function ExplorerExploreExternalButton({
     if (selected.value === newSelected.value) return;
     setCommonsInfo(null);
     setSelected(newSelected);
+    setIsCodeCopied(false);
+
+    if (newSelected.value === 'idc' && imagingDataCommonsCode) {
+      return;
+    }
 
     if (newSelected.value === '') return;
 
@@ -153,6 +162,15 @@ function ExplorerExploreExternalButton({
     setIsFileDownloaded(true);
   }
 
+  async function handleCopyImagingDataCommonsCode() {
+    try {
+      await navigator.clipboard.writeText(imagingDataCommonsCode);
+      setIsCodeCopied(true);
+    } catch (e) {
+      console.error('Unable to copy Imaging Data Commons code:', e);
+    }
+  }
+
   // View instructions in new tab
   function handleOpenInstructions() {
     const url =
@@ -168,6 +186,9 @@ function ExplorerExploreExternalButton({
     if (commonsInfo.type === 'redirect') return !!commonsInfo.link;
     return true;
   }
+
+  const isImagingDataCommons =
+    selected.value === 'idc' && Boolean(imagingDataCommonsCode);
 
   return (
     <>
@@ -213,50 +234,71 @@ function ExplorerExploreExternalButton({
                 </div>
               )}
             </form>
-            {commonsInfo?.type === 'file' && commonsInfo?.data && (
-              <>
-                <div className='explorer-explore-external__download-manifest'>
-                  <p>
-                    <FontAwesomeIcon
-                      icon='triangle-exclamation'
-                      color='var(--pcdc-color__secondary)'
-                    />
-                    Download a manifest file and upload it to the selected
-                    commons to use the current cohort.
-                  </p>
-                  <Button
-                    label='Download manifest'
-                    onClick={handleDownloadManifest}
-                  />
-                </div>
-                {/* Show documentation only if not admin */}
-                {!isAdmin && (
+            {isImagingDataCommons && (
+              <div className='explorer-explore-external__idc-code'>
+                <p>
+                  Imaging Data Commons data can be accessed with the IDC Python
+                  package. Copy this example and run it in your Python
+                  environment.
+                </p>
+                <textarea
+                  className='explorer-explore-external__idc-code-text'
+                  aria-label='Imaging Data Commons Python code'
+                  readOnly
+                  value={imagingDataCommonsCode}
+                />
+                <Button
+                  label={isCodeCopied ? 'Copied' : 'Copy code'}
+                  onClick={handleCopyImagingDataCommonsCode}
+                />
+              </div>
+            )}
+            {!isImagingDataCommons &&
+              commonsInfo?.type === 'file' &&
+              commonsInfo?.data && (
+                <>
                   <div className='explorer-explore-external__download-manifest'>
                     <p>
                       <FontAwesomeIcon
-                        icon='circle-info'
+                        icon='triangle-exclamation'
                         color='var(--pcdc-color__secondary)'
                       />
-                      &nbsp; Check the{' '}
-                      <a
-                        href='#'
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleOpenInstructions();
-                        }}
-                        style={{
-                          textDecoration: 'underline',
-                          color: 'var(--pcdc-color__secondary)',
-                        }}
-                      >
-                        PCDC User Guide
-                      </a>{' '}
-                      for information about how to upload a file.
+                      Download a manifest file and upload it to the selected
+                      commons to use the current cohort.
                     </p>
+                    <Button
+                      label='Download manifest'
+                      onClick={handleDownloadManifest}
+                    />
                   </div>
-                )}
-              </>
-            )}
+                  {/* Show documentation only if not admin */}
+                  {!isAdmin && (
+                    <div className='explorer-explore-external__download-manifest'>
+                      <p>
+                        <FontAwesomeIcon
+                          icon='circle-info'
+                          color='var(--pcdc-color__secondary)'
+                        />
+                        &nbsp; Check the{' '}
+                        <a
+                          href='#'
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleOpenInstructions();
+                          }}
+                          style={{
+                            textDecoration: 'underline',
+                            color: 'var(--pcdc-color__secondary)',
+                          }}
+                        >
+                          PCDC User Guide
+                        </a>{' '}
+                        for information about how to upload a file.
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
             <div>
               <Button
                 className='explorer-explore-external__button'
@@ -264,11 +306,13 @@ function ExplorerExploreExternalButton({
                 label='Back to page'
                 onClick={closePopup}
               />
-              <Button
-                label='Open in new tab'
-                enabled={isOpenInNewTabButtonEnabled()}
-                onClick={handleOpenExternalCommons}
-              />
+              {!isImagingDataCommons && (
+                <Button
+                  label='Open in new tab'
+                  enabled={isOpenInNewTabButtonEnabled()}
+                  onClick={handleOpenExternalCommons}
+                />
+              )}
             </div>
           </div>
         </SimplePopup>
@@ -286,6 +330,7 @@ ExplorerExploreExternalButton.propTypes = {
     }),
   ).isRequired,
   externalConfig: PropTypes.object,
+  imagingDataCommonsCode: PropTypes.string,
   isLoading: PropTypes.bool.isRequired,
   setIsLoading: PropTypes.func.isRequired,
 };

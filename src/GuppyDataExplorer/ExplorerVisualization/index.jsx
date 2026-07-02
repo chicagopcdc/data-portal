@@ -403,6 +403,9 @@ function ExplorerVisualization({
               filter={filter}
               selectedCommonsCounts={selectedCommonsCounts}
               externalConfig={externalConfig}
+              imagingDataCommonsCode={
+                patientIdsConfig?.externalCommons?.idc?.code
+              }
               isLoading={isLoadingExploreButton}
               setIsLoading={setIsLoadingExploreButton}
             />

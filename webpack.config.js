@@ -10,6 +10,11 @@ const pathPrefix = basename.endsWith('/')
   : basename;
 
 const isProduction = process.env.NODE_ENV === 'production';
+const devProxyTarget = process.env.HOSTNAME
+  ? `${process.env.HOSTNAME.startsWith('revproxy') ? 'http' : 'https'}://${
+      process.env.HOSTNAME
+    }`
+  : undefined;
 
 const plugins = [
   new CompressionPlugin(),
@@ -24,10 +29,10 @@ const plugins = [
       WORKSPACE_TIMEOUT_IN_MINUTES:
         process.env.WORKSPACE_TIMEOUT_IN_MINUTES || 480,
       REACT_APP_PROJECT_ID: JSON.stringify(
-        process.env.REACT_APP_PROJECT_ID || 'search'
+        process.env.REACT_APP_PROJECT_ID || 'search',
       ),
       REACT_APP_DISABLE_SOCKET: JSON.stringify(
-        process.env.REACT_APP_DISABLE_SOCKET || 'true'
+        process.env.REACT_APP_DISABLE_SOCKET || 'true',
       ),
     },
     // disable React DevTools in production; see https://github.com/facebook/react/pull/11448
@@ -80,7 +85,7 @@ if (isProduction) {
   // add react-refresh to plugins for development mode
   plugins.push(
     // eslint-disable-next-line global-require
-    new (require('@pmmmwh/react-refresh-webpack-plugin'))({ overlay: false })
+    new (require('@pmmmwh/react-refresh-webpack-plugin'))({ overlay: false }),
   );
 }
 
@@ -100,8 +105,37 @@ module.exports = {
   devtool,
   devServer: {
     historyApiFallback: {
-      index: 'dev.html',
+      index: '/index.html',
     },
+    client: {
+      overlay: {
+        runtimeErrors: (error) =>
+          !error.message.includes('ResizeObserver loop'),
+      },
+    },
+    ...(devProxyTarget
+      ? {
+          proxy: [
+            {
+              context: [
+                '/analysis',
+                '/api',
+                '/authz',
+                '/coremetadata',
+                '/guppy',
+                '/index',
+                '/job',
+                '/manifests',
+                '/user',
+                '/wts',
+              ],
+              target: devProxyTarget,
+              changeOrigin: true,
+              secure: false,
+            },
+          ],
+        }
+      : {}),
     allowedHosts: 'all',
     hot: true,
     port: 9443,
@@ -146,13 +180,13 @@ module.exports = {
     ],
   },
   resolve: {
-    fallback: { "punycode": require.resolve("punycode/") },
+    fallback: { punycode: require.resolve('punycode/') },
     alias: {
       graphql: path.resolve('./node_modules/graphql'),
       react: path.resolve('./node_modules/react'), // Same issue.
       graphiql: path.resolve('./node_modules/graphiql'),
       'graphql-language-service-parser': path.resolve(
-        './node_modules/graphql-language-service-parser'
+        './node_modules/graphql-language-service-parser',
       ),
     },
     extensions: ['.mjs', '.js', '.jsx', '.json'],

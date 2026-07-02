@@ -174,6 +174,7 @@ export function getCurrentConfig(explorerId) {
       buildOptions: false,
       options: {},
     },
+    heatmapConfig: config.heatmapConfig || { enabled: false },
   };
 }
 

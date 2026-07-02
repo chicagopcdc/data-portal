@@ -31,17 +31,25 @@ function DataDictionary({
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const isInitialRenderRef = useRef(true);
+
+  function setViewSearchParam(view) {
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
+    nextSearchParams.set('view', view);
+    if (nextSearchParams.toString() !== searchParams.toString())
+      setSearchParams(nextSearchParams);
+  }
+
   useEffect(() => {
     if (isInitialRenderRef.current) {
       isInitialRenderRef.current = false;
 
       const searchParamView = searchParams.get('view');
       if (!['graph', 'table'].includes(searchParamView))
-        setSearchParams(isGraphView ? 'view=graph' : 'view=table');
+        setViewSearchParam(isGraphView ? 'graph' : 'table');
       else if (isGraphView !== (searchParamView === 'graph'))
         onSetGraphView(searchParamView === 'graph');
     } else {
-      setSearchParams(isGraphView ? 'view=graph' : 'view=table');
+      setViewSearchParam(isGraphView ? 'graph' : 'table');
     }
   }, [isGraphView]);
 
@@ -60,7 +68,7 @@ function DataDictionary({
     <Dashboard>
       <Dashboard.Sidebar className='data-dictionary__sidebar'>
         <div>
-          <div className='data-dictionary__switch'>
+          <div className='data-dictionary__switch' data-tour-dictionary-views>
             <span
               className={`data-dictionary__switch-button ${
                 !isGraphView ? '' : 'data-dictionary__switch-button--active'
@@ -106,7 +114,10 @@ function DataDictionary({
             onClickSearchHistoryItem={handleClickSearchHistoryItem}
           />
         </div>
-        <div className='data-dictionary__version-info-area'>
+        <div
+          className='data-dictionary__version-info-area'
+          data-tour-version-info
+        >
           <div className='data-dictionary__version-info-list'>
             {dataVersion && (
               <div className='data-dictionary__version-info'>

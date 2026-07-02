@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Tooltip from 'rc-tooltip';
-import ButtonToggle from '../../ButtonToggle';
+import Select from 'react-select';
 import 'rc-tooltip/assets/bootstrap_white.css';
 import { AsyncPaginate } from 'react-select-async-paginate';
 import SingleSelectFilter from '../SingleSelectFilter';
@@ -19,11 +19,16 @@ import DependentFilterMessage from './DependentFilterMessage';
 
 /** @param {OptionFilterStatus | RangeFilterStatus} filterStatus */
 function getNumValuesSelected(filterStatus) {
-  if (Array.isArray(filterStatus)) return 1;
+  if (Array.isArray(filterStatus)) {
+    return 1;
+  }
 
   let numSelected = 0;
-  for (const status of Object.values(filterStatus))
-    if (status === true || Array.isArray(status)) numSelected += 1;
+  for (const status of Object.values(filterStatus)) {
+    if (status === true || Array.isArray(status)) {
+      numSelected += 1;
+    }
+  }
 
   return numSelected;
 }
@@ -32,6 +37,8 @@ function getNumValuesSelected(filterStatus) {
  * @typedef {Object} FilterSectionProps
  * @property {string} [disabledTooltipMessage]
  * @property {string} [sectionTitle]
+ * @property {string} [filterMode]
+ * @property {string} [dataTourTitle]
  * @property {boolean} [excluded]
  * @property {boolean} [expanded]
  * @property {OptionFilterStatus | RangeFilterStatus} [filterStatus]
@@ -43,8 +50,8 @@ function getNumValuesSelected(filterStatus) {
  * @property {(lowerBound: number, upperBound: number, min: number, max: number, rangeStep: number) => void} onAfterDrag
  * @property {() => void} [onClear]
  * @property {(searchString: string, offset: number) => PaginateResponse} [onSearchFilterLoadOptions]
- * @property {(label: string, isExclusion: boolean) => void} [onSelect]
- * @property {(isExclusion: boolean) => void} [onToggleExclusion]
+ * @property {(label: string, filterMode: string) => void} [onSelect]
+ * @property {(filterMode: string) => void} [onFilterModeChange]
  * @property {(isExpanded: boolean) => void} [onToggle]
  * @property {(fieldName: string, value: string) => void} [onToggleCombineMode]
  * @property {(SingleSelectFilterOption[] | RangeFilterOption[])} options
@@ -79,8 +86,9 @@ const defaultOptions = [];
 /** @param {FilterSectionProps} props */
 function FilterSection({
   disabledTooltipMessage = '',
+  dataTourTitle = '',
   sectionTitle = '',
-  excluded = false,
+  filterMode = 'CONTAINS_ANY',
   expanded = true,
   filterStatus: filterStatusProp,
   hideZero = true,
@@ -96,7 +104,7 @@ function FilterSection({
   onSelect,
   onToggle = () => {},
   onToggleCombineMode = () => {},
-  onToggleExclusion = () => {},
+  onFilterModeChange = () => {},
   options = defaultOptions,
   title = '',
   tooltip,
@@ -109,11 +117,12 @@ function FilterSection({
   function getOptionsVisibleStatus(isShowingMoreOptions, inputText) {
     /** @type {{ [label: string]: boolean }} */
     const res = {};
-    for (const [i, o] of options.entries())
+    for (const [i, o] of options.entries()) {
       res[o.text] =
         inputText === undefined || inputText.trim() === ''
           ? isShowingMoreOptions || i < initVisibleItemNumber
           : o.text.toLowerCase().indexOf(inputText.toLowerCase()) >= 0;
+    }
 
     return res;
   }
@@ -123,7 +132,7 @@ function FilterSection({
     combineMode: 'OR',
     filterStatus: {},
     isExpanded: expanded,
-    isExclusion: excluded,
+    filterMode,
     isSearchInputEmpty: true,
     isShowingCombineMode: false,
     isShowingMoreOptions: false,
@@ -170,7 +179,7 @@ function FilterSection({
       ...prevState,
       filterStatus: {},
       resetClickCounter: prevState.resetClickCounter + 1,
-      isExclusion: false,
+      filterMode: 'CONTAINS_ANY',
     }));
     onClear();
   }
@@ -198,7 +207,7 @@ function FilterSection({
         filterStatus: newFilterStatus,
       };
     });
-    onSelect(label, state.isExclusion);
+    onSelect(label, state.filterMode);
   }
 
   /**
@@ -221,12 +230,11 @@ function FilterSection({
     setState((prevState) => ({ ...prevState, isExpanded: newIsExpanded }));
   }
 
-  function handleToggleExclusion({ isOn }) {
-    let isExclusion = !isOn;
-    onToggleExclusion(isExclusion);
+  function handleFilterModeChange({ value }) {
+    onFilterModeChange(value);
     setState((prevState) => ({
       ...prevState,
-      isExclusion,
+      filterMode: value,
     }));
   }
 
@@ -305,8 +313,11 @@ function FilterSection({
 
   function renderSearchFilter() {
     const selectedOptions = [];
-    for (const [value, isSelected] of Object.entries(state.filterStatus))
-      if (isSelected) selectedOptions.push({ value, label: value });
+    for (const [value, isSelected] of Object.entries(state.filterStatus)) {
+      if (isSelected) {
+        selectedOptions.push({ value, label: value });
+      }
+    }
 
     return (
       <AsyncPaginate
@@ -344,7 +355,9 @@ function FilterSection({
           className=''
           onClick={state.isSearchInputEmpty ? undefined : clearSearchInput}
           onKeyPress={(e) => {
-            if (state.isSearchInputEmpty) return;
+            if (state.isSearchInputEmpty) {
+              return;
+            }
 
             if (e.charCode === 13 || e.charCode === 32) {
               e.preventDefault();
@@ -363,10 +376,14 @@ function FilterSection({
       </div>
     );
   }
+
   function renderShowMoreButton() {
     let totalCount = 0;
-    for (const o of options)
-      if (o.count > 0 || !hideZero || o.count === -1) totalCount += 1;
+    for (const o of options) {
+      if (o.count > 0 || !hideZero || o.count === -1) {
+        totalCount += 1;
+      }
+    }
 
     return (
       totalCount > initVisibleItemNumber && (
@@ -438,15 +455,28 @@ function FilterSection({
     // We use the 'key' prop to force the SingleSelectFilter
     // to rerender on filterStatus change.
     // See https://reactjs.org/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-uncontrolled-component-with-a-key
+    const filterModeOptions = [
+      {
+        label: 'Include any of',
+        value: 'CONTAINS_ANY',
+      },
+      { label: 'Include all of', value: 'CONTAINS_ALL' },
+      { label: 'Exclude any of', value: 'EXCLUDES_ANY' },
+      { label: 'Exclude all of', value: 'EXCLUDES_ALL' },
+    ];
     return (
       <>
         <div>
           Filter Mode
-          <ButtonToggle
-            isOn={!state.isExclusion}
-            onText='Include'
-            offText='Exclude'
-            onToggle={handleToggleExclusion}
+          <Select
+            value={
+              filterModeOptions.find((o) => o.value === state.filterMode) ||
+              filterModeOptions[0]
+            }
+            options={filterModeOptions}
+            isSearchable={false}
+            isClearable={false}
+            onChange={handleFilterModeChange}
           />
         </div>
         {options.map(
@@ -487,6 +517,7 @@ function FilterSection({
           state.isExpanded ? 'Collapse' : 'Expand'
         } filter: ${title}`}
         className='g3-filter-section__title-container'
+        data-tour-filter-toggle
         onClick={() => toggleIsExpanded()}
         onKeyPress={(e) => {
           if (e.charCode === 13 || e.charCode === 32) {
@@ -541,10 +572,18 @@ function FilterSection({
             <Chip
               text={
                 <>
+                  {state.filterMode === 'CONTAINS_ANY'
+                    ? 'Includes any of '
+                    : state.filterMode === 'CONTAINS_ALL'
+                      ? 'Includes all of '
+                      : state.filterMode === 'EXCLUDES_ANY'
+                        ? 'Excludes any of '
+                        : state.filterMode === 'EXCLUDES_ALL'
+                          ? 'Excludes all of '
+                          : ''}
                   <span className='g3-filter-section__selected-count-chip-text-emphasis'>
                     {numSelected}
                   </span>
-                  &nbsp;{`${state.isExclusion ? 'excluded' : 'selected'}`}
                 </>
               }
               onClearButtonClick={handleClearButtonClick}
@@ -592,7 +631,7 @@ function FilterSection({
   );
 
   return options.length ? (
-    <div className='g3-filter-section'>
+    <div className='g3-filter-section' data-tour-filter-section={dataTourTitle}>
       {tooltip ? (
         <Tooltip
           arrowContent={<div className='rc-tooltip-arrow-inner' />}
@@ -628,7 +667,12 @@ function FilterSection({
 
 FilterSection.propTypes = {
   expanded: PropTypes.bool,
-  excluded: PropTypes.bool,
+  filterMode: PropTypes.oneOf([
+    'CONTAINS_ANY',
+    'CONTAINS_ALL',
+    'EXCLUDES_ANY',
+    'EXCLUDES_ALL',
+  ]),
   sectionTitle: PropTypes.string,
   filterStatus: PropTypes.oneOfType([
     PropTypes.object,
@@ -644,7 +688,7 @@ FilterSection.propTypes = {
   onSelect: PropTypes.func.isRequired,
   onToggle: PropTypes.func,
   onToggleCombineMode: PropTypes.func,
-  onToggleExclusion: PropTypes.func,
+  onFilterModeChange: PropTypes.func,
   options: PropTypes.arrayOf(
     PropTypes.shape({
       filterType: PropTypes.oneOf(['singleSelect', 'range']).isRequired,
@@ -665,6 +709,7 @@ FilterSection.propTypes = {
   tooltip: PropTypes.string,
   lockedTooltipMessage: PropTypes.string,
   disabledTooltipMessage: PropTypes.string,
+  dataTourTitle: PropTypes.string,
 };
 
 export default FilterSection;

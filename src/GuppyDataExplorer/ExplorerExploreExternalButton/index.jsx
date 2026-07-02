@@ -171,13 +171,15 @@ function ExplorerExploreExternalButton({
 
   return (
     <>
-      <Button
-        label={<div>Explore in...</div>}
-        rightIcon='external-link'
-        buttonType='secondary'
-        onClick={openPopup}
-        enabled={!isDisabled}
-      />
+      <span data-tour-explore-external-button>
+        <Button
+          label={<div>Explore in...</div>}
+          rightIcon='external-link'
+          buttonType='secondary'
+          onClick={openPopup}
+          enabled={!isDisabled}
+        />
+      </span>
       {show && (
         <SimplePopup>
           <div className='explorer-explore-external__form'>

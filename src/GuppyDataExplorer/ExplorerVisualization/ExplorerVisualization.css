@@ -78,6 +78,20 @@
   margin: 4px;
 }
 
+.explorer-visualization__guide-button {
+  background-color: var(--g3-color__white);
+  border: 1px solid var(--pcdc-color__secondary);
+  border-radius: 4px;
+  color: var(--g3-color__coal);
+  font-weight: var(--g3-font__semi-bold-weight);
+  padding: 0 12px;
+  width: auto;
+}
+
+.explorer-visualization__guide-button:hover {
+  background-color: var(--pcdc-color__secondary-light);
+}
+
 /* Tablet width and less */
 @media screen and (max-width: 820px) {
   .explorer-visualization__view-group > button {

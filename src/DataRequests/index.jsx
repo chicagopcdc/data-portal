@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { useAppSelector, useAppDispatch } from '../redux/hooks';
@@ -29,10 +30,12 @@ function mapPropsToState(state) {
     savedFilterSets: state.explorer.savedFilterSets,
     isProjectsReloading: state.dataRequest.isProjectsReloading,
     isAdminActive: state.dataRequest.isAdminActive,
+    paginationLinks: state.dataRequest.paginationLinks,
   };
 }
 
 /**
+ * @param {Object} [props.paginationLinks]
  * @param {Object} props
  * @param {DataRequestProject[]} [props.projects]
  * @param {RootState["dataRequest"]["projectStates"]} [props.projectStates]
@@ -46,11 +49,50 @@ function DataRequests({
   savedFilterSets,
   isAdminActive,
   isProjectsReloading,
+  paginationLinks,
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const dispatch = useAppDispatch();
   const { authz } = useAppSelector((state) => state.user);
   const isAdmin = isAdminUser(authz);
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(25);
+
+  function getPageFromLink(link) {
+    if (!link) {
+      return null
+    }
+
+    const url = new URL(link, window.location.origin);
+    const nextPage = Number(url.searchParams.get('page'));
+    return Number.isNaN(nextPage) ? null : nextPage;
+  }
+
+  function loadProjects(nextPage) {
+    if (!nextPage) {
+      return;
+    }
+
+    setPage(nextPage);
+    dispatch(
+      fetchProjects({
+        triggerReloading: true,
+        page: nextPage,
+        perPage,
+      }),
+    );
+  }
+  function changePageSize(nextPerPage) {
+    setPerPage(nextPerPage);
+    setPage(1);
+    dispatch(
+      fetchProjects({
+        triggerReloading: true,
+        page: 1,
+        perPage: nextPerPage,
+      }),
+    );
+  }
 
   return (
     <div className='data-requests'>
@@ -99,13 +141,34 @@ function DataRequests({
               } else {
                 setSearchParams(searchParams);
               }
-              dispatch(fetchProjects({ triggerReloading: true }));
+              setPage(1);
+              dispatch(
+                fetchProjects({
+                  triggerReloading: true,
+                  page: 1,
+                  perPage,
+                }),
+              );
             }}
             reloadProjects={() => {
-              dispatch(fetchProjects({ triggerReloading: true }));
+              dispatch(
+                fetchProjects({
+                  triggerReloading: true,
+                  page,
+                  perPage,
+                }),
+              );
             }}
             isAdminActive={isAdminActive}
             isAdmin={isAdmin}
+            paginationLinks={paginationLinks}
+            page={page}
+            perPage={perPage}
+            onPageSizeChange={changePageSize}
+            onFirstPage={() => loadProjects(getPageFromLink(paginationLinks?.first) || 1)}
+            onPreviousPage={() => loadProjects(getPageFromLink(paginationLinks?.prev))}
+            onNextPage={() => loadProjects(getPageFromLink(paginationLinks?.next))}
+            onLastPage={() => loadProjects(getPageFromLink(paginationLinks?.last))}
             isLoading={isProjectsReloading}
           />
         </ErrorBoundary>

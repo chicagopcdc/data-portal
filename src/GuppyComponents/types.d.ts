@@ -5,7 +5,7 @@ export type EmptyFilter = { __type?: never };
 export type OptionFilter = {
   __combineMode?: CombineMode;
   __type: 'OPTION';
-  isExclusion?: boolean;
+  filterMode: string;
   selectedValues?: string[];
 };
 

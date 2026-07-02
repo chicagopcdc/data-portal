@@ -145,6 +145,14 @@ function DataRequestsTable({
   isAdmin,
   isAdminActive,
   onToggleAdmin,
+  paginationLinks,
+  page,
+  perPage,
+  onPageSizeChange,
+  onFirstPage,
+  onPreviousPage,
+  onNextPage,
+  onLastPage,
   isLoading,
   reloadProjects,
 }) {
@@ -249,7 +257,7 @@ function DataRequestsTable({
           </div>
         )}
         <h2>{isAdminActive ? 'All Requests' : 'List of My Requests'}</h2>
-        <div className='data-requests__table-actions'>
+            <div className='data-requests__table-actions'>
           <Button
             label={'CSL Verification'}
             enabled={isAdmin}
@@ -298,6 +306,7 @@ function DataRequestsTable({
         )}
         {isVerifyPopupOpen && (
           <Popup
+            className='data-request__csl-popup'
             title='Verify Person Or Entity Using The Consolidated Screening List'
             onClose={() => {
               setVerifyPopupOpen(false);
@@ -339,11 +348,50 @@ function DataRequestsTable({
           statusFlow={statusFlow}
         />
       )}
-      {isLoading ? (
-        <Spinner />
-      ) : (
+      <div className='data-requests__table-wrapper'>
+        {isLoading && (
+          <div className='data-requests__table-loading-overlay'>
+            <Spinner />
+          </div>
+        )}
         <Table header={tableHeader} data={tableData} />
-      )}
+      </div>
+      <div className='data-requests__pagination'>
+        <label className='data-requests__page-size'>
+          Rows per page:
+          <select
+            value={perPage}
+            onChange={(e) => onPageSizeChange(Number(e.target.value))}
+          >
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+        </label>
+
+        <Button
+          label='First'
+          enabled={Boolean(paginationLinks?.first)}
+          onClick={onFirstPage}
+        />
+        <Button
+          label='Previous'
+          enabled={Boolean(paginationLinks?.prev)}
+          onClick={onPreviousPage}
+        />
+        <span className='data-requests__pagination-page'>Page {page}</span>
+        <Button
+          label='Next'
+          enabled={Boolean(paginationLinks?.next)}
+          onClick={onNextPage}
+        />
+        <Button
+          label='Last'
+          enabled={Boolean(paginationLinks?.last)}
+          onClick={onLastPage}
+        />
+      </div>
     </div>
   );
 }
@@ -358,6 +406,19 @@ DataRequestsTable.propTypes = {
   isLoading: PropTypes.bool,
   reloadProjects: PropTypes.func,
   savedFilterSets: PropTypes.object,
+  paginationLinks: PropTypes.shape({
+    first: PropTypes.string,
+    prev: PropTypes.string,
+    next: PropTypes.string,
+    last: PropTypes.string,
+  }),
+  page: PropTypes.number,
+  perPage: PropTypes.number,
+  onPageSizeChange: PropTypes.func,
+  onFirstPage: PropTypes.func,
+  onPreviousPage: PropTypes.func,
+  onNextPage: PropTypes.func,
+  onLastPage: PropTypes.func,
 };
 
 export default DataRequestsTable;

@@ -9,16 +9,16 @@ import PatientIdFilter from '../PatientIdFilter';
 import {
   clearFilterSection,
   FILTER_TYPE,
-  getExcludedStatus,
   getExpandedStatus,
   getFilterStatus,
   getSelectedAnchors,
   tabHasActiveFilters,
   updateCombineMode,
-  updateExclusion,
   updateRangeValue,
   updateSelectedValue,
   removeEmptyFilter,
+  updateFilterMode,
+  getFilterModeStatus,
 } from './utils';
 import './FilterGroup.css';
 
@@ -28,11 +28,12 @@ function findFilterElement(label) {
   /** @type {NodeListOf<HTMLDivElement>} */
   const sectionTitleElements = document.querySelectorAll(selector);
 
-  for (const el of sectionTitleElements)
+  for (const el of sectionTitleElements) {
     if (label === el.attributes['aria-label'].value.split(': ')[1]) {
       el.focus();
       break;
     }
+  }
 }
 
 /** @typedef {import('../types').EmptyFilter} EmptyFilter */
@@ -128,8 +129,8 @@ function FilterGroup({
 
   const [filterResults, setFilterResults] = useState(filter);
 
-  const [excludedStatus, setExcludedStatus] = useState(
-    getExcludedStatus(filterTabs, filterResults),
+  const [filterModeStatus, setFilterModeStatus] = useState(
+    getFilterModeStatus(filterTabs, filterResults),
   );
 
   /** Takes in a filter's filter name and returns its display name
@@ -276,16 +277,17 @@ function FilterGroup({
     if (
       filterValues.__type === FILTER_TYPE.OPTION &&
       filterValues.selectedValues.length > 0
-    )
+    ) {
       onFilterChange(updated.filterResults);
+    }
   }
 
   /**
    * @param {number} sectionIndex
    * @param {string} selectedValue
-   * @param {boolean} isExclusion
+   * @param {string} filterMode
    */
-  function handleSelect(sectionIndex, selectedValue, isExclusion) {
+  function handleSelect(sectionIndex, selectedValue, filterMode) {
     const updated = updateSelectedValue({
       filterStatus,
       filterResults,
@@ -294,7 +296,7 @@ function FilterGroup({
       anchorLabel,
       sectionIndex,
       selectedValue,
-      isExclusion,
+      filterMode,
     });
     setFilterStatus(updated.filterStatus);
     setFilterResults(updated.filterResults);
@@ -314,7 +316,7 @@ function FilterGroup({
     newFilterResults.value['subject_submitter_id'] = {
       selectedValues: inputPatientIds,
       __type: 'OPTION',
-      isExclusion: false,
+      filterMode: 'CONTAINS_ANY',
     };
     setFilterResults(newFilterResults);
     onFilterChange(newFilterResults);
@@ -349,23 +351,23 @@ function FilterGroup({
 
   /**
    * @param {number} sectionIndex
-   * @param {boolean} isExclusion
+   * @param {string} filterMode
    */
-  function handleToggleExclusion(sectionIndex, isExclusion) {
-    const updated = updateExclusion({
+  function handleFilterModeChange(sectionIndex, filterMode) {
+    const updated = updateFilterMode({
       filterResults,
       filterTabs,
       tabIndex,
       anchorLabel,
       sectionIndex,
-      isExclusion,
+      filterMode,
     });
-
-    setExcludedStatus(
-      getExcludedStatus(filterTabs, updated.filterResults, excludedStatus),
+    setFilterModeStatus(
+      getFilterModeStatus(filterTabs, updated.filterResults, filterModeStatus),
     );
-    setFilterResults(removeEmptyFilter(updated.filterResults));
-    onFilterChange(removeEmptyFilter(updated.filterResults));
+    const emptyFilterRemoved = removeEmptyFilter(updated.filterResults);
+    setFilterResults(emptyFilterRemoved);
+    onFilterChange(emptyFilterRemoved);
   }
 
   /**
@@ -437,7 +439,7 @@ function FilterGroup({
   function createDependentFiltersArr(origfilterNames, currentFilterName) {
     const newfilterNames = [];
     for (const filterName of origfilterNames) {
-      if (filterName != currentFilterName) {
+      if (filterName !== currentFilterName) {
         newfilterNames.push(toDisplayName(filterName));
       }
     }
@@ -458,6 +460,7 @@ function FilterGroup({
         {tabs.map((_, index) => (
           <div
             key={index}
+            data-tour-filter-tab={filterTabs[index].title}
             className={'g3-filter-group__tab'.concat(
               tabIndex === index ? ' g3-filter-group__tab--selected' : '',
             )}
@@ -547,9 +550,10 @@ function FilterGroup({
           return (
             <FilterSection
               key={section.title}
+              dataTourTitle={section.title}
               sectionTitle={section.title}
               disabledTooltipMessage={disabledTooltipMessage}
-              excluded={excludedStatus[tabIndex][index]}
+              filterMode={filterModeStatus[tabIndex][index]}
               expanded={expandedStatus[tabIndex][index]}
               filterStatus={filterTabStatus[index]}
               hideZero={hideZero}
@@ -559,15 +563,15 @@ function FilterGroup({
               onAfterDrag={(...args) => handleDrag(index, ...args)}
               onClear={() => handleClearSection(index)}
               onSearchFilterLoadOptions={section.onSearchFilterLoadOptions}
-              onSelect={(label, isExclusion) =>
-                handleSelect(index, label, isExclusion)
+              onSelect={(label, filterMode) =>
+                handleSelect(index, label, filterMode)
               }
               onToggle={(isExpanded) => handleToggleSection(index, isExpanded)}
               onToggleCombineMode={(...args) =>
                 handleToggleCombineMode(index, ...args)
               }
-              onToggleExclusion={(isExclusion) =>
-                handleToggleExclusion(index, isExclusion)
+              onFilterModeChange={(filterMode) =>
+                handleFilterModeChange(index, filterMode)
               }
               options={section.options}
               title={section.title}

@@ -6,6 +6,7 @@ import {
 import * as filterSetsAPI from './filterSetsAPI';
 import * as survivalAnalysisAPI from './survivalAnalysisAPI';
 import * as tableOneAPI from './tableOneAPI';
+import { mockStore } from '../../localconf';
 
 /** @typedef {import('../../GuppyDataExplorer/types').SavedExplorerFilterSet} SavedExplorerFilterSet */
 /** @typedef {import('../types').AppGetState} AppGetState */
@@ -43,6 +44,7 @@ export const fetchFilterSets = createAsyncThunk(
   'explorer/fetchFilterSets',
   async (_, { getState, rejectWithValue }) => {
     const { explorer } = /** @type {AppGetState} */ (getState)();
+    if (mockStore) return [];
     try {
       return filterSetsAPI.fetchAll(explorer.explorerId);
     } catch (e) {

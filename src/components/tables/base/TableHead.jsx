@@ -25,11 +25,17 @@ function TableHead({ cols, setFilters, data, filterConfig }) {
       <tr>
         {cols.map((col, i) => {
           const dataValues = data.map((dataCol) => dataCol[i]);
+          const firstFilterValue = dataValues.find(
+            (value) =>
+              typeof value !== 'undefined' &&
+              value !== '' &&
+              cellValueToText(value) !== '',
+          );
+
           return (
             <th className='base-table__column-head' key={`col_${col}_${i}`}>
-              {typeof dataValues[0] === 'number' ||
-              typeof dataValues[0] === 'undefined' ||
-              dataValues[0] === '' ||
+              {typeof firstFilterValue === 'number' ||
+              typeof firstFilterValue === 'undefined' ||
               filterConfig[col] === false ? (
                 col
               ) : (
@@ -53,12 +59,18 @@ function TableHead({ cols, setFilters, data, filterConfig }) {
             return null;
           }
           const dataValues = data.map((dataCol) => dataCol[i]);
-          const stringValues = Array.isArray(dataValues[0])
+          const firstFilterValue = dataValues.find(
+            (value) =>
+              typeof value !== 'undefined' &&
+              value !== '' &&
+              cellValueToText(value) !== '',
+          );
+          const stringValues = Array.isArray(firstFilterValue)
             ? dataValues.flat().map((val) => cellValueToText(val))
             : dataValues.map((val) => cellValueToText(val));
           const uniqueValues = Array.from(new Set(stringValues));
 
-          if (dataValues[0] instanceof Date) {
+          if (firstFilterValue instanceof Date) {
             return (
               <th className='base-table__column-head' key={`col_${col}_${i}`}>
                 <Provider theme={defaultTheme}>
@@ -90,9 +102,8 @@ function TableHead({ cols, setFilters, data, filterConfig }) {
                   uniqueValues.length > 10
                 ) {
                   if (
-                    typeof dataValues[0] === 'number' ||
-                    typeof dataValues[0] === 'undefined' ||
-                    dataValues[0] === ''
+                    typeof firstFilterValue === 'number' ||
+                    typeof firstFilterValue === 'undefined'
                   ) {
                     return null;
                   }
@@ -117,9 +128,8 @@ function TableHead({ cols, setFilters, data, filterConfig }) {
                 }
 
                 if (
-                  typeof dataValues[0] === 'number' ||
-                  typeof dataValues[0] === 'undefined' ||
-                  dataValues[0] === ''
+                  typeof firstFilterValue === 'number' ||
+                  typeof firstFilterValue === 'undefined'
                 ) {
                   return null;
                 }

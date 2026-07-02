@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -27,6 +28,7 @@ import './TopBar.css';
 /** @param {TopBarProps} props */
 function TopBar({ config, isAdminUser, onLogoutClick, username }) {
   const location = useLocation();
+  const [openMenu, setOpenMenu] = useState(null);
   const leftItems = [];
   const rightItems = [];
   for (const item of config.items)
@@ -67,6 +69,11 @@ function TopBar({ config, isAdminUser, onLogoutClick, username }) {
             <TopBarMenu
               buttonIcon={<FontAwesomeIcon icon='circle-info' />}
               title='Documents'
+              isOpen={openMenu === 'documents'}
+              onToggle={() =>
+                setOpenMenu(openMenu === 'documents' ? null : 'documents')
+              }
+              onClose={() => setOpenMenu(null)}
             >
               {documents.isError ? (
                 <>
@@ -105,6 +112,11 @@ function TopBar({ config, isAdminUser, onLogoutClick, username }) {
             <TopBarMenu
               buttonIcon={<FontAwesomeIcon icon='circle-user' />}
               title='Profile'
+              isOpen={openMenu === 'profile'}
+              onToggle={() =>
+                setOpenMenu(openMenu === 'profile' ? null : 'profile')
+              }
+              onClose={() => setOpenMenu(null)}
             >
               {username === undefined ? (
                 <TopBarMenu.Item>

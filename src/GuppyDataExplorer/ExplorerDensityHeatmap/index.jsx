@@ -1,5 +1,17 @@
+import { useState } from 'react';
 import PropTypes from 'prop-types';
+import UserAgreement from '../ExplorerSurvivalAnalysis/UserAgreement';
 import './ExplorerDensityHeatmap.css';
+
+const userAgreementLocalStorageKey = 'survival:userAgreement';
+
+function checkUserAgreement() {
+  return window.localStorage.getItem(userAgreementLocalStorageKey) === 'true';
+}
+
+function handleUserAgreement() {
+  return window.localStorage.setItem(userAgreementLocalStorageKey, 'true');
+}
 
 /**
  * @typedef {Object} ExplorerDensityHeatmapProps
@@ -14,8 +26,12 @@ function ExplorerDensityHeatmap({
   accessibleCount = 0,
   totalCount = 0,
 }) {
+  const [isUserCompliant, setIsUserCompliant] = useState(checkUserAgreement());
+
   return (
     <section className='explorer-density-heatmap'>
+      {isUserCompliant ? (
+        <>
       <div className='explorer-density-heatmap__header'>
         <div>
           <h2 className='explorer-density-heatmap__title'>Data density heatmap</h2>
@@ -61,6 +77,15 @@ function ExplorerDensityHeatmap({
           aggregation queries and render the full heatmap visualization.
         </p>
       </div>
+      </>
+      ) : (
+        <UserAgreement
+          onAgree={() => {
+            handleUserAgreement();
+            setIsUserCompliant(checkUserAgreement());
+          }}
+        />
+      )}
     </section>
   );
 }

@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { config } from '../params';
 import './ExplorerWizard.css';
 
-const COMPLETION_STORAGE_KEY = 'pcdc-explorer-wizard-completed-v1';
+export const ONBOARDING_VERSION_FIELD = 'onboardingVersionSeen';
 export const OPEN_EXPLORER_WIZARD_EVENT = 'pcdc-open-explorer-wizard';
 
 function getElements(selectors) {
@@ -54,6 +54,27 @@ function getPopoverPosition(rect) {
 function getConfiguredSteps() {
   const configuredSteps = config.explorerWizard?.steps;
   return Array.isArray(configuredSteps) ? configuredSteps : [];
+}
+
+export function getExplorerWizardVersion() {
+  const version = Number(config.explorerWizard?.version);
+  return Number.isFinite(version) && version > 0 ? version : null;
+}
+
+export function isExplorerWizardEnabled() {
+  return getExplorerWizardVersion() !== null && getConfiguredSteps().length > 0;
+}
+
+export function hasSeenExplorerWizard(user) {
+  const wizardVersion = getExplorerWizardVersion();
+  const seenVersion = Number(
+    user?.additional_info?.[ONBOARDING_VERSION_FIELD],
+  );
+
+  return (
+    wizardVersion === null ||
+    (Number.isFinite(seenVersion) && seenVersion >= wizardVersion)
+  );
 }
 
 function getRouteWithMergedSearch(route, location) {
@@ -278,7 +299,5 @@ ExplorerWizard.propTypes = {
   onClose: PropTypes.func.isRequired,
   onDone: PropTypes.func.isRequired,
 };
-
-ExplorerWizard.COMPLETION_STORAGE_KEY = COMPLETION_STORAGE_KEY;
 
 export default ExplorerWizard;

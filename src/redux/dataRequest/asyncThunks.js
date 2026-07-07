@@ -33,22 +33,50 @@ function handleRequestError(status, response, data = null) {
   }
 }
 
+function getPaginationLinks(linkHeader) {
+  if (!linkHeader) {
+    return {};
+  }
+  return linkHeader.split(',').reduce((links, part) => {
+    const section = part.split(';');
+    if (section.length < 2) {
+      return links;
+    }
+    const url = section[0].replace(/<(.*)>/, '$1').trim();
+    const relMatch = section[1].match(/rel="(.*)"/);
+    if (!relMatch) {
+      return links;
+    }
+    return {
+      ...links,
+      [relMatch[1]]: url,
+    };
+  }, {});
+}
+
 export const fetchProjects = createAsyncThunk(
   'dataRequest/fetchProjects',
-  /** @param {{ triggerReloading: boolean  }} _ */
+  /** @param {{ triggerReloading?: boolean, page?: number, perPage?: number }} _ */
   async (
-    { triggerReloading } = { triggerReloading: false },
+    { triggerReloading = false, page = 1, perPage = 25 } = {},
     { getState, rejectWithValue },
   ) => {
     const {
       dataRequest: { isAdminActive },
     } = /** @type {import("../types").RootState} */ (getState());
 
+    const searchParams = new URLSearchParams({
+      page: String(page),
+      per_page: String(perPage),
+    });
+
+    if (isAdminActive) {
+      searchParams.set('special_user', 'admin');
+    }
+
     try {
-      const { data, response, status } = await fetchWithCreds({
-        path: isAdminActive
-          ? '/amanuensis/projects?special_user=admin'
-          : '/amanuensis/projects',
+      const { data, response, status, headers } = await fetchWithCreds({
+        path: `/amanuensis/projects?${searchParams.toString()}`,
         method: 'GET',
       });
 
@@ -57,7 +85,12 @@ export const fetchProjects = createAsyncThunk(
         return null;
       }
 
-      return data;
+      return {
+        projects: data,
+        paginationLinks: getPaginationLinks(
+          response?.headers?.get('Link') || headers?.get('Link'),
+        ),
+      };
     } catch (e) {
       return rejectWithValue(e);
     }

@@ -193,8 +193,11 @@ Below is an example, with inline comments describing what each JSON block config
   // optional; will hide certain parts of the site if needed
   "featureFlags": {},
   // optional; configures the Exploration guide shown by the Guide button.
-  // The guide is disabled when this block or its steps are missing.
+  // The guide is disabled when this block, version, or steps are missing.
+  // Increment version when users should see the guide again. Completion is
+  // saved to the user's additional_info.onboardingVersionSeen field.
   "explorerWizard": {
+    "version": 1,
     "steps": [
       {
         // optional; navigate before showing this step

@@ -23,11 +23,13 @@ const preloadedState = {
   user:
     process.env.NODE_ENV !== 'production' && mockStore
       ? {
+          additional_info: {},
           authz: {
             '/mock/registered-user': [{ method: 'read' }],
           },
           certificates_uploaded: requiredCerts,
           docs_to_be_reviewed: [],
+          fetched_user: true,
           lastAuthMs: Date.now(),
           user_id: 'test',
           username: 'test',

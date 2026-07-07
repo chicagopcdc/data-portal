@@ -1,9 +1,10 @@
 .explorer-density-heatmap {
-  margin-top: 20px;
-  background: var(--g3-color__white);
-  border: 1px solid var(--g3-color__silver);
-  border-radius: 8px;
-  padding: 16px;
+  margin-top: 10px;
+  background-color: var(--g3-color__white);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  padding: 12px 12px 5rem;
 }
 
 .explorer-density-heatmap__header {
@@ -12,6 +13,7 @@
   gap: 16px;
   align-items: flex-start;
   margin-bottom: 16px;
+  width: 100%;
 }
 
 .explorer-density-heatmap__title {
@@ -49,7 +51,6 @@
   font-size: 12px;
   color: var(--g3-color__gray);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 .explorer-density-heatmap__placeholder {
@@ -60,10 +61,10 @@
   justify-content: center;
   color: var(--g3-color__gray);
   border: 1px dashed var(--g3-color__silver);
-  border-radius: 6px;
   background: var(--g3-color__bg-cloud);
   text-align: center;
   padding: 24px;
+  width: 100%;
 }
 
 .explorer-density-heatmap__placeholder-text {
@@ -76,6 +77,65 @@
   margin: 0;
   font-size: 13px;
   max-width: 480px;
+}
+
+.explorer-density-heatmap > div:not([class^='explorer-density-heatmap__']) {
+  margin: 1rem 1rem 2rem;
+  width: 100%;
+}
+
+.explorer-density-heatmap > div:not([class^='explorer-density-heatmap__']) > p,
+.explorer-density-heatmap > div:not([class^='explorer-density-heatmap__']) > ul,
+.explorer-density-heatmap
+  > div:not([class^='explorer-density-heatmap__'])
+  > video {
+  margin-bottom: 1rem;
+  max-width: 80ch;
+}
+
+.explorer-density-heatmap
+  > div:not([class^='explorer-density-heatmap__'])
+  > ul {
+  padding-left: 2rem;
+}
+
+.explorer-density-heatmap
+  > div:not([class^='explorer-density-heatmap__'])
+  > ul
+  > li {
+  margin-top: 0.5rem;
+}
+
+.explorer-density-heatmap
+  > div:not([class^='explorer-density-heatmap__'])
+  > div {
+  background-color: var(--g3-color__white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem 2rem;
+  gap: 10px;
+}
+
+.explorer-density-heatmap
+  > div:not([class^='explorer-density-heatmap__'])
+  > div
+  > button {
+  margin-left: 1rem;
+}
+
+@media screen and (max-width: 1090px) {
+  .explorer-density-heatmap {
+    padding-bottom: 5rem;
+  }
+
+  .explorer-density-heatmap
+    > div:not([class^='explorer-density-heatmap__'])
+    > div {
+    justify-content: center;
+    padding-bottom: 4rem;
+    padding-left: 0;
+  }
 }
 
 @media screen and (max-width: 820px) {

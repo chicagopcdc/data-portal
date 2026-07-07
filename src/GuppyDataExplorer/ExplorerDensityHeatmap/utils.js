@@ -161,44 +161,38 @@ export function extractFieldsFromFilter(filterObj) {
   if (typeof entries !== 'object') return fields;
 
   for (const [fieldName, fieldFilter] of Object.entries(entries)) {
-    if (!fieldFilter || typeof fieldFilter !== 'object') continue;
-
-    // ANCHORED filter — recurse into its nested value map
-    if (fieldFilter.__type === 'ANCHORED') {
-      if (fieldFilter.value && typeof fieldFilter.value === 'object') {
-        for (const nestedField of Object.keys(fieldFilter.value)) {
-          const nested = fieldFilter.value[nestedField];
-          if (nested && typeof nested === 'object') {
-            const hasSelected =
-              Array.isArray(nested.selectedValues) &&
-              nested.selectedValues.length > 0;
-            const hasRange =
-              nested.lowerBound !== undefined ||
-              nested.upperBound !== undefined;
-            if (hasSelected || hasRange) {
-              fields.push(nestedField);
+    if (fieldFilter && typeof fieldFilter === 'object') {
+      // ANCHORED filter — recurse into its nested value map
+      if (fieldFilter.__type === 'ANCHORED') {
+        if (fieldFilter.value && typeof fieldFilter.value === 'object') {
+          for (const nestedField of Object.keys(fieldFilter.value)) {
+            const nested = fieldFilter.value[nestedField];
+            if (nested && typeof nested === 'object') {
+              const hasSelected =
+                Array.isArray(nested.selectedValues) &&
+                nested.selectedValues.length > 0;
+              const hasRange =
+                nested.lowerBound !== undefined ||
+                nested.upperBound !== undefined;
+              if (hasSelected || hasRange) {
+                fields.push(nestedField);
+              }
             }
           }
         }
+      } else if (
+        Array.isArray(fieldFilter.selectedValues) &&
+        fieldFilter.selectedValues.length > 0
+      ) {
+        // OPTION filter
+        fields.push(fieldName);
+      } else if (
+        // RANGE filter
+        fieldFilter.lowerBound !== undefined ||
+        fieldFilter.upperBound !== undefined
+      ) {
+        fields.push(fieldName);
       }
-      continue;
-    }
-
-    // OPTION filter
-    if (
-      Array.isArray(fieldFilter.selectedValues) &&
-      fieldFilter.selectedValues.length > 0
-    ) {
-      fields.push(fieldName);
-      continue;
-    }
-
-    // RANGE filter
-    if (
-      fieldFilter.lowerBound !== undefined ||
-      fieldFilter.upperBound !== undefined
-    ) {
-      fields.push(fieldName);
     }
   }
 
@@ -232,9 +226,8 @@ export function getDensityHeatmapColor(density) {
   const clamped = Math.min(1, Math.max(0, density));
   if (clamped < 0.5) {
     return interpolateColor(COLOR_ROSE, COLOR_BEE, clamped * 2);
-  } else {
-    return interpolateColor(COLOR_BEE, COLOR_LIME, (clamped - 0.5) * 2);
   }
+  return interpolateColor(COLOR_BEE, COLOR_LIME, (clamped - 0.5) * 2);
 }
 
 /** @param {number} density */

@@ -96,13 +96,11 @@ function collectHistogramCount(node) {
   return total;
 }
 
-
 /**
  * @typedef {Object} ExplorerDensityHeatmapProps
  * @property {string[]} fields
  * @property {string[]} [primaryFields]
  * @property {boolean} [expandByFilter]
- * @property {number} accessibleCount
  * @property {number} totalCount
  * @property {object} filter
  * @property {string} dataType
@@ -114,7 +112,6 @@ function ExplorerDensityHeatmap({
   fields = [],
   primaryFields = [],
   expandByFilter = false,
-  accessibleCount = 0,
   totalCount = 0,
   filter = {},
   dataType,
@@ -168,7 +165,6 @@ function ExplorerDensityHeatmap({
     secondaryFields,
     showAllFields,
   ]);
-
 
   const fieldQuery = useMemo(() => {
     if (!fieldPaths.length) return '';
@@ -359,144 +355,142 @@ function ExplorerDensityHeatmap({
     return group.label;
   }
 
+  let heatmapContent = null;
+  if (isLoading) {
+    heatmapContent = (
+      <div className='explorer-density-heatmap__state'>Loading...</div>
+    );
+  } else if (error) {
+    heatmapContent = (
+      <div className='explorer-density-heatmap__state explorer-density-heatmap__state--error'>
+        {error}
+      </div>
+    );
+  } else if (groupedDensityRows.length > 0) {
+    heatmapContent = groupedDensityRows.map((group) => (
+      <div
+        className={`explorer-density-heatmap__section${
+          group.sectionType === 'secondary'
+            ? ' explorer-density-heatmap__section--secondary'
+            : ''
+        }`}
+        key={`${group.sectionType}-${group.key}`}
+      >
+        <div className='explorer-density-heatmap__section-header'>
+          <h3 className='explorer-density-heatmap__section-title'>
+            {getSectionLabel(group)}
+            {group.sectionType === 'secondary' && (
+              <span className='explorer-density-heatmap__badge'>
+                Active Filters
+              </span>
+            )}
+          </h3>
+          <span className='explorer-density-heatmap__section-count'>
+            {group.rows.length} field
+            {group.rows.length === 1 ? '' : 's'}
+          </span>
+        </div>
+
+        {group.rows.map((row) => (
+          <div className='explorer-density-heatmap__row' key={row.field}>
+            <div className='explorer-density-heatmap__field-name'>
+              {getFieldLabel(row.field)}
+              <span className='explorer-density-heatmap__field-path'>
+                {row.field}
+              </span>
+            </div>
+
+            <div
+              className='explorer-density-heatmap__strip'
+              aria-label={`${row.field} completeness ${formatDensityPercentage(row.completeness)}`}
+            >
+              <div
+                className='explorer-density-heatmap__strip-fill'
+                style={{
+                  clipPath: `inset(0 ${100 - row.completeness * 100}% 0 0)`,
+                }}
+              />
+            </div>
+
+            <div className='explorer-density-heatmap__counts'>
+              <span className='explorer-density-heatmap__bar-label'>
+                {formatDensityPercentage(row.completeness)} complete
+              </span>
+              <span>{row.availableCount.toLocaleString()} available</span>
+              <span>{row.missingCount.toLocaleString()} missing</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    ));
+  } else {
+    heatmapContent = (
+      <div className='explorer-density-heatmap__state'>
+        No density data available for the configured fields.
+      </div>
+    );
+  }
+
   return (
     <section className='explorer-density-heatmap'>
       {isUserCompliant ? (
-        <>
-          <div className='explorer-visualization__charts explorer-density-heatmap__panel'>
-            <div className='explorer-density-heatmap__header'>
-              <div>
-                <h2 className='explorer-density-heatmap__title'>
-                  Data density heatmap
-                </h2>
-                <p className='explorer-density-heatmap__description'>
-                  Field availability and completeness across the dataset
-                </p>
-              </div>
-              <div className='explorer-density-heatmap__header-right'>
-                {canShowToggle && (
-                  <button
-                    className='explorer-density-heatmap__show-all-toggle'
-                    onClick={() => setShowAllFields((prev) => !prev)}
-                    type='button'
-                  >
-                    {showAllFields
-                      ? 'Show curated fields only'
-                      : `Show all fields (${allFieldCount})`}
-                  </button>
-                )}
-                <div className='explorer-density-heatmap__summary'>
-                  {stats.map((stat) => (
-                    <div key={stat.label}>
-                      <span className='explorer-density-heatmap__summary-value'>
-                        {stat.value.toLocaleString()}
-                      </span>
-                      <span className='explorer-density-heatmap__summary-label'>
-                        {stat.label}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+        <div className='explorer-visualization__charts explorer-density-heatmap__panel'>
+          <div className='explorer-density-heatmap__header'>
+            <div>
+              <h2 className='explorer-density-heatmap__title'>
+                Data density heatmap
+              </h2>
+              <p className='explorer-density-heatmap__description'>
+                Field availability and completeness across the dataset
+              </p>
             </div>
-
-            <div className='explorer-density-heatmap__legend'>
-              <span>low completeness</span>
-              <div className='explorer-density-heatmap__legend-gradient' />
-              <span>high completeness</span>
-            </div>
-
-            <div className='explorer-density-heatmap__matrix'>
-              <div className='explorer-density-heatmap__matrix-header'>
-                <span>Field</span>
-                <span className='explorer-density-heatmap__header-density'>
-                  Density
-                </span>
-                <span className='explorer-density-heatmap__header-summary'>
-                  Summary
-                </span>
-              </div>
-
-              {isLoading ? (
-                <div className='explorer-density-heatmap__state'>
-                  Loading...
-                </div>
-              ) : error ? (
-                <div className='explorer-density-heatmap__state explorer-density-heatmap__state--error'>
-                  {error}
-                </div>
-              ) : groupedDensityRows.length > 0 ? (
-                groupedDensityRows.map((group) => (
-                  <div
-                    className={`explorer-density-heatmap__section${
-                      group.sectionType === 'secondary'
-                        ? ' explorer-density-heatmap__section--secondary'
-                        : ''
-                    }`}
-                    key={`${group.sectionType}-${group.key}`}
-                  >
-                    <div className='explorer-density-heatmap__section-header'>
-                      <h3 className='explorer-density-heatmap__section-title'>
-                        {getSectionLabel(group)}
-                        {group.sectionType === 'secondary' && (
-                          <span className='explorer-density-heatmap__badge'>
-                            Active Filters
-                          </span>
-                        )}
-                      </h3>
-                      <span className='explorer-density-heatmap__section-count'>
-                        {group.rows.length} field
-                        {group.rows.length === 1 ? '' : 's'}
-                      </span>
-                    </div>
-
-                    {group.rows.map((row) => (
-                      <div
-                        className='explorer-density-heatmap__row'
-                        key={row.field}
-                      >
-                        <div className='explorer-density-heatmap__field-name'>
-                          {getFieldLabel(row.field)}
-                          <span className='explorer-density-heatmap__field-path'>
-                            {row.field}
-                          </span>
-                        </div>
-
-                        <div
-                          className='explorer-density-heatmap__strip'
-                          aria-label={`${row.field} completeness ${formatDensityPercentage(row.completeness)}`}
-                        >
-                          <div
-                            className='explorer-density-heatmap__strip-fill'
-                            style={{
-                              clipPath: `inset(0 ${100 - row.completeness * 100}% 0 0)`,
-                            }}
-                          />
-                        </div>
-
-                        <div className='explorer-density-heatmap__counts'>
-                          <span className='explorer-density-heatmap__bar-label'>
-                            {formatDensityPercentage(row.completeness)} complete
-                          </span>
-                          <span>
-                            {row.availableCount.toLocaleString()} available
-                          </span>
-                          <span>
-                            {row.missingCount.toLocaleString()} missing
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ))
-              ) : (
-                <div className='explorer-density-heatmap__state'>
-                  No density data available for the configured fields.
-                </div>
+            <div className='explorer-density-heatmap__header-right'>
+              {canShowToggle && (
+                <button
+                  className='explorer-density-heatmap__show-all-toggle'
+                  onClick={() => setShowAllFields((prev) => !prev)}
+                  type='button'
+                >
+                  {showAllFields
+                    ? 'Show curated fields only'
+                    : `Show all fields (${allFieldCount})`}
+                </button>
               )}
+              <div className='explorer-density-heatmap__summary'>
+                {stats.map((stat) => (
+                  <div key={stat.label}>
+                    <span className='explorer-density-heatmap__summary-value'>
+                      {stat.value.toLocaleString()}
+                    </span>
+                    <span className='explorer-density-heatmap__summary-label'>
+                      {stat.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </>
+
+          <div className='explorer-density-heatmap__legend'>
+            <span>low completeness</span>
+            <div className='explorer-density-heatmap__legend-gradient' />
+            <span>high completeness</span>
+          </div>
+
+          <div className='explorer-density-heatmap__matrix'>
+            <div className='explorer-density-heatmap__matrix-header'>
+              <span>Field</span>
+              <span className='explorer-density-heatmap__header-density'>
+                Density
+              </span>
+              <span className='explorer-density-heatmap__header-summary'>
+                Summary
+              </span>
+            </div>
+
+            {heatmapContent}
+          </div>
+        </div>
       ) : (
         <UserAgreement
           onAgree={() => {
@@ -510,7 +504,6 @@ function ExplorerDensityHeatmap({
 }
 
 ExplorerDensityHeatmap.propTypes = {
-  accessibleCount: PropTypes.number,
   dataType: PropTypes.string,
   expandByFilter: PropTypes.bool,
   fieldInfo: PropTypes.object,

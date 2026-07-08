@@ -2,7 +2,7 @@ import { useState } from 'react';
 import * as Yup from 'yup';
 import Select from 'react-select';
 import { Formik, Field, Form, FieldArray } from 'formik';
-import { useAppDispatch, useAppSelector } from '../redux/hooks';
+import { useAppDispatch } from '../redux/hooks';
 import Button from '../gen3-ui-component/components/Button';
 import IconComponent from '../components/Icon';
 import SimpleInputField from '../components/SimpleInputField';
@@ -21,7 +21,6 @@ import UserAccessTable from './UserAccessTable';
 import DataRequestFilterSets from './DataRequestFilterSets';
 import DataRequestApprovedUrl from './DataRequestApprovedUrl';
 import ViewProjectStatusHistory from './ViewProjectStatusHistory';
-import StatusExplainerModal from './StatusExplainerModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 const dataAccessSchema = Yup.object().shape({
@@ -50,6 +49,8 @@ function errorObjectForField(errors, touched, fieldName) {
  * @param {RootState["explorer"]["savedFilterSets"]} props.savedFilterSets
  * @param {(actionType: string) => void} [props.onAction] - Callback when action completes
  * @param {() => void} [props.onClose] - Callback when popup closes
+ * @param {boolean} [props.isStatusFlowEnabled]
+ * @param {() => void} [props.onShowStatusFlow]
  */
 /* eslint-disable react/prop-types */
 export default function AdminProjectActions({
@@ -58,18 +59,13 @@ export default function AdminProjectActions({
   savedFilterSets,
   onAction,
   onClose,
+  isStatusFlowEnabled,
+  onShowStatusFlow,
 }) {
   const dispatch = useAppDispatch();
-  const dataRequestsConfig = useAppSelector(
-    (state) => state.explorer.config.dataRequests,
-  );
-  const statusFlow = dataRequestsConfig?.statusFlow;
-  const isStatusFlowEnabled =
-    dataRequestsConfig?.enabled && Boolean(statusFlow);
   const [actionType, setActionType] = useState('');
   const [currentEmailInput, setCurrentEmailInput] = useState('');
   const [isActionPending, setActionPending] = useState(false);
-  const [statusExplainer, setStatusExplainer] = useState(false);
   const [actionRequestError, setRequestactionError] = useState({
     isError: false,
     message: '',
@@ -149,21 +145,13 @@ export default function AdminProjectActions({
                             type='button'
                             className='data-request__status-info-icon'
                             aria-label='Show status explainer modal'
-                            onClick={() => setStatusExplainer(true)}
+                            onClick={onShowStatusFlow}
                           >
                             <FontAwesomeIcon icon='circle-info' />
                           </button>
                         )}
                       </h2>
                     </div>
-
-                    {isStatusFlowEnabled && (
-                      <StatusExplainerModal
-                        isOpen={statusExplainer}
-                        onClose={() => setStatusExplainer(false)}
-                        statusFlow={statusFlow}
-                      />
-                    )}
 
                     <div className='data-request__fields'>
                       <Field name='state'>

@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { contactEmail } from '../localconf';
 import ErrorBoundary from '../components/ErrorBoundary';
 import DataRequestsTable from './DataRequestsTable';
+import StatusExplainerModal from './StatusExplainerModal';
 import { toggleAdminActive } from '../redux/dataRequest/slice';
 import {
   fetchProjects,
@@ -54,13 +55,20 @@ function DataRequests({
   const [searchParams, setSearchParams] = useSearchParams();
   const dispatch = useAppDispatch();
   const { authz } = useAppSelector((state) => state.user);
+  const dataRequestsConfig = useAppSelector(
+    (state) => state.explorer.config.dataRequests,
+  );
+  const statusFlow = dataRequestsConfig?.statusFlow;
+  const isStatusFlowEnabled =
+    dataRequestsConfig?.enabled && Boolean(statusFlow);
   const isAdmin = isAdminUser(authz);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(25);
+  const [isStatusExplainerOpen, setStatusExplainerOpen] = useState(false);
 
   function getPageFromLink(link) {
     if (!link) {
-      return null
+      return null;
     }
 
     const url = new URL(link, window.location.origin);
@@ -165,14 +173,31 @@ function DataRequests({
             page={page}
             perPage={perPage}
             onPageSizeChange={changePageSize}
-            onFirstPage={() => loadProjects(getPageFromLink(paginationLinks?.first) || 1)}
-            onPreviousPage={() => loadProjects(getPageFromLink(paginationLinks?.prev))}
-            onNextPage={() => loadProjects(getPageFromLink(paginationLinks?.next))}
-            onLastPage={() => loadProjects(getPageFromLink(paginationLinks?.last))}
+            onFirstPage={() =>
+              loadProjects(getPageFromLink(paginationLinks?.first) || 1)
+            }
+            onPreviousPage={() =>
+              loadProjects(getPageFromLink(paginationLinks?.prev))
+            }
+            onNextPage={() =>
+              loadProjects(getPageFromLink(paginationLinks?.next))
+            }
+            onLastPage={() =>
+              loadProjects(getPageFromLink(paginationLinks?.last))
+            }
             isLoading={isProjectsReloading}
+            isStatusFlowEnabled={isStatusFlowEnabled}
+            onShowStatusFlow={() => setStatusExplainerOpen(true)}
           />
         </ErrorBoundary>
       </main>
+      {isStatusFlowEnabled && (
+        <StatusExplainerModal
+          isOpen={isStatusExplainerOpen}
+          onClose={() => setStatusExplainerOpen(false)}
+          statusFlow={statusFlow}
+        />
+      )}
     </div>
   );
 }

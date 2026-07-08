@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import * as dagre from '@dagrejs/dagre';
 
 import './StatusExplainerModal.css';
@@ -18,9 +19,7 @@ const getPath = (points) => {
   return points
     .map(
       (point, index) =>
-        `${index === 0 ? 'M' : 'L'} ${point.x + PADDING} ${
-          point.y + PADDING
-        }`,
+        `${index === 0 ? 'M' : 'L'} ${point.x + PADDING} ${point.y + PADDING}`,
     )
     .join(' ');
 };
@@ -40,99 +39,110 @@ const getTransitionLabelSize = (label) => {
 };
 
 export default function StatusExplainerModal(props) {
-  const states = props.statusFlow?.states || [];
+  const markerId = useMemo(
+    () => `status-flow-arrowhead-${Math.random().toString(36).slice(2)}`,
+    [],
+  );
+
+  const graphData = useMemo(() => {
+    const states = props.statusFlow?.states || [];
+    const transitions = props.statusFlow?.transitions || [];
+    const graph = new dagre.graphlib.Graph({
+      multigraph: true,
+    });
+
+    graph.setGraph({
+      rankdir: 'LR',
+      ranksep: RANK_SEPARATION,
+      nodesep: NODE_SEPARATION,
+      marginx: 0,
+      marginy: 0,
+    });
+
+    graph.setDefaultEdgeLabel(() => ({}));
+
+    const nodes = [
+      {
+        id: 'start',
+        label: 'START',
+        isStart: true,
+      },
+      ...states,
+    ];
+
+    nodes.forEach((node) => {
+      graph.setNode(node.id, {
+        width: node.isStart ? START_WIDTH : BOX_WIDTH,
+        height: node.isStart ? START_HEIGHT : BOX_HEIGHT,
+      });
+    });
+
+    transitions.forEach((transition, index) => {
+      if (graph.hasNode(transition.from) && graph.hasNode(transition.to)) {
+        const hasVisibleLabel = transition.label && transition.from !== 'start';
+
+        const labelSize = getTransitionLabelSize(
+          hasVisibleLabel ? transition.label : null,
+        );
+
+        graph.setEdge(
+          transition.from,
+          transition.to,
+          {
+            transition,
+            width: labelSize.width,
+            height: labelSize.height,
+            labelpos: 'c',
+          },
+          `${transition.from}-${transition.to}-${index}`,
+        );
+      }
+    });
+
+    dagre.layout(graph);
+
+    const positionedNodes = nodes.map((node) => ({
+      ...node,
+      ...graph.node(node.id),
+    }));
+
+    const positionedTransitions = graph.edges().map((edge) => {
+      const edgeData = graph.edge(edge);
+
+      return {
+        id: edge.name,
+        transition: edgeData.transition,
+        points: edgeData.points || [],
+        labelPosition:
+          edgeData.transition.label && edgeData.transition.from !== 'start'
+            ? {
+                left: edgeData.x + PADDING,
+                top: edgeData.y + PADDING,
+              }
+            : null,
+      };
+    });
+
+    const graphSize = graph.graph();
+
+    return {
+      positionedNodes,
+      positionedTransitions,
+      diagramWidth: graphSize.width + PADDING * 2,
+      diagramHeight: graphSize.height + PADDING * 2,
+    };
+  }, [props.statusFlow]);
 
   if (!props.isOpen) {
     return null;
   }
 
-  const transitions = props.statusFlow?.transitions || [];
-  const markerId = `status-flow-arrowhead-${crypto.randomUUID()}`;
-
-  const graph = new dagre.graphlib.Graph({
-    multigraph: true,
-  });
-
-  graph.setGraph({
-    rankdir: 'LR',
-    ranksep: RANK_SEPARATION,
-    nodesep: NODE_SEPARATION,
-    marginx: 0,
-    marginy: 0,
-  });
-
-  graph.setDefaultEdgeLabel(() => ({}));
-
-  const nodes = [
-    {
-      id: 'start',
-      label: 'START',
-      isStart: true,
-    },
-    ...states,
-  ];
-
-  nodes.forEach((node) => {
-    graph.setNode(node.id, {
-      width: node.isStart ? START_WIDTH : BOX_WIDTH,
-      height: node.isStart ? START_HEIGHT : BOX_HEIGHT,
-    });
-  });
-
-  transitions.forEach((transition, index) => {
-    if (
-      graph.hasNode(transition.from) &&
-      graph.hasNode(transition.to)
-    ) {
-
-      const hasVisibleLabel =
-        transition.label && transition.from !== 'start';
-
-      const labelSize = getTransitionLabelSize(
-        hasVisibleLabel ? transition.label : null,
-      );
-
-      graph.setEdge(
-        transition.from,
-        transition.to,
-        {
-          transition,
-          width: labelSize.width,
-          height: labelSize.height,
-          labelpos: 'c',
-        },
-        `${transition.from}-${transition.to}-${index}`,
-      );
-    }
-  });
-
-  dagre.layout(graph);
-
-  const positionedNodes = nodes.map((node) => ({
-    ...node,
-    ...graph.node(node.id),
-  }));
-
-  const positionedTransitions = graph.edges().map((edge) => {
-    const edgeData = graph.edge(edge);
-
-    return {
-      id: edge.name,
-      transition: edgeData.transition,
-      points: edgeData.points || [],
-      labelPosition: edgeData.transition.label
-        && edgeData.transition.from !== 'start'
-        ? {
-            left: edgeData.x + PADDING,
-            top: edgeData.y + PADDING,
-          }
-        : null,
-    };
-  });
-
-  const graphSize = graph.graph();
-  const diagramWidth = graphSize.width + PADDING * 2;
-  const diagramHeight = graphSize.height + PADDING * 2;
+  const {
+    positionedNodes,
+    positionedTransitions,
+    diagramWidth,
+    diagramHeight,
+  } = graphData;
 
   return (
     <div className='status-explainer-modal__overlay'>

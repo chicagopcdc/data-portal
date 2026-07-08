@@ -12,7 +12,6 @@ import './DataRequests.css';
 import Spinner from '../gen3-ui-component/components/Spinner/Spinner';
 import Tooltip from 'rc-tooltip';
 import 'rc-tooltip/assets/bootstrap_white.css';
-import StatusExplainerModal from './StatusExplainerModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 /** @typedef {import("../redux/types").RootState} RootState */
@@ -136,6 +135,8 @@ function parseTableData({ projects, userId, rowAction, isAdminActive }) {
  * @param {function} props.onToggleAdmin
  * @param {boolean} [props.isLoading]
  * @param {function} [props.reloadProjects]
+ * @param {boolean} [props.isStatusFlowEnabled]
+ * @param {() => void} [props.onShowStatusFlow]
  */
 function DataRequestsTable({
   className = '',
@@ -155,6 +156,8 @@ function DataRequestsTable({
   onLastPage,
   isLoading,
   reloadProjects,
+  isStatusFlowEnabled,
+  onShowStatusFlow,
 }) {
   const navigate = useNavigate();
   const transitionTo = useNavigate();
@@ -162,13 +165,6 @@ function DataRequestsTable({
   const [projectDisplayOptions, setProjectDisplayOptions] = useState(null);
   const [isMoreActionsPopupOpen, setMoreActionsPopupOpen] = useState(false);
   const [isVerifyPopupOpen, setVerifyPopupOpen] = useState(false);
-  const [statusExplainer, setStatusExplainer] = useState(false);
-  const dataRequestsConfig = useAppSelector(
-    (state) => state.explorer.config.dataRequests,
-  );
-  const statusFlow = dataRequestsConfig?.statusFlow;
-  const isStatusFlowEnabled =
-    dataRequestsConfig?.enabled && Boolean(statusFlow);
 
   const tableHeader = [
     'ID',
@@ -183,7 +179,7 @@ function DataRequestsTable({
           type='button'
           className='data-request__status-info-icon'
           aria-label='Show status explainer modal'
-          onClick={() => setStatusExplainer(true)}
+          onClick={onShowStatusFlow}
         >
           <FontAwesomeIcon icon='circle-info' />
         </button>
@@ -257,7 +253,7 @@ function DataRequestsTable({
           </div>
         )}
         <h2>{isAdminActive ? 'All Requests' : 'List of My Requests'}</h2>
-            <div className='data-requests__table-actions'>
+        <div className='data-requests__table-actions'>
           <Button
             label={'CSL Verification'}
             enabled={isAdmin}
@@ -337,17 +333,12 @@ function DataRequestsTable({
                 }
               }}
               onClose={closeProjectActionPopup}
+              isStatusFlowEnabled={isStatusFlowEnabled}
+              onShowStatusFlow={onShowStatusFlow}
             />
           </Popup>
         )}
       </div>
-      {isStatusFlowEnabled && (
-        <StatusExplainerModal
-          isOpen={statusExplainer}
-          onClose={() => setStatusExplainer(false)}
-          statusFlow={statusFlow}
-        />
-      )}
       <div className='data-requests__table-wrapper'>
         {isLoading && (
           <div className='data-requests__table-loading-overlay'>

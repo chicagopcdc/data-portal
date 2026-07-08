@@ -275,6 +275,7 @@ function App() {
                       dispatch(toggleAdminActive());
                     }
                     return Promise.all([
+                      dispatch(fetchDictionary()),
                       dispatch(fetchFilterSets()),
                       dispatch(
                         fetchDataRequestProjects({ triggerReloading: false }),
@@ -283,9 +284,12 @@ function App() {
                       dispatch(getUserRoles()),
                     ]);
                   }
-                  return dispatch(
-                    fetchDataRequestProjects({ triggerReloading: false }),
-                  );
+                  return Promise.all([
+                    dispatch(fetchDictionary()),
+                    dispatch(
+                      fetchDataRequestProjects({ triggerReloading: false }),
+                    ),
+                  ]);
                 }}
               >
                 <DataRequests />

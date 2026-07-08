@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Button from '../gen3-ui-component/components/Button';
-import { fetchDictionary } from '../redux/submission/asyncThunks';
 import {
   addProjectDatapoints,
   deleteProjectDatapoints,
@@ -50,6 +49,10 @@ const getSelectionsFromSavedDatapoints = (savedDatapoints) =>
     }
     return result;
   }, {});
+
+const areAllAttributesChecked = (attributes = [], checkedAttributes = []) =>
+  attributes.length > 0 &&
+  attributes.every((attribute) => checkedAttributes.includes(attribute));
 
 const toggleAttribute = (attributesByTable, tableName, attributeName) => {
   const currentAttributes = attributesByTable[tableName] || [];
@@ -134,7 +137,7 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
           'Unable to load selected attributes for this project.',
       );
       setIsLoading(false);
-      return;
+      return false;
     }
 
     const savedDatapoints = buildSavedDatapointsByTable(
@@ -157,12 +160,12 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
     setAvailableCheckedByTable({});
     setSelectedCheckedByTable({});
     setIsLoading(false);
+    return true;
   }, [dispatch, projectId]);
 
   useEffect(() => {
-    dispatch(fetchDictionary());
     loadProjectDatapoints();
-  }, [dispatch, loadProjectDatapoints]);
+  }, [loadProjectDatapoints]);
 
   const toggleTable = (tableName) => {
     setExpandedTables((current) => ({
@@ -179,11 +182,10 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
 
     setAvailableCheckedByTable((current) => {
       const checkedAttributes = current[table.id] || [];
-      const areAllAvailableChecked =
-        availableAttributes.length > 0 &&
-        availableAttributes.every((attribute) =>
-          checkedAttributes.includes(attribute),
-        );
+      const areAllAvailableChecked = areAllAttributesChecked(
+        availableAttributes,
+        checkedAttributes,
+      );
 
       if (areAllAvailableChecked) {
         const nextCheckedAttributes = { ...current };
@@ -201,9 +203,10 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
   const toggleAllSelectedAttributes = (tableName, attributes) => {
     setSelectedCheckedByTable((current) => {
       const checkedAttributes = current[tableName] || [];
-      const areAllSelected =
-        attributes.length > 0 &&
-        attributes.every((attribute) => checkedAttributes.includes(attribute));
+      const areAllSelected = areAllAttributesChecked(
+        attributes,
+        checkedAttributes,
+      );
 
       if (areAllSelected) {
         const nextCheckedAttributes = { ...current };
@@ -297,8 +300,9 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
       );
 
       if (!savedDatapoint && selectedAttributes.length > 0) {
-        requests.push(
-          dispatch(
+        requests.push({
+          tableName,
+          request: dispatch(
             addProjectDatapoints({
               term: tableName,
               value_list: selectedAttributes,
@@ -306,18 +310,19 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
               project_id: projectId,
             }),
           ),
-        );
+        });
         return;
       }
 
       if (savedDatapoint && selectedAttributes.length === 0) {
-        requests.push(
-          dispatch(
+        requests.push({
+          tableName,
+          request: dispatch(
             deleteProjectDatapoints({
               id: savedDatapoint.id,
             }),
           ),
-        );
+        });
         return;
       }
 
@@ -328,8 +333,9 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
           { [tableName]: selectedAttributes },
         )
       ) {
-        requests.push(
-          dispatch(
+        requests.push({
+          tableName,
+          request: dispatch(
             updateProjectDatapoints({
               id: savedDatapoint.id,
               term: tableName,
@@ -338,29 +344,47 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
               project_id: projectId,
             }),
           ),
-        );
+        });
       }
     });
 
-    const actions = await Promise.all(requests);
+    const results = await Promise.all(
+      requests.map(async ({ tableName, request }) => ({
+        tableName,
+        action: await request,
+      })),
+    );
 
-    const failedAction = actions.find(
-      (action) =>
+    const failedResults = results.filter(
+      ({ action }) =>
         action.meta.requestStatus === 'rejected' || action.payload?.isError,
     );
 
-    if (failedAction) {
+    const didRefresh = await loadProjectDatapoints();
+    setIsSaving(false);
+
+    if (failedResults.length > 0) {
+      const failedTableNames = failedResults
+        .map(({ tableName }) => tableTitlesById[tableName] || tableName)
+        .join(', ');
+      const refreshMessage = didRefresh
+        ? 'The selections have been refreshed from the server.'
+        : 'The latest selections could not be refreshed from the server.';
+
       setRequestError(
-        failedAction.payload?.message ||
-          'Unable to save all selected attributes. Please try again.',
+        `Unable to save attributes for: ${failedTableNames}. ${refreshMessage}`,
       );
-      setIsSaving(false);
       return;
     }
 
-    await loadProjectDatapoints();
+    if (!didRefresh) {
+      setRequestError(
+        'Attributes were saved, but the latest selections could not be refreshed from the server.',
+      );
+      return;
+    }
+
     setSuccessMessage('Project request attributes saved.');
-    setIsSaving(false);
     onAction?.('SELECT_ATTRIBUTES');
   };
 
@@ -397,22 +421,13 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
                           className='data-request-select-attributes__table-checkbox'
                           type='checkbox'
                           aria-label={`Select all ${table.title} attributes`}
-                          checked={
-                            table.attributes
-                              .filter(
-                                (attribute) =>
-                                  !selectedAttributes.includes(attribute),
-                              )
-                              .every((attribute) =>
-                                (
-                                  availableCheckedByTable[table.id] || []
-                                ).includes(attribute),
-                              ) &&
-                            table.attributes.some(
+                          checked={areAllAttributesChecked(
+                            table.attributes.filter(
                               (attribute) =>
                                 !selectedAttributes.includes(attribute),
-                            )
-                          }
+                            ),
+                            availableCheckedByTable[table.id] || [],
+                          )}
                           disabled={table.attributes.every((attribute) =>
                             selectedAttributes.includes(attribute),
                           )}
@@ -510,14 +525,10 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
                               className='data-request-select-attributes__table-checkbox'
                               type='checkbox'
                               aria-label={`Select all ${tableTitlesById[tableName] || tableName} attributes for removal`}
-                              checked={
-                                attributes.length > 0 &&
-                                attributes.every((attribute) =>
-                                  (
-                                    selectedCheckedByTable[tableName] || []
-                                  ).includes(attribute),
-                                )
-                              }
+                              checked={areAllAttributesChecked(
+                                attributes,
+                                selectedCheckedByTable[tableName] || [],
+                              )}
                               onChange={() =>
                                 toggleAllSelectedAttributes(
                                   tableName,

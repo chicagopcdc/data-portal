@@ -45,7 +45,7 @@ async function fetchExternalCommonsInfo(payload) {
  * @param {ExplorerFilter} props.filter - Current filter object for queries
  * @param {Array<{ resourceName: string, count: number }>} props.selectedCommonsCounts - Array of commons with their subject counts
  * @param {ExternalConfig} props.externalConfig - External configuration object from commons config
- * @param {string} props.imagingDataCommonsCode - IDC Python example from portal config
+ * @param {Object} props.externalCommonsConfig - External commons display configuration from portal config
  * @param {boolean} props.isLoading - Loading state controlled by parent
  * @param {function} props.setIsLoading - Function to update loading state from parent
  */
@@ -53,7 +53,7 @@ function ExplorerExploreExternalButton({
   filter,
   selectedCommonsCounts,
   externalConfig,
-  imagingDataCommonsCode,
+  externalCommonsConfig,
   isLoading,
   setIsLoading,
 }) {
@@ -128,7 +128,13 @@ function ExplorerExploreExternalButton({
     setSelected(newSelected);
     setIsCodeCopied(false);
 
-    if (newSelected.value === 'idc' && imagingDataCommonsCode) {
+    const newSelectedExternalCommonsConfig =
+      externalCommonsConfig?.[newSelected.value] || {};
+
+    if (
+      newSelectedExternalCommonsConfig.type === 'code' &&
+      newSelectedExternalCommonsConfig.data
+    ) {
       return;
     }
 
@@ -162,15 +168,6 @@ function ExplorerExploreExternalButton({
     setIsFileDownloaded(true);
   }
 
-  async function handleCopyImagingDataCommonsCode() {
-    try {
-      await navigator.clipboard.writeText(imagingDataCommonsCode);
-      setIsCodeCopied(true);
-    } catch (e) {
-      console.error('Unable to copy Imaging Data Commons code:', e);
-    }
-  }
-
   // View instructions in new tab
   function handleOpenInstructions() {
     const url =
@@ -187,8 +184,20 @@ function ExplorerExploreExternalButton({
     return true;
   }
 
-  const isImagingDataCommons =
-    selected.value === 'idc' && Boolean(imagingDataCommonsCode);
+  const selectedExternalCommonsConfig =
+    externalCommonsConfig?.[selected.value] || {};
+  const isCodeExternalCommons =
+    selectedExternalCommonsConfig.type === 'code' &&
+    Boolean(selectedExternalCommonsConfig.data);
+
+  async function handleCopyExternalCommonsCode() {
+    try {
+      await navigator.clipboard.writeText(selectedExternalCommonsConfig.data);
+      setIsCodeCopied(true);
+    } catch (e) {
+      console.error('Unable to copy external commons code:', e);
+    }
+  }
 
   return (
     <>
@@ -234,26 +243,32 @@ function ExplorerExploreExternalButton({
                 </div>
               )}
             </form>
-            {isImagingDataCommons && (
-              <div className='explorer-explore-external__idc-code'>
+            {isCodeExternalCommons && (
+              <div className='explorer-explore-external__code'>
                 <p>
-                  Imaging Data Commons data can be accessed with the IDC Python
-                  package. Copy this example and run it in your Python
-                  environment.
+                  {selectedExternalCommonsConfig.description ||
+                    'Copy this example and run it in your environment.'}
                 </p>
                 <textarea
-                  className='explorer-explore-external__idc-code-text'
-                  aria-label='Imaging Data Commons Python code'
+                  className='explorer-explore-external__code-text'
+                  aria-label={
+                    selectedExternalCommonsConfig.ariaLabel ||
+                    'External commons code'
+                  }
                   readOnly
-                  value={imagingDataCommonsCode}
+                  value={selectedExternalCommonsConfig.data}
                 />
                 <Button
-                  label={isCodeCopied ? 'Copied' : 'Copy code'}
-                  onClick={handleCopyImagingDataCommonsCode}
+                  label={
+                    isCodeCopied
+                      ? selectedExternalCommonsConfig.copiedLabel || 'Copied'
+                      : selectedExternalCommonsConfig.copyLabel || 'Copy code'
+                  }
+                  onClick={handleCopyExternalCommonsCode}
                 />
               </div>
             )}
-            {!isImagingDataCommons &&
+            {!isCodeExternalCommons &&
               commonsInfo?.type === 'file' &&
               commonsInfo?.data && (
                 <>
@@ -306,7 +321,7 @@ function ExplorerExploreExternalButton({
                 label='Back to page'
                 onClick={closePopup}
               />
-              {!isImagingDataCommons && (
+              {!isCodeExternalCommons && (
                 <Button
                   label='Open in new tab'
                   enabled={isOpenInNewTabButtonEnabled()}
@@ -330,7 +345,7 @@ ExplorerExploreExternalButton.propTypes = {
     }),
   ).isRequired,
   externalConfig: PropTypes.object,
-  imagingDataCommonsCode: PropTypes.string,
+  externalCommonsConfig: PropTypes.object,
   isLoading: PropTypes.bool.isRequired,
   setIsLoading: PropTypes.func.isRequired,
 };

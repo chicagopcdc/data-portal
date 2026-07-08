@@ -27,12 +27,12 @@
   margin-right: 0.25rem;
 }
 
-.explorer-explore-external__idc-code {
+.explorer-explore-external__code {
   margin: 0 1rem 1rem;
   text-align: left;
 }
 
-.explorer-explore-external__idc-code-text {
+.explorer-explore-external__code-text {
   box-sizing: border-box;
   width: 100%;
   min-height: 18rem;

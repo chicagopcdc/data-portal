@@ -7,7 +7,7 @@ import './TopBarMenu.css';
  * @param {React.ReactNode | React.ReactNode[]} props.children
  * @param {string} [props.title]
  */
-function TopBarMenu({ 
+function TopBarMenu({
   buttonIcon,
   children,
   title,

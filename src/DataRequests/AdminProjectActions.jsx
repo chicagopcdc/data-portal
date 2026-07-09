@@ -21,6 +21,7 @@ import UserAccessTable from './UserAccessTable';
 import DataRequestFilterSets from './DataRequestFilterSets';
 import DataRequestApprovedUrl from './DataRequestApprovedUrl';
 import ViewProjectStatusHistory from './ViewProjectStatusHistory';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 const dataAccessSchema = Yup.object().shape({
   email: Yup.string().email().required('Must be a valid email address'),
@@ -48,6 +49,8 @@ function errorObjectForField(errors, touched, fieldName) {
  * @param {RootState["explorer"]["savedFilterSets"]} props.savedFilterSets
  * @param {(actionType: string) => void} [props.onAction] - Callback when action completes
  * @param {() => void} [props.onClose] - Callback when popup closes
+ * @param {boolean} [props.isStatusFlowEnabled]
+ * @param {() => void} [props.onShowStatusFlow]
  */
 /* eslint-disable react/prop-types */
 export default function AdminProjectActions({
@@ -56,6 +59,8 @@ export default function AdminProjectActions({
   savedFilterSets,
   onAction,
   onClose,
+  isStatusFlowEnabled,
+  onShowStatusFlow,
 }) {
   const dispatch = useAppDispatch();
   const [actionType, setActionType] = useState('');
@@ -133,8 +138,21 @@ export default function AdminProjectActions({
                 {({ values, errors, touched }) => (
                   <Form className='data-request__form'>
                     <div className='data-request__header'>
-                      <h2>Change Project State</h2>
+                      <h2>
+                        Change Project State
+                        {isStatusFlowEnabled && (
+                          <button
+                            type='button'
+                            className='data-request__status-info-icon'
+                            aria-label='Show status explainer modal'
+                            onClick={onShowStatusFlow}
+                          >
+                            <FontAwesomeIcon icon='circle-info' />
+                          </button>
+                        )}
+                      </h2>
                     </div>
+
                     <div className='data-request__fields'>
                       <Field name='state'>
                         {({ field }) => (

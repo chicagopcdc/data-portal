@@ -12,20 +12,11 @@ import './DataRequests.css';
 import Spinner from '../gen3-ui-component/components/Spinner/Spinner';
 import Tooltip from 'rc-tooltip';
 import 'rc-tooltip/assets/bootstrap_white.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 /** @typedef {import("../redux/types").RootState} RootState */
 /** @typedef {import("../redux/dataRequest/types").ResearcherInfo} ResearcherInfo */
 /** @typedef {import("../redux/dataRequest/types").DataRequestProject} DataRequestProject */
-
-const tableHeader = [
-  'ID',
-  'Research Title',
-  'Description',
-  'Researcher',
-  'Submitted Date',
-  'Status',
-  'Consortia',
-];
 
 /** @param {ResearcherInfo} researcher */
 function parseResearcherInfo(researcher) {
@@ -144,6 +135,8 @@ function parseTableData({ projects, userId, rowAction, isAdminActive }) {
  * @param {function} props.onToggleAdmin
  * @param {boolean} [props.isLoading]
  * @param {function} [props.reloadProjects]
+ * @param {boolean} [props.isStatusFlowEnabled]
+ * @param {() => void} [props.onShowStatusFlow]
  */
 function DataRequestsTable({
   className = '',
@@ -163,6 +156,8 @@ function DataRequestsTable({
   onLastPage,
   isLoading,
   reloadProjects,
+  isStatusFlowEnabled,
+  onShowStatusFlow,
 }) {
   const navigate = useNavigate();
   const transitionTo = useNavigate();
@@ -170,6 +165,29 @@ function DataRequestsTable({
   const [projectDisplayOptions, setProjectDisplayOptions] = useState(null);
   const [isMoreActionsPopupOpen, setMoreActionsPopupOpen] = useState(false);
   const [isVerifyPopupOpen, setVerifyPopupOpen] = useState(false);
+
+  const tableHeader = [
+    'ID',
+    'Research Title',
+    'Description',
+    'Researcher',
+    'Submitted Date',
+    <span className='data-request__status-header'>
+      Status
+      {isStatusFlowEnabled && (
+        <button
+          type='button'
+          className='data-request__status-info-icon'
+          aria-label='Show status explainer modal'
+          onClick={onShowStatusFlow}
+        >
+          <FontAwesomeIcon icon='circle-info' />
+        </button>
+      )}
+    </span>,
+    'Consortia',
+  ];
+
   const tableData = useMemo(
     () =>
       parseTableData({
@@ -235,7 +253,7 @@ function DataRequestsTable({
           </div>
         )}
         <h2>{isAdminActive ? 'All Requests' : 'List of My Requests'}</h2>
-            <div className='data-requests__table-actions'>
+        <div className='data-requests__table-actions'>
           <Button
             label={'CSL Verification'}
             enabled={isAdmin}
@@ -315,6 +333,8 @@ function DataRequestsTable({
                 }
               }}
               onClose={closeProjectActionPopup}
+              isStatusFlowEnabled={isStatusFlowEnabled}
+              onShowStatusFlow={onShowStatusFlow}
             />
           </Popup>
         )}
@@ -324,7 +344,7 @@ function DataRequestsTable({
           <div className='data-requests__table-loading-overlay'>
             <Spinner />
           </div>
-        )}  
+        )}
         <Table header={tableHeader} data={tableData} />
       </div>
       <div className='data-requests__pagination'>

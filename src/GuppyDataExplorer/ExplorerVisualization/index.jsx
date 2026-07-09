@@ -410,6 +410,7 @@ function ExplorerVisualization({
               filter={filter}
               selectedCommonsCounts={selectedCommonsCounts}
               externalConfig={externalConfig}
+              externalCommonsConfig={patientIdsConfig?.externalCommons}
               isLoading={isLoadingExploreButton}
               setIsLoading={setIsLoadingExploreButton}
             />

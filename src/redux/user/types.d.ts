@@ -9,6 +9,7 @@ export type User = {
     firstName?: string;
     lastName?: string;
     institution?: string;
+    onboardingVersionSeen?: number;
   };
   authz: UserAuthz;
   azp: any;

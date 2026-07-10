@@ -13,6 +13,31 @@
   color: inherit;
 }
 
+.data-request__status-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.data-request__status-info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 10px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #2f6287;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.data-request__status-info-icon:hover {
+  color: #1f4f6d;
+}
+
 .data-requests__status-approved,
 .data-requests__status-data-available {
   color: var(--pcdc-color__primary);
@@ -329,6 +354,56 @@
 .data-request__approved-url--no-url span {
   color: #856404;
   font-style: italic;
+}
+
+.popup__box.data-request__csl-popup {
+  width: calc(100vw - 2rem);
+  max-width: 720px;
+  box-sizing: border-box;
+}
+
+.data-request__csl-popup .popup__title,
+.data-request__csl-popup .popup__message,
+.data-request__csl-popup .popup__foot {
+  box-sizing: border-box;
+}
+
+.data-request__csl-popup .popup__message {
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.data-request__csl-popup .data-request__form {
+  width: 100%;
+  min-width: 0;
+  align-items: stretch;
+}
+
+.data-request__csl-popup .data-request__fields {
+  width: 100%;
+}
+
+.data-request__csl-popup .data-request__value-container {
+  left: 0;
+  min-width: 0;
+  width: 100%;
+}
+
+.data-request__csl-results {
+  width: 100%;
+  min-width: 0;
+}
+
+.data-request__csl-results .base-table {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.data-request__csl-results .base-table__body {
+  width: 700px;
+  min-width: 700px;
 }
 
 .submission-success-message {

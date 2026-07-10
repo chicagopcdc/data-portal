@@ -108,6 +108,7 @@
     ]
   },
   "explorerWizard": {
+    "version": 1,
     "steps": [
       {
         "route": "/explorer",
@@ -435,7 +436,17 @@
       },
       "patientIds": {
         "filter": true,
-        "export": true
+        "export": true,
+        "externalCommons": {
+          "idc": {
+            "type": "code",
+            "data": "import time\nfrom idc_index import IDCClient\nfrom pathlib import Path\n\n\npatient_ids = None\nexport_entire_idc = False\n\nif export_entire_idc:\n    client = IDCClient()\n    client.index.to_json(\"idc_index.json\", orient=\"records\", indent=2)\n    print(\"✅ Saved full index to idc_index.json\")\n\n    client.index.to_json(\"idc_index_table.json\", orient=\"table\", indent=2)\n    print(\"✅ Saved full index to idc_index_table.json\")\n\n    import pandas as pd\n    df_records = pd.read_json(\"idc_index.json\", orient=\"records\")\n    print(df_records.shape)\n    print(df_records.head())\nelse:\n    patient_ids = [\"TCGA-3L-AA1B\", \"PANLMU\"]\n\n    def timed(label, func, *args, **kwargs):\n        start = time.perf_counter()\n        result = func(*args, **kwargs)\n        end = time.perf_counter()\n        print(f\"[⏱️] {label} took {end - start:.3f} seconds\")\n        return result\n\n\n    client = timed(\"Initialize IDCClient\", IDCClient)\n\n    total_count = timed(\"Count total records\", lambda: len(client.index))\n    print(f\"Total records: {total_count}\")\n\n    selection = timed(\n        \"Filter by PatientID\",\n        lambda: client.index[client.index[\"PatientID\"].isin(patient_ids)]\n    )\n    selection_count = timed(\"Count selection\", lambda: len(selection))\n    print(f\"Selection count: {selection_count}\")\n    # print(selection[\"PatientID\"])\n    # Save entire index DataFrame to JSON\n    timed(\n        \"Save selection to JSON\",\n        lambda: selection.to_json(\"idc_index_selection.json\", orient=\"records\", indent=2)\n    )\n    print(\"✅ Saved selection index to idc_index_selection.json\")\n\n    # Download data for selected patients\n    Path(\"files\").mkdir(exist_ok=True)\n    timed(\n        \"Download from selection\",\n        client.download_from_selection,\n        patientId=patient_ids,\n        downloadDir=\"./files\"\n    )",
+            "description": "Imaging Data Commons data can be accessed with the IDC Python package. Copy this example and run it in your Python environment.",
+            "ariaLabel": "Imaging Data Commons Python code",
+            "copyLabel": "Copy code",
+            "copiedLabel": "Copied"
+          }
+        }
       },
       "survivalAnalysis": {
         "result": {
@@ -801,7 +812,40 @@
         ]
       },
       "dataRequests": {
-        "enabled": false
+        "enabled": false,
+        "statusFlow": {
+          "states": [
+            { "id": "draft", "label": "Draft" },
+            { "id": "in_review", "label": "In Review" },
+            { "id": "rejected", "label": "Rejected" },
+            { "id": "in_revision", "label": "In Revision" },
+            { "id": "withdrawn", "label": "Withdrawn" },
+            { "id": "approved", "label": "Approved" },
+            { "id": "approved_with_feedback", "label": "Approved with Feedback" },
+            { "id": "request_criteria_finalized", "label": "Request Criteria Finalized" },
+            { "id": "contracting_requirements_met", "label": "Contracting and other requirements met" },
+            { "id": "data_available", "label": "Data available" },
+            { "id": "data_downloaded", "label": "Data Downloaded" },
+            { "id": "paper_published", "label": "Paper Published" }
+          ],
+          "transitions": [
+            { "from": "start", "to": "draft", "label": "START" },
+            { "from": "draft", "to": "in_review" },
+            { "from": "in_review", "to": "withdrawn", "label": "Withdraw" },
+            { "from": "in_review", "to": "rejected" },
+            { "from": "in_review", "to": "approved" },
+            { "from": "in_review", "to": "approved_with_feedback" },
+            { "from": "in_review", "to": "in_revision", "label": "Re-review Requested" },
+            { "from": "in_revision", "to": "in_review", "label": "Submit" },
+            { "from": "in_revision", "to": "withdrawn" },
+            { "from": "approved", "to": "request_criteria_finalized" },
+            { "from": "approved_with_feedback", "to": "request_criteria_finalized" },
+            { "from": "request_criteria_finalized", "to": "contracting_requirements_met" },
+            { "from": "contracting_requirements_met", "to": "data_available" },
+            { "from": "data_available", "to": "data_downloaded" },
+            { "from": "data_downloaded", "to": "paper_published" }
+          ]
+        }
       },
       "getAccessButtonLink": "https://docs.pedscommons.org/PCDCProjectRequestForm/"
     },
@@ -912,7 +956,17 @@
       },
       "patientIds": {
         "filter": false,
-        "export": true
+        "export": true,
+        "externalCommons": {
+          "idc": {
+            "type": "code",
+            "data": "import time\nfrom idc_index import IDCClient\nfrom pathlib import Path\n\n\npatient_ids = None\nexport_entire_idc = False\n\nif export_entire_idc:\n    client = IDCClient()\n    client.index.to_json(\"idc_index.json\", orient=\"records\", indent=2)\n    print(\"✅ Saved full index to idc_index.json\")\n\n    client.index.to_json(\"idc_index_table.json\", orient=\"table\", indent=2)\n    print(\"✅ Saved full index to idc_index_table.json\")\n\n    import pandas as pd\n    df_records = pd.read_json(\"idc_index.json\", orient=\"records\")\n    print(df_records.shape)\n    print(df_records.head())\nelse:\n    patient_ids = [\"TCGA-3L-AA1B\", \"PANLMU\"]\n\n    def timed(label, func, *args, **kwargs):\n        start = time.perf_counter()\n        result = func(*args, **kwargs)\n        end = time.perf_counter()\n        print(f\"[⏱️] {label} took {end - start:.3f} seconds\")\n        return result\n\n\n    client = timed(\"Initialize IDCClient\", IDCClient)\n\n    total_count = timed(\"Count total records\", lambda: len(client.index))\n    print(f\"Total records: {total_count}\")\n\n    selection = timed(\n        \"Filter by PatientID\",\n        lambda: client.index[client.index[\"PatientID\"].isin(patient_ids)]\n    )\n    selection_count = timed(\"Count selection\", lambda: len(selection))\n    print(f\"Selection count: {selection_count}\")\n    # print(selection[\"PatientID\"])\n    # Save entire index DataFrame to JSON\n    timed(\n        \"Save selection to JSON\",\n        lambda: selection.to_json(\"idc_index_selection.json\", orient=\"records\", indent=2)\n    )\n    print(\"✅ Saved selection index to idc_index_selection.json\")\n\n    # Download data for selected patients\n    Path(\"files\").mkdir(exist_ok=True)\n    timed(\n        \"Download from selection\",\n        client.download_from_selection,\n        patientId=patient_ids,\n        downloadDir=\"./files\"\n    )",
+            "description": "Imaging Data Commons data can be accessed with the IDC Python package. Copy this example and run it in your Python environment.",
+            "ariaLabel": "Imaging Data Commons Python code",
+            "copyLabel": "Copy code",
+            "copiedLabel": "Copied"
+          }
+        }
       },
       "survivalAnalysis": {
         "result": {

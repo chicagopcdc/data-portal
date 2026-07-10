@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
 import { defaultTheme, Flex, Form, Provider } from '@adobe/react-spectrum';
@@ -24,6 +25,29 @@ function DataRequestsTableHead({
   adminUsers,
   isAdminActive,
 }) {
+  const [nameFilter, setNameFilter] = useState(filters.name);
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
+
+  useEffect(() => {
+    setNameFilter(filters.name);
+  }, [filters.name]);
+
+  useEffect(() => {
+    if (nameFilter === filtersRef.current.name) {
+      return undefined;
+    }
+
+    const timer = setTimeout(() => {
+      onFiltersChange({
+        ...filtersRef.current,
+        name: nameFilter,
+      });
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [nameFilter, onFiltersChange]);
+
   const statusItems = Object.keys(projectStates).map((status) => ({
     id: status,
     text: status,
@@ -93,11 +117,9 @@ function DataRequestsTableHead({
             input={
               <input
                 name='research-title-filter-input'
-                onChange={(event) =>
-                  updateFilters({ name: event.target.value })
-                }
+                onChange={(event) => setNameFilter(event.target.value)}
                 type='text'
-                value={filters.name}
+                value={nameFilter}
               />
             }
           />

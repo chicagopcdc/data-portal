@@ -25,28 +25,50 @@ function DataRequestsTableHead({
   adminUsers,
   isAdminActive,
 }) {
-  const [nameFilter, setNameFilter] = useState(filters.name);
+  const [delayedFilters, setDelayedFilters] = useState({
+    id: filters.id,
+    name: filters.name,
+    description: filters.description,
+  });
   const filtersRef = useRef(filters);
   filtersRef.current = filters;
 
   useEffect(() => {
-    setNameFilter(filters.name);
-  }, [filters.name]);
+    setDelayedFilters({
+      id: filters.id,
+      name: filters.name,
+      description: filters.description,
+    });
+  }, [filters.id, filters.name, filters.description]);
 
   useEffect(() => {
-    if (nameFilter === filtersRef.current.name) {
+    const changes = {};
+
+    if (delayedFilters.id !== filtersRef.current.id) {
+      changes.id = delayedFilters.id;
+    }
+
+    if (delayedFilters.name !== filtersRef.current.name) {
+      changes.name = delayedFilters.name;
+    }
+
+    if (delayedFilters.description !== filtersRef.current.description) {
+      changes.description = delayedFilters.description;
+    }
+
+    if (Object.keys(changes).length === 0) {
       return undefined;
     }
 
     const timer = setTimeout(() => {
       onFiltersChange({
         ...filtersRef.current,
-        name: nameFilter,
+        ...changes,
       });
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [nameFilter, onFiltersChange]);
+  }, [delayedFilters, onFiltersChange]);
 
   const statusItems = Object.keys(projectStates).map((status) => ({
     id: status,
@@ -101,9 +123,14 @@ function DataRequestsTableHead({
               <input
                 min='1'
                 name='id-filter-input'
-                onChange={(event) => updateFilters({ id: event.target.value })}
+                onChange={(event) =>
+                  setDelayedFilters((current) => ({
+                    ...current,
+                    id: event.target.value,
+                  }))
+                }
                 type='number'
-                value={filters.id}
+                value={delayedFilters.id}
               />
             }
           />
@@ -117,9 +144,14 @@ function DataRequestsTableHead({
             input={
               <input
                 name='research-title-filter-input'
-                onChange={(event) => setNameFilter(event.target.value)}
+                onChange={(event) =>
+                  setDelayedFilters((current) => ({
+                    ...current,
+                    name: event.target.value,
+                  }))
+                }
                 type='text'
-                value={nameFilter}
+                value={delayedFilters.name}
               />
             }
           />
@@ -134,10 +166,13 @@ function DataRequestsTableHead({
               <input
                 name='description-filter-input'
                 onChange={(event) =>
-                  updateFilters({ description: event.target.value })
+                  setDelayedFilters((current) => ({
+                    ...current,
+                    description: event.target.value,
+                  }))
                 }
                 type='text'
-                value={filters.description}
+                value={delayedFilters.description}
               />
             }
           />

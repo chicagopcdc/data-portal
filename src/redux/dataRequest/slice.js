@@ -3,6 +3,7 @@ import {
   fetchProjects,
   createProject,
   fetchProjectStates,
+  fetchProjectConsortiums,
   getProjectUsers,
   getUserRoles,
 } from './asyncThunks';
@@ -13,6 +14,7 @@ const slice = createSlice({
     projects: [],
     userRoles: [],
     projectStates: {},
+    projectConsortiums: [],
     paginationLinks: {},
     isError: false,
     isAdminActive: false,
@@ -60,6 +62,11 @@ const slice = createSlice({
       }
 
       state.projectStates = projectStates;
+    });
+    builder.addCase(fetchProjectConsortiums.fulfilled, (state, action) => {
+      if (action.payload) {
+        state.projectConsortiums = action.payload;
+      }
     });
     builder.addCase(createProject.pending, (state) => {
       state.isCreatePending = true;

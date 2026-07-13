@@ -45,6 +45,7 @@ async function fetchExternalCommonsInfo(payload) {
  * @param {ExplorerFilter} props.filter - Current filter object for queries
  * @param {Array<{ resourceName: string, count: number }>} props.selectedCommonsCounts - Array of commons with their subject counts
  * @param {ExternalConfig} props.externalConfig - External configuration object from commons config
+ * @param {Object} props.externalCommonsConfig - External commons display configuration from portal config
  * @param {boolean} props.isLoading - Loading state controlled by parent
  * @param {function} props.setIsLoading - Function to update loading state from parent
  */
@@ -52,6 +53,7 @@ function ExplorerExploreExternalButton({
   filter,
   selectedCommonsCounts,
   externalConfig,
+  externalCommonsConfig,
   isLoading,
   setIsLoading,
 }) {
@@ -65,6 +67,7 @@ function ExplorerExploreExternalButton({
   const [show, setShow] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
   const [isFileDownloaded, setIsFileDownloaded] = useState(false);
+  const [isCodeCopied, setIsCodeCopied] = useState(false);
 
   // State for external commons config and result data
   const [commonsInfo, setCommonsInfo] = useState(
@@ -107,6 +110,7 @@ function ExplorerExploreExternalButton({
     setShow(false);
     setIsLoading(false);
     setIsFileDownloaded(false);
+    setIsCodeCopied(false);
   }
 
   const { authz, user_id: currentUserId } = useAppSelector(
@@ -122,6 +126,17 @@ function ExplorerExploreExternalButton({
     if (selected.value === newSelected.value) return;
     setCommonsInfo(null);
     setSelected(newSelected);
+    setIsCodeCopied(false);
+
+    const newSelectedExternalCommonsConfig =
+      externalCommonsConfig?.[newSelected.value] || {};
+
+    if (
+      newSelectedExternalCommonsConfig.type === 'code' &&
+      newSelectedExternalCommonsConfig.data
+    ) {
+      return;
+    }
 
     if (newSelected.value === '') return;
 
@@ -169,6 +184,21 @@ function ExplorerExploreExternalButton({
     return true;
   }
 
+  const selectedExternalCommonsConfig =
+    externalCommonsConfig?.[selected.value] || {};
+  const isCodeExternalCommons =
+    selectedExternalCommonsConfig.type === 'code' &&
+    Boolean(selectedExternalCommonsConfig.data);
+
+  async function handleCopyExternalCommonsCode() {
+    try {
+      await navigator.clipboard.writeText(selectedExternalCommonsConfig.data);
+      setIsCodeCopied(true);
+    } catch (e) {
+      console.error('Unable to copy external commons code:', e);
+    }
+  }
+
   return (
     <>
       <span data-tour-explore-external-button>
@@ -213,50 +243,77 @@ function ExplorerExploreExternalButton({
                 </div>
               )}
             </form>
-            {commonsInfo?.type === 'file' && commonsInfo?.data && (
-              <>
-                <div className='explorer-explore-external__download-manifest'>
-                  <p>
-                    <FontAwesomeIcon
-                      icon='triangle-exclamation'
-                      color='var(--pcdc-color__secondary)'
-                    />
-                    Download a manifest file and upload it to the selected
-                    commons to use the current cohort.
-                  </p>
-                  <Button
-                    label='Download manifest'
-                    onClick={handleDownloadManifest}
-                  />
-                </div>
-                {/* Show documentation only if not admin */}
-                {!isAdmin && (
+            {isCodeExternalCommons && (
+              <div className='explorer-explore-external__code'>
+                <p>
+                  {selectedExternalCommonsConfig.description ||
+                    'Copy this example and run it in your environment.'}
+                </p>
+                <textarea
+                  className='explorer-explore-external__code-text'
+                  aria-label={
+                    selectedExternalCommonsConfig.ariaLabel ||
+                    'External commons code'
+                  }
+                  readOnly
+                  value={selectedExternalCommonsConfig.data}
+                />
+                <Button
+                  label={
+                    isCodeCopied
+                      ? selectedExternalCommonsConfig.copiedLabel || 'Copied'
+                      : selectedExternalCommonsConfig.copyLabel || 'Copy code'
+                  }
+                  onClick={handleCopyExternalCommonsCode}
+                />
+              </div>
+            )}
+            {!isCodeExternalCommons &&
+              commonsInfo?.type === 'file' &&
+              commonsInfo?.data && (
+                <>
                   <div className='explorer-explore-external__download-manifest'>
                     <p>
                       <FontAwesomeIcon
-                        icon='circle-info'
+                        icon='triangle-exclamation'
                         color='var(--pcdc-color__secondary)'
                       />
-                      &nbsp; Check the{' '}
-                      <a
-                        href='#'
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleOpenInstructions();
-                        }}
-                        style={{
-                          textDecoration: 'underline',
-                          color: 'var(--pcdc-color__secondary)',
-                        }}
-                      >
-                        PCDC User Guide
-                      </a>{' '}
-                      for information about how to upload a file.
+                      Download a manifest file and upload it to the selected
+                      commons to use the current cohort.
                     </p>
+                    <Button
+                      label='Download manifest'
+                      onClick={handleDownloadManifest}
+                    />
                   </div>
-                )}
-              </>
-            )}
+                  {/* Show documentation only if not admin */}
+                  {!isAdmin && (
+                    <div className='explorer-explore-external__download-manifest'>
+                      <p>
+                        <FontAwesomeIcon
+                          icon='circle-info'
+                          color='var(--pcdc-color__secondary)'
+                        />
+                        &nbsp; Check the{' '}
+                        <a
+                          href='#'
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleOpenInstructions();
+                          }}
+                          style={{
+                            textDecoration: 'underline',
+                            color: 'var(--pcdc-color__secondary)',
+                          }}
+                        >
+                          PCDC User Guide
+                        </a>{' '}
+                        for information about how to upload a file.
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
             <div>
               <Button
                 className='explorer-explore-external__button'
@@ -264,11 +321,13 @@ function ExplorerExploreExternalButton({
                 label='Back to page'
                 onClick={closePopup}
               />
-              <Button
-                label='Open in new tab'
-                enabled={isOpenInNewTabButtonEnabled()}
-                onClick={handleOpenExternalCommons}
-              />
+              {!isCodeExternalCommons && (
+                <Button
+                  label='Open in new tab'
+                  enabled={isOpenInNewTabButtonEnabled()}
+                  onClick={handleOpenExternalCommons}
+                />
+              )}
             </div>
           </div>
         </SimplePopup>
@@ -286,6 +345,7 @@ ExplorerExploreExternalButton.propTypes = {
     }),
   ).isRequired,
   externalConfig: PropTypes.object,
+  externalCommonsConfig: PropTypes.object,
   isLoading: PropTypes.bool.isRequired,
   setIsLoading: PropTypes.func.isRequired,
 };

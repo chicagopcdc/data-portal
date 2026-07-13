@@ -54,11 +54,40 @@ function getPaginationLinks(linkHeader) {
   }, {});
 }
 
+function appendList(searchParams, key, values = []) {
+  values.forEach((value) => {
+    if (value !== null && value !== undefined && value !== '') {
+      searchParams.append(key, String(value));
+    }
+  });
+}
+
 export const fetchProjects = createAsyncThunk(
   'dataRequest/fetchProjects',
-  /** @param {{ triggerReloading?: boolean, page?: number, perPage?: number }} _ */
+  /**
+   * @param {{
+   *   triggerReloading?: boolean,
+   *   page?: number,
+   *   perPage?: number,
+   *   filters?: {
+   *     id?: string,
+   *     name?: string,
+   *     description?: string,
+   *     researcherIds?: number[],
+   *     statuses?: string[],
+   *     consortiums?: string[],
+   *     submittedAtStart?: string,
+   *     submittedAtEnd?: string,
+   *   },
+   * }} _
+   */
   async (
-    { triggerReloading = false, page = 1, perPage = 25 } = {},
+    {
+      triggerReloading = false,
+      page = 1,
+      perPage = 25,
+      filters = {},
+    } = {},
     { getState, rejectWithValue },
   ) => {
     const {
@@ -73,6 +102,25 @@ export const fetchProjects = createAsyncThunk(
     if (isAdminActive) {
       searchParams.set('special_user', 'admin');
     }
+    if (filters.id) {
+      searchParams.set('id', filters.id);
+    }
+    if (filters.name) {
+      searchParams.set('name', filters.name);
+    }
+    if (filters.description) {
+      searchParams.set('description', filters.description);
+    }
+    if (filters.submittedAtStart) {
+      searchParams.set('submitted_at_start', filters.submittedAtStart);
+    }
+    if (filters.submittedAtEnd) {
+      searchParams.set('submitted_at_end', filters.submittedAtEnd);
+    }
+
+    appendList(searchParams, 'researcher_id', filters.researcherIds);
+    appendList(searchParams, 'status', filters.statuses);
+    appendList(searchParams, 'consortiums', filters.consortiums);
 
     try {
       const { data, response, status, headers } = await fetchWithCreds({
@@ -91,6 +139,33 @@ export const fetchProjects = createAsyncThunk(
           response?.headers?.get('Link') || headers?.get('Link'),
         ),
       };
+    } catch (e) {
+      return rejectWithValue(e);
+    }
+  },
+);
+
+export const fetchProjectConsortiums = createAsyncThunk(
+  'dataRequest/fetchProjectConsortiums',
+  async (_, { getState, rejectWithValue }) => {
+    const {
+      dataRequest: { projectConsortiums },
+    } = /** @type {import("../types").RootState} */ (getState());
+
+    if (projectConsortiums.length > 0) return;
+
+    try {
+      const { data, response, status } = await fetchWithCreds({
+        path: '/amanuensis/projects/consortiums',
+        method: 'GET',
+      });
+
+      if (status !== 200) {
+        console.error(`WARNING: failed to with status ${response.statusText}`);
+        return null;
+      }
+
+      return data;
     } catch (e) {
       return rejectWithValue(e);
     }

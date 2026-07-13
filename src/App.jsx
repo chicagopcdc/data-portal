@@ -44,6 +44,7 @@ import {
 } from './redux/explorer/asyncThunks';
 import {
   fetchProjects as fetchDataRequestProjects,
+  fetchProjectConsortiums,
   fetchProjectStates,
   getUserRoles,
 } from './redux/dataRequest/asyncThunks';
@@ -280,8 +281,10 @@ function App() {
                       dispatch(
                         fetchDataRequestProjects({ triggerReloading: false }),
                       ),
+                      dispatch(fetchProjectConsortiums()),
                       dispatch(fetchProjectStates()),
                       dispatch(getUserRoles()),
+                      dispatch(adminFetchUsers()),
                     ]);
                   }
                   return Promise.all([
@@ -289,6 +292,8 @@ function App() {
                     dispatch(
                       fetchDataRequestProjects({ triggerReloading: false }),
                     ),
+                    dispatch(fetchProjectConsortiums()),
+                    dispatch(fetchProjectStates()),
                   ]);
                 }}
               >

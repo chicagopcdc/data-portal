@@ -29,6 +29,20 @@ export type ExplorerConfig = {
   chartConfig: ChartConfig;
   filterConfig: FilterConfig;
   getAccessButtonLink?: string;
+  dataRequests?: {
+    enabled?: boolean;
+    statusFlow?: {
+      states?: {
+        id: string;
+        label: string;
+      }[];
+      transitions?: {
+        from: string;
+        to: string;
+        label?: string;
+      }[];
+    };
+  };
   guppyConfig: GuppyConfig;
   hideGetAccessButton?: boolean;
   patientIdsConfig?: PatientIdsConfig;

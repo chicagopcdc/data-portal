@@ -106,6 +106,16 @@ export type DataRequestState = {
   userRoles: { id: number; code: string; role: string }[];
   projectUsers: { email: string; role: string }[];
   projectFilterSets: ProjectFilterSets[];
+  reExportJobs: Record<
+    number,
+    {
+      job_uid?: string;
+      project_id?: string;
+      search_id?: number;
+      status: string;
+      error: string | null;
+    }
+  >;
   isError: boolean;
   isAdminActive: boolean;
   isProjectsReloading: boolean;

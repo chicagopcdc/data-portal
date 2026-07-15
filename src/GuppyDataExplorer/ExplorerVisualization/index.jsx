@@ -459,7 +459,11 @@ function ExplorerVisualization({
         >
           <ExplorerDensityHeatmap
             fields={allFields}
-            accessibleCount={accessibleCount}
+            primaryFields={Object.keys(chartConfig)}
+            expandByFilter
+            fieldInfo={filterConfig.info}
+            filter={filter}
+            dataType={guppyConfig.dataType}
             totalCount={totalCount}
           />
         </ViewContainer>

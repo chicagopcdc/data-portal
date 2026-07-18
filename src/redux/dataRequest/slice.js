@@ -6,7 +6,10 @@ import {
   fetchProjectConsortiums,
   getProjectUsers,
   getUserRoles,
+  exportProjectAgain,
+  checkProjectReExportStatus,
 } from './asyncThunks';
+import { RE_EXPORT_STATUS } from './constants';
 
 const slice = createSlice({
   name: 'dataRequest',
@@ -16,6 +19,7 @@ const slice = createSlice({
     projectStates: {},
     projectConsortiums: [],
     paginationLinks: {},
+    reExportJobs: {},
     isError: false,
     isAdminActive: false,
     isProjectsReloading: false,
@@ -126,6 +130,41 @@ const slice = createSlice({
       if (action.payload) {
         state.userRoles = action.payload;
       }
+    });
+    builder.addCase(exportProjectAgain.pending, (state, action) => {
+      state.reExportJobs[action.meta.arg] = {
+        status: RE_EXPORT_STATUS.DISPATCHING,
+        error: null,
+      };
+    });
+    builder.addCase(exportProjectAgain.fulfilled, (state, action) => {
+      state.reExportJobs[action.meta.arg] = {
+        ...action.payload,
+        status: RE_EXPORT_STATUS.RUNNING,
+        error: null,
+      };
+    });
+    builder.addCase(exportProjectAgain.rejected, (state, action) => {
+      state.reExportJobs[action.meta.arg] = {
+        status: RE_EXPORT_STATUS.FAILED,
+        error: action.payload || action.error.message,
+      };
+    });
+    builder.addCase(checkProjectReExportStatus.fulfilled, (state, action) => {
+      const { projectId, jobUid, status } = action.payload;
+      const currentJob = state.reExportJobs[projectId];
+      if (currentJob?.job_uid !== jobUid) return;
+
+      currentJob.status = status;
+      currentJob.error =
+        status === RE_EXPORT_STATUS.FAILED ? 'The export job failed.' : null;
+    });
+    builder.addCase(checkProjectReExportStatus.rejected, (state, action) => {
+      const { projectId, jobUid } = action.meta.arg;
+      const currentJob = state.reExportJobs[projectId];
+      if (currentJob?.job_uid !== jobUid) return;
+
+      currentJob.error = action.payload || action.error.message;
     });
   },
 });

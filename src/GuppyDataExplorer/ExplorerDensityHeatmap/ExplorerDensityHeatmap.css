@@ -1,10 +1,16 @@
 .explorer-density-heatmap {
-  margin-top: 10px;
   background-color: var(--g3-color__white);
   display: flex;
   flex-wrap: wrap;
   justify-content: space-around;
+  margin-top: 10px;
   padding: 12px 12px 5rem;
+}
+
+.explorer-density-heatmap__panel {
+  width: 100%;
+  max-width: 1240px;
+  padding: 12px 12px 1rem;
 }
 
 .explorer-density-heatmap__header {
@@ -18,7 +24,7 @@
 
 .explorer-density-heatmap__title {
   margin: 0;
-  font-size: 18px;
+  font-size: 22px;
   font-weight: var(--g3-font__semi-bold-weight);
 }
 
@@ -26,6 +32,52 @@
   margin: 4px 0 0;
   color: var(--g3-color__gray);
   max-width: 720px;
+}
+
+.explorer-density-heatmap__header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.explorer-density-heatmap__show-all-toggle {
+  appearance: none;
+  border: 1px solid rgba(125, 138, 156, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--g3-color__base-blue);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: var(--g3-font__semi-bold-weight);
+  padding: 6px 14px;
+  transition:
+    background 0.15s,
+    box-shadow 0.15s;
+  white-space: nowrap;
+}
+
+.explorer-density-heatmap__show-all-toggle:hover {
+  background: var(--g3-color__base-blue-light, rgba(23, 105, 163, 0.08));
+  box-shadow: 0 1px 4px rgba(16, 24, 40, 0.08);
+}
+
+.explorer-density-heatmap__badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--g3-color__base-blue-light, rgba(23, 105, 163, 0.1));
+  color: var(--g3-color__base-blue);
+  font-size: 11px;
+  font-weight: var(--g3-font__semi-bold-weight);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.explorer-density-heatmap__section--secondary {
+  border-left: 3px solid var(--g3-color__base-blue, #1769a3);
 }
 
 .explorer-density-heatmap__summary {
@@ -38,7 +90,13 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  min-width: 96px;
+  min-width: 108px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.8);
+  box-shadow:
+    0 1px 0 rgba(16, 24, 40, 0.04),
+    0 8px 20px rgba(16, 24, 40, 0.05);
 }
 
 .explorer-density-heatmap__summary-value {
@@ -53,75 +111,175 @@
   text-transform: uppercase;
 }
 
-.explorer-density-heatmap__placeholder {
-  min-height: 220px;
+.explorer-density-heatmap__legend {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  gap: 10px;
   color: var(--g3-color__gray);
-  border: 1px dashed var(--g3-color__silver);
-  background: var(--g3-color__bg-cloud);
-  text-align: center;
-  padding: 24px;
-  width: 100%;
+  font-size: 12px;
+  margin-bottom: 14px;
 }
 
-.explorer-density-heatmap__placeholder-text {
-  margin: 0 0 8px;
-  font-size: 15px;
+.explorer-density-heatmap__legend-gradient {
+  flex: 1;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--g3-color__rose) 0%,
+    var(--g3-color__bee) 50%,
+    var(--g3-color__lime) 100%
+  );
+}
+
+.explorer-density-heatmap__matrix {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.explorer-density-heatmap__matrix-header,
+.explorer-density-heatmap__row {
+  display: grid;
+  grid-template-columns: minmax(220px, 2.2fr) minmax(320px, 4fr) minmax(
+      180px,
+      1.4fr
+    );
+  gap: 12px;
+  align-items: center;
+}
+
+.explorer-density-heatmap__matrix-header {
+  color: var(--g3-color__gray);
+  font-size: 12px;
+  font-weight: var(--g3-font__semi-bold-weight);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0 17px;
+}
+
+.explorer-density-heatmap__header-density {
+  text-align: center;
+}
+
+.explorer-density-heatmap__header-summary {
+  text-align: right;
+}
+
+.explorer-density-heatmap__section {
+  border: 1px solid rgba(125, 138, 156, 0.22);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow:
+    0 1px 0 rgba(16, 24, 40, 0.04),
+    0 16px 28px rgba(16, 24, 40, 0.06);
+  overflow: hidden;
+}
+
+.explorer-density-heatmap__section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 12px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.92),
+    rgba(249, 250, 252, 0.86)
+  );
+  border-bottom: 1px solid rgba(125, 138, 156, 0.16);
+}
+
+.explorer-density-heatmap__section-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--g3-font__semi-bold-weight);
+  text-transform: capitalize;
+}
+
+.explorer-density-heatmap__section-count {
+  color: var(--g3-color__gray);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.explorer-density-heatmap__section .explorer-density-heatmap__row {
+  padding: 12px 16px;
+}
+
+.explorer-density-heatmap__section
+  .explorer-density-heatmap__row:not(:last-child) {
+  border-bottom: 1px solid rgba(125, 138, 156, 0.12);
+}
+
+.explorer-density-heatmap__field-name {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: var(--g3-font__semi-bold-weight);
+  color: var(--g3-color__coal);
+  word-break: break-word;
+}
+
+.explorer-density-heatmap__field-path {
+  color: var(--g3-color__gray);
+  font-size: 12px;
+  font-weight: 400;
+  word-break: break-all;
+}
+
+.explorer-density-heatmap__strip {
+  position: relative;
+  height: 16px;
+  border-radius: 999px;
+  background: rgba(125, 138, 156, 0.08);
+  padding: 3px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.explorer-density-heatmap__strip-fill {
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--g3-color__rose) 0%,
+    var(--g3-color__bee) 50%,
+    var(--g3-color__lime) 100%
+  );
+  transition: clip-path 0.2s ease-in-out;
+}
+
+.explorer-density-heatmap__counts {
+  color: var(--g3-color__gray);
+  font-size: 13px;
+}
+
+.explorer-density-heatmap__counts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  line-height: 1.35;
+}
+
+.explorer-density-heatmap__bar-label {
+  color: var(--g3-color__coal);
   font-weight: var(--g3-font__semi-bold-weight);
 }
 
-.explorer-density-heatmap__placeholder-note {
-  margin: 0;
-  font-size: 13px;
-  max-width: 480px;
+.explorer-density-heatmap__state {
+  border: 1px dashed var(--g3-color__silver);
+  border-radius: 6px;
+  color: var(--g3-color__gray);
+  padding: 18px;
+  text-align: center;
+  background: var(--g3-color__bg-cloud);
 }
 
-.explorer-density-heatmap > div:not([class^='explorer-density-heatmap__']) {
-  margin: 1rem 1rem 2rem;
-  width: 100%;
-}
-
-.explorer-density-heatmap > div:not([class^='explorer-density-heatmap__']) > p,
-.explorer-density-heatmap > div:not([class^='explorer-density-heatmap__']) > ul,
-.explorer-density-heatmap
-  > div:not([class^='explorer-density-heatmap__'])
-  > video {
-  margin-bottom: 1rem;
-  max-width: 80ch;
-}
-
-.explorer-density-heatmap
-  > div:not([class^='explorer-density-heatmap__'])
-  > ul {
-  padding-left: 2rem;
-}
-
-.explorer-density-heatmap
-  > div:not([class^='explorer-density-heatmap__'])
-  > ul
-  > li {
-  margin-top: 0.5rem;
-}
-
-.explorer-density-heatmap
-  > div:not([class^='explorer-density-heatmap__'])
-  > div {
-  background-color: var(--g3-color__white);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 1rem 2rem;
-  gap: 10px;
-}
-
-.explorer-density-heatmap
-  > div:not([class^='explorer-density-heatmap__'])
-  > div
-  > button {
-  margin-left: 1rem;
+.explorer-density-heatmap__state--error {
+  color: var(--g3-color__error);
 }
 
 @media screen and (max-width: 1090px) {
@@ -129,12 +287,8 @@
     padding-bottom: 5rem;
   }
 
-  .explorer-density-heatmap
-    > div:not([class^='explorer-density-heatmap__'])
-    > div {
-    justify-content: center;
+  .explorer-density-heatmap__panel {
     padding-bottom: 4rem;
-    padding-left: 0;
   }
 }
 
@@ -150,5 +304,26 @@
 
   .explorer-density-heatmap__summary > div {
     align-items: flex-start;
+  }
+
+  .explorer-density-heatmap__row {
+    grid-template-columns: 1fr;
+  }
+
+  .explorer-density-heatmap__matrix-header {
+    grid-template-columns: 1fr;
+  }
+
+  .explorer-density-heatmap__header-density,
+  .explorer-density-heatmap__header-summary {
+    text-align: left;
+  }
+
+  .explorer-density-heatmap__counts {
+    align-items: flex-start;
+  }
+
+  .explorer-density-heatmap__strip {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
   }
 }

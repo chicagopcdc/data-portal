@@ -276,6 +276,7 @@ function App() {
                       dispatch(toggleAdminActive());
                     }
                     return Promise.all([
+                      dispatch(fetchDictionary()),
                       dispatch(fetchFilterSets()),
                       dispatch(
                         fetchDataRequestProjects({ triggerReloading: false }),
@@ -287,7 +288,10 @@ function App() {
                     ]);
                   }
                   return Promise.all([
-                    dispatch(fetchDataRequestProjects({ triggerReloading: false })),
+                    dispatch(fetchDictionary()),
+                    dispatch(
+                      fetchDataRequestProjects({ triggerReloading: false }),
+                    ),
                     dispatch(fetchProjectConsortiums()),
                     dispatch(fetchProjectStates()),
                   ]);

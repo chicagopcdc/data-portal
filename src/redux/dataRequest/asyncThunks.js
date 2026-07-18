@@ -569,3 +569,87 @@ export const getProjectFilterSets = createAsyncThunk(
     }
   },
 );
+
+export const getProjectDatapoints = createAsyncThunk(
+  'dataRequest/getProjectDatapoints',
+  /** @param {number} projectId */
+  async (projectId, { rejectWithValue }) => {
+    try {
+      const { data, response, status } = await fetchWithCreds({
+        path: `/amanuensis/project-datapoints/project/${projectId}`,
+        method: 'GET',
+      });
+
+      if (statusCategory(status) !== '2XX') {
+        return handleRequestError(status, response, data);
+      }
+
+      return { data, isError: false, message: '' };
+    } catch (e) {
+      return rejectWithValue(e);
+    }
+  },
+);
+
+export const addProjectDatapoints = createAsyncThunk(
+  'dataRequest/addProjectDatapoints',
+  async (datapoints, { rejectWithValue }) => {
+    try {
+      const { data, response, status } = await fetchWithCreds({
+        path: '/amanuensis/project-datapoints/add-datapoints',
+        method: 'POST',
+        body: JSON.stringify(datapoints),
+      });
+
+      if (statusCategory(status) !== '2XX') {
+        return handleRequestError(status, response, data);
+      }
+
+      return { data, isError: false, message: '' };
+    } catch (e) {
+      return rejectWithValue(e);
+    }
+  },
+);
+
+export const updateProjectDatapoints = createAsyncThunk(
+  'dataRequest/updateProjectDatapoints',
+  async (datapoints, { rejectWithValue }) => {
+    try {
+      const { data, response, status } = await fetchWithCreds({
+        path: '/amanuensis/project-datapoints/modify-datapoints',
+        method: 'PUT',
+        body: JSON.stringify(datapoints),
+      });
+
+      if (statusCategory(status) !== '2XX') {
+        return handleRequestError(status, response, data);
+      }
+
+      return { data, isError: false, message: '' };
+    } catch (e) {
+      return rejectWithValue(e);
+    }
+  },
+);
+
+export const deleteProjectDatapoints = createAsyncThunk(
+  'dataRequest/deleteProjectDatapoints',
+  async (datapoints, { rejectWithValue }) => {
+    try {
+      const { data, response, status } = await fetchWithCreds({
+        path: '/amanuensis/project-datapoints/delete-datapoints',
+        method: 'DELETE',
+        body: JSON.stringify(datapoints),
+      });
+
+      if (statusCategory(status) !== '2XX') {
+        return handleRequestError(status, response, data);
+      }
+
+      return { data, isError: false, message: '' };
+    } catch (e) {
+      return rejectWithValue(e);
+    }
+  },
+);

@@ -1,0 +1,109 @@
+.data-request-select-attributes {
+  min-width: 0;
+}
+
+.data-request-select-attributes__header {
+  margin-bottom: 1rem;
+}
+
+.data-request-select-attributes__columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.data-request-select-attributes__column {
+  min-width: 0;
+}
+
+.data-request-select-attributes__column h3 {
+  margin: 0 0 0.5rem;
+}
+
+.data-request-select-attributes__table-list {
+  height: 360px;
+  overflow-y: auto;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  margin-bottom: 0.75rem;
+}
+
+.data-request-select-attributes__table {
+  border-bottom: 1px solid #e6e6e6;
+}
+
+.data-request-select-attributes__table:last-child {
+  border-bottom: none;
+}
+
+.data-request-select-attributes__table-toggle {
+  width: 100%;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.625rem 0.75rem;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+}
+
+.data-request-select-attributes__table-toggle:hover {
+  background: #f5f5f5;
+}
+
+.data-request-select-attributes__attribute-list {
+  padding: 0 0.75rem 0.625rem 1.75rem;
+}
+
+.data-request-select-attributes__attribute {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  overflow-wrap: anywhere;
+}
+
+.data-request-select-attributes__selected-label {
+  margin-left: auto;
+  color: var(--g3-color__gray);
+  font-size: 0.75rem;
+}
+
+.data-request-select-attributes__empty-state,
+.data-request-select-attributes__loading {
+  padding: 0.75rem;
+  color: var(--g3-color__gray);
+}
+
+.data-request-select-attributes__footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.data-request-select-attributes__available-table-header {
+  display: flex;
+  align-items: center;
+  padding-left: 0.75rem;
+}
+
+.data-request-select-attributes__available-table-header
+  .data-request-select-attributes__table-toggle {
+  flex: 1;
+  width: auto;
+}
+
+.data-request-select-attributes__table-checkbox {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .data-request-select-attributes__columns {
+    grid-template-columns: 1fr;
+  }
+}

@@ -23,6 +23,7 @@ import UserAccessTable from './UserAccessTable';
 import DataRequestFilterSets from './DataRequestFilterSets';
 import DataRequestApprovedUrl from './DataRequestApprovedUrl';
 import ViewProjectStatusHistory from './ViewProjectStatusHistory';
+import DataRequestSelectAttributes from './DataRequestSelectAttributes';
 import {
   isTerminalReExportStatus,
   RE_EXPORT_STATUS,
@@ -433,6 +434,13 @@ export default function AdminProjectActions({
               />
             );
           }
+          case 'SELECT_ATTRIBUTES':
+            return (
+              <DataRequestSelectAttributes
+                projectId={project.id}
+                onAction={onAction}
+              />
+            );
           case 'ACTION_SUCCESS':
             return (
               <div className='data-request-admin__action-success'>
@@ -528,6 +536,13 @@ export default function AdminProjectActions({
                   {/*     buttonType='secondary' */}
                   {/*   /> */}
                   {/* </li> */}
+                  <li>
+                    <Button
+                      label='Select Attributes'
+                      onClick={() => setActionType('SELECT_ATTRIBUTES')}
+                      buttonType='secondary'
+                    />
+                  </li>
                   <li>
                     <Button
                       label='Add Filter Set to Request'

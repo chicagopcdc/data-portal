@@ -3,6 +3,7 @@ import { render } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import AdminProjectActions from './AdminProjectActions';
 import dataRequestReducer from '../redux/dataRequest/slice';
+import { RE_EXPORT_STATUS } from '../redux/dataRequest/constants';
 
 function renderActions(reExportJob) {
   const initialDataRequestState = dataRequestReducer(undefined, {
@@ -41,7 +42,7 @@ describe('AdminProjectActions re-export action', () => {
   it('keeps other admin actions available while an export runs', () => {
     const { getByRole, getByText } = renderActions({
       job_uid: 'export-job-uid',
-      status: 'Running',
+      status: RE_EXPORT_STATUS.RUNNING,
       error: null,
     });
 
@@ -52,5 +53,18 @@ describe('AdminProjectActions re-export action', () => {
       'g3-button--disabled',
     );
     expect(getByText('Export job in progress.')).toBeInTheDocument();
+  });
+
+  it('does not expose an unknown backend status', () => {
+    const { getByText, queryByText } = renderActions({
+      job_uid: 'export-job-uid',
+      status: RE_EXPORT_STATUS.UNKNOWN,
+      error: null,
+    });
+
+    expect(
+      getByText('Export job status is unavailable. Checking again...'),
+    ).toBeInTheDocument();
+    expect(queryByText(/UNKNOWN/)).not.toBeInTheDocument();
   });
 });

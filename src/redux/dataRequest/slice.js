@@ -9,6 +9,7 @@ import {
   exportProjectAgain,
   checkProjectReExportStatus,
 } from './asyncThunks';
+import { RE_EXPORT_STATUS } from './constants';
 
 const slice = createSlice({
   name: 'dataRequest',
@@ -132,20 +133,20 @@ const slice = createSlice({
     });
     builder.addCase(exportProjectAgain.pending, (state, action) => {
       state.reExportJobs[action.meta.arg] = {
-        status: 'Dispatching',
+        status: RE_EXPORT_STATUS.DISPATCHING,
         error: null,
       };
     });
     builder.addCase(exportProjectAgain.fulfilled, (state, action) => {
       state.reExportJobs[action.meta.arg] = {
         ...action.payload,
-        status: 'Running',
+        status: RE_EXPORT_STATUS.RUNNING,
         error: null,
       };
     });
     builder.addCase(exportProjectAgain.rejected, (state, action) => {
       state.reExportJobs[action.meta.arg] = {
-        status: 'Failed',
+        status: RE_EXPORT_STATUS.FAILED,
         error: action.payload || action.error.message,
       };
     });
@@ -155,7 +156,8 @@ const slice = createSlice({
       if (currentJob?.job_uid !== jobUid) return;
 
       currentJob.status = status;
-      currentJob.error = status === 'Failed' ? 'The export job failed.' : null;
+      currentJob.error =
+        status === RE_EXPORT_STATUS.FAILED ? 'The export job failed.' : null;
     });
     builder.addCase(checkProjectReExportStatus.rejected, (state, action) => {
       const { projectId, jobUid } = action.meta.arg;

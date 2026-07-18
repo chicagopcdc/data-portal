@@ -1,6 +1,10 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { jobapiPath } from '../../localconf';
 import { fetchWithCreds } from '../../utils.fetch';
+import {
+  isTerminalReExportStatus,
+  normalizeReExportStatus,
+} from './constants';
 
 const PROJECT_RE_EXPORT_POLL_INTERVAL_MS = 5000;
 const projectReExportPollTimeouts = new Map();
@@ -361,7 +365,11 @@ export const checkProjectReExportStatus = createAsyncThunk(
         );
       }
 
-      return { projectId, jobUid, status: data.status };
+      return {
+        projectId,
+        jobUid,
+        status: normalizeReExportStatus(data.status),
+      };
     } catch (e) {
       return rejectWithValue(
         e?.message || 'Unable to check the export job status.',
@@ -391,8 +399,7 @@ export const pollProjectReExportStatus =
 
     if (
       checkProjectReExportStatus.fulfilled.match(action) &&
-      (action.payload.status === 'Completed' ||
-        action.payload.status === 'Failed')
+      isTerminalReExportStatus(action.payload.status)
     ) {
       clearProjectReExportPoll(projectId);
       return;

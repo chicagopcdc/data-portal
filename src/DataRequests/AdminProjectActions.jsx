@@ -2,6 +2,7 @@ import { useState } from 'react';
 import * as Yup from 'yup';
 import Select from 'react-select';
 import { Formik, Field, Form, FieldArray } from 'formik';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import Button from '../gen3-ui-component/components/Button';
 import IconComponent from '../components/Icon';
@@ -22,7 +23,10 @@ import UserAccessTable from './UserAccessTable';
 import DataRequestFilterSets from './DataRequestFilterSets';
 import DataRequestApprovedUrl from './DataRequestApprovedUrl';
 import ViewProjectStatusHistory from './ViewProjectStatusHistory';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  isTerminalReExportStatus,
+  RE_EXPORT_STATUS,
+} from '../redux/dataRequest/constants';
 
 const dataAccessSchema = Yup.object().shape({
   email: Yup.string().email().required('Must be a valid email address'),
@@ -83,24 +87,22 @@ export default function AdminProjectActions({
     value: projectStates[name].id,
   }));
   const isReExportPending = Boolean(
-    reExportJob &&
-    reExportJob.status !== 'Completed' &&
-    reExportJob.status !== 'Failed',
+    reExportJob && !isTerminalReExportStatus(reExportJob.status),
   );
   const reExportStatusMessage = (() => {
     switch (reExportJob?.status) {
-      case 'Dispatching':
+      case RE_EXPORT_STATUS.DISPATCHING:
         return 'Starting export...';
-      case 'Running':
+      case RE_EXPORT_STATUS.RUNNING:
         return reExportJob.error || 'Export job in progress.';
-      case 'Completed':
+      case RE_EXPORT_STATUS.COMPLETED:
         return 'Export completed successfully.';
-      case 'Failed':
+      case RE_EXPORT_STATUS.FAILED:
         return reExportJob.error || 'The export job failed.';
+      case RE_EXPORT_STATUS.UNKNOWN:
+        return 'Export job status is unavailable. Checking again...';
       default:
-        return reExportJob
-          ? reExportJob.error || `Export job status: ${reExportJob.status}.`
-          : '';
+        return '';
     }
   })();
   return (
@@ -556,7 +558,8 @@ export default function AdminProjectActions({
                     {reExportStatusMessage && (
                       <span
                         className={`data-request-admin__re-export-status data-request-admin__re-export-status--${
-                          reExportJob.status === 'Failed' || reExportJob.error
+                          reExportJob.status === RE_EXPORT_STATUS.FAILED ||
+                          reExportJob.error
                             ? 'error'
                             : 'info'
                         }`}

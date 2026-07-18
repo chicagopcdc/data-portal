@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import reducer from './slice';
 import { exportProjectAgain, startProjectReExport } from './asyncThunks';
+import { RE_EXPORT_STATUS } from './constants';
 
 function createStore() {
   return configureStore({
@@ -45,7 +46,7 @@ describe('project re-export', () => {
       job_uid: 'export-job-uid',
       project_id: '904',
       search_id: 1805,
-      status: 'Running',
+      status: RE_EXPORT_STATUS.RUNNING,
       error: null,
     });
   });
@@ -61,15 +62,15 @@ describe('project re-export', () => {
         }),
         { status: 200 },
       )
-      .mockResponseOnce(JSON.stringify({ status: 'Running' }), { status: 200 })
-      .mockResponseOnce(JSON.stringify({ status: 'Completed' }), {
+      .mockResponseOnce(JSON.stringify({ status: 'rUn-NiNg' }), { status: 200 })
+      .mockResponseOnce(JSON.stringify({ status: 'SuCcEeDeD' }), {
         status: 200,
       });
 
     await store.dispatch(startProjectReExport(904));
 
     expect(store.getState().dataRequest.reExportJobs[904].status).toBe(
-      'Running',
+      RE_EXPORT_STATUS.RUNNING,
     );
     expect(jest.getTimerCount()).toBe(1);
 
@@ -80,7 +81,7 @@ describe('project re-export', () => {
       expect.objectContaining({ method: 'GET' }),
     );
     expect(store.getState().dataRequest.reExportJobs[904].status).toBe(
-      'Completed',
+      RE_EXPORT_STATUS.COMPLETED,
     );
     expect(jest.getTimerCount()).toBe(0);
   });
@@ -104,7 +105,7 @@ describe('project re-export', () => {
     await store.dispatch(startProjectReExport(904));
 
     expect(store.getState().dataRequest.reExportJobs[904]).toMatchObject({
-      status: 'Running',
+      status: RE_EXPORT_STATUS.RUNNING,
       error: 'Service unavailable',
     });
     expect(jest.getTimerCount()).toBe(1);
@@ -112,9 +113,42 @@ describe('project re-export', () => {
     await jest.advanceTimersByTimeAsync(5000);
 
     expect(store.getState().dataRequest.reExportJobs[904]).toMatchObject({
-      status: 'Completed',
+      status: RE_EXPORT_STATUS.COMPLETED,
       error: null,
     });
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
+  it('continues polling when the backend adds an unknown status', async () => {
+    const store = createStore();
+    fetch
+      .mockResponseOnce(
+        JSON.stringify({
+          job_uid: 'export-job-uid',
+          project_id: '904',
+          search_id: 1805,
+        }),
+        { status: 200 },
+      )
+      .mockResponseOnce(JSON.stringify({ status: 'Awaiting Worker' }), {
+        status: 200,
+      })
+      .mockResponseOnce(JSON.stringify({ status: 'completed' }), {
+        status: 200,
+      });
+
+    await store.dispatch(startProjectReExport(904));
+
+    expect(store.getState().dataRequest.reExportJobs[904].status).toBe(
+      RE_EXPORT_STATUS.UNKNOWN,
+    );
+    expect(jest.getTimerCount()).toBe(1);
+
+    await jest.advanceTimersByTimeAsync(5000);
+
+    expect(store.getState().dataRequest.reExportJobs[904].status).toBe(
+      RE_EXPORT_STATUS.COMPLETED,
+    );
     expect(jest.getTimerCount()).toBe(0);
   });
 });

@@ -104,6 +104,10 @@ module.exports = {
   optimization,
   devtool,
   devServer: {
+    static: {
+      directory: path.join(__dirname, 'data'),
+      publicPath: '/data',
+    },
     historyApiFallback: {
       index: '/index.html',
     },

@@ -31,6 +31,7 @@ export type ExplorerConfig = {
   getAccessButtonLink?: string;
   dataRequests?: {
     enabled?: boolean;
+    requestButtonEnabled?: boolean;
     statusFlow?: {
       states?: {
         id: string;

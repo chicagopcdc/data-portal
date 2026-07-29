@@ -159,6 +159,35 @@ export const fetchProjects = createAsyncThunk(
   },
 );
 
+export const REQUEST_CONFIG_TEMPLATES_PATH =
+  process.env.NODE_ENV === 'development'
+    ? 'https://localhost:9443/data/request_config/templates.json'
+    : '/data/request_config/templates.json';
+
+export const fetchRequestConfigTemplates = createAsyncThunk(
+  'dataRequest/fetchRequestConfigTemplates',
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data, status } = await fetchWithCreds({
+        path: REQUEST_CONFIG_TEMPLATES_PATH,
+        method: 'GET',
+      });
+
+      if (status !== 200 || !Array.isArray(data?.templates)) {
+        return rejectWithValue(
+          'Unable to load request configuration templates.',
+        );
+      }
+
+      return data.templates;
+    } catch (error) {
+      return rejectWithValue(
+        error?.message || 'Unable to load request configuration templates.',
+      );
+    }
+  },
+);
+
 export const fetchProjectConsortiums = createAsyncThunk(
   'dataRequest/fetchProjectConsortiums',
   async (_, { getState, rejectWithValue }) => {

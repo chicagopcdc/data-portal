@@ -4,10 +4,10 @@ import {
   addProjectDatapoints,
   deleteProjectDatapoints,
   getProjectDatapoints,
+  fetchRequestConfigTemplates,
   updateProjectDatapoints,
 } from '../redux/dataRequest/asyncThunks';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { fetchRequestConfigTemplates } from './requestConfigTemplates';
 import './DataRequestSelectAttributes.css';
 
 const normalizeAttributes = (attributes = []) =>
@@ -82,6 +82,11 @@ const toggleAttribute = (attributesByTable, tableName, attributeName) => {
 export default function DataRequestSelectAttributes({ projectId, onAction }) {
   const dispatch = useAppDispatch();
   const dictionary = useAppSelector((state) => state.submission.dictionary);
+  const {
+    requestConfigTemplates: templates,
+    isRequestConfigTemplatesPending: isLoadingTemplates,
+    requestConfigTemplatesError: templateError,
+  } = useAppSelector((state) => state.dataRequest);
 
   const [savedDatapointsByTable, setSavedDatapointsByTable] = useState({});
   const [selectedAttributesByTable, setSelectedAttributesByTable] = useState(
@@ -92,10 +97,7 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
   const [expandedTables, setExpandedTables] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [templates, setTemplates] = useState([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
-  const [isLoadingTemplates, setIsLoadingTemplates] = useState(true);
-  const [templateError, setTemplateError] = useState('');
   const [requestError, setRequestError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -173,23 +175,8 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
   }, [loadProjectDatapoints]);
 
   useEffect(() => {
-    let isMounted = true;
-
-    fetchRequestConfigTemplates()
-      .then((loadedTemplates) => {
-        if (isMounted) setTemplates(loadedTemplates);
-      })
-      .catch((error) => {
-        if (isMounted) setTemplateError(error.message);
-      })
-      .finally(() => {
-        if (isMounted) setIsLoadingTemplates(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    dispatch(fetchRequestConfigTemplates());
+  }, [dispatch]);
 
   const toggleTable = (tableName) => {
     setExpandedTables((current) => ({
@@ -320,7 +307,6 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
     setAvailableCheckedByTable({});
     setSelectedCheckedByTable({});
     setRequestError('');
-    setTemplateError('');
     setSuccessMessage(
       `${template.name} template loaded. Review the attributes and save to apply them to this request.`,
     );

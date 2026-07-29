@@ -145,7 +145,10 @@ module.exports = {
     port: 9443,
     https: true,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': devProxyTarget || 'https://localhost',
+      'Access-Control-Allow-Credentials': 'true',
+      'Access-Control-Allow-Headers': 'Accept, Content-Type, x-csrf-token',
+      'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
     },
   },
   module: {

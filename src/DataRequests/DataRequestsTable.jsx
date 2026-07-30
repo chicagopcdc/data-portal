@@ -12,20 +12,12 @@ import './DataRequests.css';
 import Spinner from '../gen3-ui-component/components/Spinner/Spinner';
 import Tooltip from 'rc-tooltip';
 import 'rc-tooltip/assets/bootstrap_white.css';
+import DataRequestsTableHead from './DataRequestsTableHead';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 /** @typedef {import("../redux/types").RootState} RootState */
 /** @typedef {import("../redux/dataRequest/types").ResearcherInfo} ResearcherInfo */
 /** @typedef {import("../redux/dataRequest/types").DataRequestProject} DataRequestProject */
-
-const tableHeader = [
-  'ID',
-  'Research Title',
-  'Description',
-  'Researcher',
-  'Submitted Date',
-  'Status',
-  'Consortia',
-];
 
 /** @param {ResearcherInfo} researcher */
 function parseResearcherInfo(researcher) {
@@ -144,24 +136,67 @@ function parseTableData({ projects, userId, rowAction, isAdminActive }) {
  * @param {function} props.onToggleAdmin
  * @param {boolean} [props.isLoading]
  * @param {function} [props.reloadProjects]
+ * @param {boolean} [props.isStatusFlowEnabled]
+ * @param {() => void} [props.onShowStatusFlow]
  */
 function DataRequestsTable({
   className = '',
   projects,
   projectStates,
   savedFilterSets,
+  filters,
+  onFiltersChange,
   isAdmin,
   isAdminActive,
   onToggleAdmin,
+  paginationLinks,
+  page,
+  perPage,
+  onPageSizeChange,
+  onFirstPage,
+  onPreviousPage,
+  onNextPage,
+  onLastPage,
   isLoading,
   reloadProjects,
+  isStatusFlowEnabled,
+  onShowStatusFlow,
 }) {
   const navigate = useNavigate();
   const transitionTo = useNavigate();
   const userId = useAppSelector((state) => state.user.user_id);
+  const projectConsortiums = useAppSelector(
+    (state) => state.dataRequest.projectConsortiums,
+  );
+  const adminUsers = useAppSelector(
+    (state) => state.user.admin_user_list || [],
+  );
   const [projectDisplayOptions, setProjectDisplayOptions] = useState(null);
   const [isMoreActionsPopupOpen, setMoreActionsPopupOpen] = useState(false);
   const [isVerifyPopupOpen, setVerifyPopupOpen] = useState(false);
+
+  const tableHeader = [
+    'ID',
+    'Research Title',
+    'Description',
+    'Researcher',
+    'Submitted Date',
+    <span className='data-request__status-header'>
+      Status
+      {isStatusFlowEnabled && (
+        <button
+          type='button'
+          className='data-request__status-info-icon'
+          aria-label='Show status explainer modal'
+          onClick={onShowStatusFlow}
+        >
+          <FontAwesomeIcon icon='circle-info' />
+        </button>
+      )}
+    </span>,
+    'Consortia',
+  ];
+
   const tableData = useMemo(
     () =>
       parseTableData({
@@ -276,6 +311,7 @@ function DataRequestsTable({
         )}
         {isVerifyPopupOpen && (
           <Popup
+            className='data-request__csl-popup'
             title='Verify Person Or Entity Using The Consolidated Screening List'
             onClose={() => {
               setVerifyPopupOpen(false);
@@ -306,15 +342,71 @@ function DataRequestsTable({
                 }
               }}
               onClose={closeProjectActionPopup}
+              isStatusFlowEnabled={isStatusFlowEnabled}
+              onShowStatusFlow={onShowStatusFlow}
             />
           </Popup>
         )}
       </div>
-      {isLoading ? (
-        <Spinner />
-      ) : (
-        <Table header={tableHeader} data={tableData} />
-      )}
+      <div className='data-requests__table-wrapper'>
+        {isLoading && (
+          <div className='data-requests__table-loading-overlay'>
+            <Spinner />
+          </div>
+        )}
+        <Table
+          customHead={
+            <DataRequestsTableHead
+              adminUsers={adminUsers}
+              cols={tableHeader}
+              filters={filters}
+              isAdminActive={isAdminActive}
+              onFiltersChange={onFiltersChange}
+              projectConsortiums={projectConsortiums}
+              projectStates={projectStates}
+            />
+          }
+          data={tableData}
+          disableClientFiltering
+          header={tableHeader}
+        />
+      </div>
+      <div className='data-requests__pagination'>
+        <label className='data-requests__page-size'>
+          Rows per page:
+          <select
+            value={perPage}
+            onChange={(e) => onPageSizeChange(Number(e.target.value))}
+          >
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+        </label>
+
+        <Button
+          label='First'
+          enabled={Boolean(paginationLinks?.first)}
+          onClick={onFirstPage}
+        />
+        <Button
+          label='Previous'
+          enabled={Boolean(paginationLinks?.prev)}
+          onClick={onPreviousPage}
+        />
+        <span className='data-requests__pagination-page'>Page {page}</span>
+        <Button
+          label='Next'
+          enabled={Boolean(paginationLinks?.next)}
+          onClick={onNextPage}
+        />
+        <Button
+          label='Last'
+          enabled={Boolean(paginationLinks?.last)}
+          onClick={onLastPage}
+        />
+      </div>
     </div>
   );
 }
@@ -323,12 +415,27 @@ DataRequestsTable.propTypes = {
   className: PropTypes.string,
   projects: PropTypes.array.isRequired,
   projectStates: PropTypes.object.isRequired,
+  filters: PropTypes.object.isRequired,
+  onFiltersChange: PropTypes.func.isRequired,
   isAdmin: PropTypes.bool,
   isAdminActive: PropTypes.bool,
   onToggleAdmin: PropTypes.func,
   isLoading: PropTypes.bool,
   reloadProjects: PropTypes.func,
   savedFilterSets: PropTypes.object,
+  paginationLinks: PropTypes.shape({
+    first: PropTypes.string,
+    prev: PropTypes.string,
+    next: PropTypes.string,
+    last: PropTypes.string,
+  }),
+  page: PropTypes.number,
+  perPage: PropTypes.number,
+  onPageSizeChange: PropTypes.func,
+  onFirstPage: PropTypes.func,
+  onPreviousPage: PropTypes.func,
+  onNextPage: PropTypes.func,
+  onLastPage: PropTypes.func,
 };
 
 export default DataRequestsTable;

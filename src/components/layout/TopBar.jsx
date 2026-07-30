@@ -6,6 +6,7 @@ import useLatestDocuments from '../../hooks/useDocumentItems';
 import { TopBarLink } from './TopBarItems';
 import TopBarMenu from './TopBarMenu';
 import Banner from './Banner';
+import { OPEN_EXPLORER_WIZARD_EVENT } from '../../GuppyDataExplorer/ExplorerWizard';
 import './TopBar.css';
 
 /**
@@ -21,12 +22,19 @@ import './TopBar.css';
  * @typedef {Object} TopBarProps
  * @property {{ items: TopBarItem[] }} config
  * @property {boolean} isAdminUser
+ * @property {boolean} isExplorerWizardEnabled
  * @property {React.MouseEventHandler<HTMLButtonElement>} onLogoutClick
  * @property {string} [username]
  */
 
 /** @param {TopBarProps} props */
-function TopBar({ config, isAdminUser, onLogoutClick, username }) {
+function TopBar({
+  config,
+  isAdminUser,
+  isExplorerWizardEnabled,
+  onLogoutClick,
+  username,
+}) {
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState(null);
   const leftItems = [];
@@ -36,6 +44,8 @@ function TopBar({ config, isAdminUser, onLogoutClick, username }) {
     else rightItems.push(item);
 
   const documents = useLatestDocuments();
+  const hasHelpMenuItems =
+    isExplorerWizardEnabled || documents.data?.length > 0 || documents.isError;
 
   return (
     <>
@@ -65,16 +75,35 @@ function TopBar({ config, isAdminUser, onLogoutClick, username }) {
           </div>
         </div>
         <div className='top-bar__menu-group'>
-          {(documents.data?.length > 0 || documents.isError) && (
+          {hasHelpMenuItems && (
             <TopBarMenu
               buttonIcon={<FontAwesomeIcon icon='circle-info' />}
-              title='Documents'
+              title='Help and Documents'
               isOpen={openMenu === 'documents'}
               onToggle={() =>
                 setOpenMenu(openMenu === 'documents' ? null : 'documents')
               }
               onClose={() => setOpenMenu(null)}
             >
+              {isExplorerWizardEnabled && (
+                <TopBarMenu.Item>
+                  <button
+                    onClick={() => {
+                      window.dispatchEvent(
+                        new Event(OPEN_EXPLORER_WIZARD_EVENT),
+                      );
+                      setOpenMenu(null);
+                    }}
+                    type='button'
+                  >
+                    Guide
+                  </button>
+                </TopBarMenu.Item>
+              )}
+
+              {isExplorerWizardEnabled &&
+                (documents.data?.length > 0 || documents.isError) && <hr />}
+
               {documents.isError ? (
                 <>
                   <TopBarMenu.Item>
@@ -93,7 +122,7 @@ function TopBar({ config, isAdminUser, onLogoutClick, username }) {
                   </TopBarMenu.Item>
                 </>
               ) : (
-                documents.data.map((item) => (
+                documents.data?.map((item) => (
                   <TopBarMenu.Item key={item.formatted}>
                     <a
                       href={item.formatted}
@@ -166,6 +195,7 @@ TopBar.propTypes = {
     items: PropTypes.array.isRequired,
   }).isRequired,
   isAdminUser: PropTypes.bool.isRequired,
+  isExplorerWizardEnabled: PropTypes.bool.isRequired,
   onLogoutClick: PropTypes.func.isRequired,
   username: PropTypes.string,
 };

@@ -27,6 +27,23 @@
   margin-right: 0.25rem;
 }
 
+.explorer-explore-external__code {
+  margin: 0 1rem 1rem;
+  text-align: left;
+}
+
+.explorer-explore-external__code-text {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 18rem;
+  max-height: 24rem;
+  margin-bottom: 0.75rem;
+  overflow: auto;
+  resize: vertical;
+  font-family: monospace;
+  white-space: pre;
+}
+
 .no-data-info {
   margin-bottom: 2rem;
 }

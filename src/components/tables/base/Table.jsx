@@ -5,11 +5,23 @@ import TableFoot from './TableFoot';
 import TableHead from './TableHead';
 import './Table.css';
 
-function Table({ title, header, data, footer, filterConfig }) {
+function Table({
+  title,
+  header,
+  data,
+  footer,
+  filterConfig,
+  customHead,
+  disableClientFiltering,
+}) {
   const [filterArray, setFilters] = useState([]);
   const [filteredData, setData] = useState(data);
 
   useEffect(() => {
+    if (disableClientFiltering) {
+      setData(data);
+      return;
+    }
     setData(
       data.filter((row) =>
         row.every((value, j) => {
@@ -49,19 +61,21 @@ function Table({ title, header, data, footer, filterConfig }) {
         }),
       ),
     );
-  }, [filterArray, data]);
+  }, [filterArray, data, disableClientFiltering]);
 
   return (
     <>
       {title ? <h2>{title}</h2> : null}
       <div className='base-table'>
         <table className='base-table__body'>
-          <TableHead
-            cols={header}
-            data={data}
-            setFilters={setFilters}
-            filterConfig={filterConfig}
-          />
+          {customHead || (
+            <TableHead
+              cols={header}
+              data={data}
+              setFilters={setFilters}
+              filterConfig={filterConfig}
+            />
+          )}
           {footer.length > 0 && <TableFoot cols={footer} />}
           <tbody>
             {filteredData.map((row, i) => (
@@ -80,6 +94,8 @@ Table.propTypes = {
   data: PropTypes.array,
   footer: PropTypes.array,
   filterConfig: PropTypes.object,
+  customHead: PropTypes.node,
+  disableClientFiltering: PropTypes.bool,
 };
 
 Table.defaultProps = {
@@ -88,6 +104,8 @@ Table.defaultProps = {
   data: [],
   footer: [],
   filterConfig: {},
+  customHead: null,
+  disableClientFiltering: false,
 };
 
 export default Table;

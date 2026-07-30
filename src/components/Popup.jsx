@@ -30,6 +30,7 @@ import './Popup.css';
 /** @param {PopupProps} props */
 function Popup({
   children,
+  className = '',
   error = '',
   iconName = '',
   leftButtons = [],
@@ -42,7 +43,7 @@ function Popup({
 }) {
   return (
     <div className='popup__mask'>
-      <div className='popup__box'>
+      <div className={`popup__box ${className}`}>
         <div className='popup__title'>
           <div className='popup__icon'>
             {iconName !== '' && (
@@ -166,6 +167,7 @@ const buttonType = PropTypes.shape({
 
 Popup.propTypes = {
   children: PropTypes.node,
+  className: PropTypes.string,
   error: PropTypes.string,
   iconName: PropTypes.string,
   lines: PropTypes.arrayOf(

@@ -5,7 +5,7 @@ import SummaryChartGroup from '../../gen3-ui-component/components/charts/Summary
 import PercentageStackedBarChart from '../../gen3-ui-component/components/charts/PercentageStackedBarChart';
 import Spinner from '../../components/Spinner';
 import { useAppSelector } from '../../redux/hooks';
-import { components, config } from '../../params';
+import { components } from '../../params';
 import { capitalizeFirstLetter } from '../../utils';
 import { fetchWithCreds } from '../../utils.fetch';
 import DataSummaryCardGroup from '../../components/cards/DataSummaryCardGroup';
@@ -197,6 +197,7 @@ function ExplorerVisualization({
   const {
     buttonConfig,
     chartConfig,
+    dataRequests,
     filterConfig,
     getAccessButtonLink,
     guppyConfig,
@@ -308,7 +309,8 @@ function ExplorerVisualization({
     guppyConfig,
     isLocked: isComponentLocked,
   };
-  const isDataRequestEnabled = config.dataRequests?.enabled ?? false;
+  const isDataRequestButtonEnabled =
+    dataRequests?.requestButtonEnabled ?? false;
 
   // Capture counts for external_resources and pass on
   const externalResourceData = aggsExternalData || [];
@@ -353,22 +355,11 @@ function ExplorerVisualization({
           ))}
         </div>
         <div className='explorer-visualization__button-group'>
-          {isExplorerWizardConfigured && (
-            <button
-              className='explorer-visualization__guide-button'
-              onClick={() =>
-                window.dispatchEvent(new Event(OPEN_EXPLORER_WIZARD_EVENT))
-              }
-              type='button'
-            >
-              Guide
-            </button>
-          )}
           {accessibleCount < totalCount && !hideGetAccessButton && (
             <>
               <ExplorerRequestAccessButton
                 onClick={() =>
-                  isDataRequestEnabled
+                  isDataRequestButtonEnabled
                     ? setRequestAccessModalOpen(true)
                     : openLink(getAccessButtonLink)
                 }
@@ -410,6 +401,7 @@ function ExplorerVisualization({
               filter={filter}
               selectedCommonsCounts={selectedCommonsCounts}
               externalConfig={externalConfig}
+              externalCommonsConfig={patientIdsConfig?.externalCommons}
               isLoading={isLoadingExploreButton}
               setIsLoading={setIsLoadingExploreButton}
             />
@@ -469,7 +461,11 @@ function ExplorerVisualization({
         >
           <ExplorerDensityHeatmap
             fields={allFields}
-            accessibleCount={accessibleCount}
+            primaryFields={Object.keys(chartConfig)}
+            expandByFilter
+            fieldInfo={filterConfig.info}
+            filter={filter}
+            dataType={guppyConfig.dataType}
             totalCount={totalCount}
           />
         </ViewContainer>

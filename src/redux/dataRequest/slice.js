@@ -1,21 +1,32 @@
 import { createSlice } from '@reduxjs/toolkit';
 import {
   fetchProjects,
+  fetchRequestConfigTemplates,
   createProject,
   fetchProjectStates,
+  fetchProjectConsortiums,
   getProjectUsers,
   getUserRoles,
+  exportProjectAgain,
+  checkProjectReExportStatus,
 } from './asyncThunks';
+import { RE_EXPORT_STATUS } from './constants';
 
 const slice = createSlice({
   name: 'dataRequest',
   initialState: /** @type {import("./types").DataRequestState} */ ({
     projects: [],
+    requestConfigTemplates: [],
     userRoles: [],
     projectStates: {},
+    projectConsortiums: [],
+    paginationLinks: {},
+    reExportJobs: {},
     isError: false,
     isAdminActive: false,
     isProjectsReloading: false,
+    isRequestConfigTemplatesPending: false,
+    requestConfigTemplatesError: null,
     isCreatePending: false,
     isUserRolesPending: false,
     userRolesError: false,
@@ -35,11 +46,26 @@ const slice = createSlice({
       state.isProjectsReloading = false;
       if (action.payload === null) return;
 
-      state.projects = action.payload;
+      state.projects = action.payload.projects;
+      state.paginationLinks = action.payload.paginationLinks;
     });
     builder.addCase(fetchProjects.rejected, (state) => {
       state.isProjectsReloading = false;
       state.isError = true;
+    });
+    builder.addCase(fetchRequestConfigTemplates.pending, (state) => {
+      state.isRequestConfigTemplatesPending = true;
+      state.requestConfigTemplatesError = null;
+    });
+    builder.addCase(fetchRequestConfigTemplates.fulfilled, (state, action) => {
+      state.isRequestConfigTemplatesPending = false;
+      state.requestConfigTemplates = action.payload;
+    });
+    builder.addCase(fetchRequestConfigTemplates.rejected, (state, action) => {
+      state.isRequestConfigTemplatesPending = false;
+      state.requestConfigTemplates = [];
+      state.requestConfigTemplatesError =
+        action.payload || action.error.message;
     });
     builder.addCase(fetchProjectStates.fulfilled, (state, action) => {
       if (
@@ -58,6 +84,11 @@ const slice = createSlice({
       }
 
       state.projectStates = projectStates;
+    });
+    builder.addCase(fetchProjectConsortiums.fulfilled, (state, action) => {
+      if (action.payload) {
+        state.projectConsortiums = action.payload;
+      }
     });
     builder.addCase(createProject.pending, (state) => {
       state.isCreatePending = true;
@@ -117,6 +148,41 @@ const slice = createSlice({
       if (action.payload) {
         state.userRoles = action.payload;
       }
+    });
+    builder.addCase(exportProjectAgain.pending, (state, action) => {
+      state.reExportJobs[action.meta.arg] = {
+        status: RE_EXPORT_STATUS.DISPATCHING,
+        error: null,
+      };
+    });
+    builder.addCase(exportProjectAgain.fulfilled, (state, action) => {
+      state.reExportJobs[action.meta.arg] = {
+        ...action.payload,
+        status: RE_EXPORT_STATUS.RUNNING,
+        error: null,
+      };
+    });
+    builder.addCase(exportProjectAgain.rejected, (state, action) => {
+      state.reExportJobs[action.meta.arg] = {
+        status: RE_EXPORT_STATUS.FAILED,
+        error: action.payload || action.error.message,
+      };
+    });
+    builder.addCase(checkProjectReExportStatus.fulfilled, (state, action) => {
+      const { projectId, jobUid, status } = action.payload;
+      const currentJob = state.reExportJobs[projectId];
+      if (currentJob?.job_uid !== jobUid) return;
+
+      currentJob.status = status;
+      currentJob.error =
+        status === RE_EXPORT_STATUS.FAILED ? 'The export job failed.' : null;
+    });
+    builder.addCase(checkProjectReExportStatus.rejected, (state, action) => {
+      const { projectId, jobUid } = action.meta.arg;
+      const currentJob = state.reExportJobs[projectId];
+      if (currentJob?.job_uid !== jobUid) return;
+
+      currentJob.error = action.payload || action.error.message;
     });
   },
 });

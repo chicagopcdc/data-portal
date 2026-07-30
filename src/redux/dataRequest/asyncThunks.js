@@ -1,5 +1,13 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
+import { jobapiPath } from '../../localconf';
 import { fetchWithCreds } from '../../utils.fetch';
+import {
+  isTerminalReExportStatus,
+  normalizeReExportStatus,
+} from './constants';
+
+const PROJECT_RE_EXPORT_POLL_INTERVAL_MS = 5000;
+const projectReExportPollTimeouts = new Map();
 
 function statusCategory(status) {
   return `${Math.floor(status / 100)}XX`;
@@ -31,6 +39,12 @@ function handleRequestError(status, response, data = null) {
         data: null,
       };
   }
+}
+
+function getRequestErrorMessage(data, fallbackMessage) {
+  if (typeof data === 'string' && data) return data;
+  if (typeof data?.message === 'string' && data.message) return data.message;
+  return fallbackMessage;
 }
 
 function getPaginationLinks(linkHeader) {
@@ -141,6 +155,35 @@ export const fetchProjects = createAsyncThunk(
       };
     } catch (e) {
       return rejectWithValue(e);
+    }
+  },
+);
+
+export const REQUEST_CONFIG_TEMPLATES_PATH =
+  process.env.NODE_ENV === 'development'
+    ? 'https://localhost:9443/data/request_config/templates.json'
+    : '/data/request_config/templates.json';
+
+export const fetchRequestConfigTemplates = createAsyncThunk(
+  'dataRequest/fetchRequestConfigTemplates',
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data, status } = await fetchWithCreds({
+        path: REQUEST_CONFIG_TEMPLATES_PATH,
+        method: 'GET',
+      });
+
+      if (status !== 200 || !Array.isArray(data?.templates)) {
+        return rejectWithValue(
+          'Unable to load request configuration templates.',
+        );
+      }
+
+      return data.templates;
+    } catch (error) {
+      return rejectWithValue(
+        error?.message || 'Unable to load request configuration templates.',
+      );
     }
   },
 );
@@ -301,6 +344,119 @@ export const updateProjectApprovedUrl = createAsyncThunk(
     }
   },
 );
+
+export const exportProjectAgain = createAsyncThunk(
+  'dataRequest/exportProjectAgain',
+  /** @param {number} projectId */
+  async (projectId, { rejectWithValue }) => {
+    try {
+      const { data, status } = await fetchWithCreds({
+        path: `/amanuensis/admin/project/export/${projectId}`,
+        method: 'POST',
+        customHeaders: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+
+      if (statusCategory(status) !== '2XX' || !data?.job_uid) {
+        return rejectWithValue(
+          getRequestErrorMessage(
+            data,
+            'Failed to start the export job. Please try again.',
+          ),
+        );
+      }
+
+      return data;
+    } catch (e) {
+      return rejectWithValue(
+        e?.message || 'Failed to start the export job. Please try again.',
+      );
+    }
+  },
+);
+
+export const checkProjectReExportStatus = createAsyncThunk(
+  'dataRequest/checkProjectReExportStatus',
+  /** @param {{ projectId: number, jobUid: string }} params */
+  async ({ projectId, jobUid }, { rejectWithValue }) => {
+    try {
+      const { data, status } = await fetchWithCreds({
+        path: `${jobapiPath}status?UID=${jobUid}`,
+        method: 'GET',
+      });
+
+      if (status !== 200 || !data?.status) {
+        return rejectWithValue(
+          getRequestErrorMessage(
+            data,
+            'Unable to check the export job status.',
+          ),
+        );
+      }
+
+      return {
+        projectId,
+        jobUid,
+        status: normalizeReExportStatus(data.status),
+      };
+    } catch (e) {
+      return rejectWithValue(
+        e?.message || 'Unable to check the export job status.',
+      );
+    }
+  },
+);
+
+/** @param {number} projectId */
+function clearProjectReExportPoll(projectId) {
+  const timeout = projectReExportPollTimeouts.get(projectId);
+  if (timeout) window.clearTimeout(timeout);
+  projectReExportPollTimeouts.delete(projectId);
+}
+
+/**
+ * Poll outside the modal lifecycle so closing it does not interrupt the job.
+ *
+ * @param {{ projectId: number, jobUid: string }} params
+ */
+export const pollProjectReExportStatus =
+  ({ projectId, jobUid }) =>
+  async (dispatch) => {
+    const action = await dispatch(
+      checkProjectReExportStatus({ projectId, jobUid }),
+    );
+
+    if (
+      checkProjectReExportStatus.fulfilled.match(action) &&
+      isTerminalReExportStatus(action.payload.status)
+    ) {
+      clearProjectReExportPoll(projectId);
+      return;
+    }
+
+    const timeout = window.setTimeout(
+      () => dispatch(pollProjectReExportStatus({ projectId, jobUid })),
+      PROJECT_RE_EXPORT_POLL_INTERVAL_MS,
+    );
+    projectReExportPollTimeouts.set(projectId, timeout);
+  };
+
+/** @param {number} projectId */
+export const startProjectReExport = (projectId) => async (dispatch) => {
+  clearProjectReExportPoll(projectId);
+  const action = await dispatch(exportProjectAgain(projectId));
+
+  if (exportProjectAgain.fulfilled.match(action)) {
+    await dispatch(
+      pollProjectReExportStatus({
+        projectId,
+        jobUid: action.payload.job_uid,
+      }),
+    );
+  }
+
+  return action;
+};
 
 export const updateUserDataAccess = createAsyncThunk(
   'dataRequest/updateUserDataAccess',

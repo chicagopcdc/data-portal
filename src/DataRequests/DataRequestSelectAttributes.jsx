@@ -4,6 +4,7 @@ import {
   addProjectDatapoints,
   deleteProjectDatapoints,
   getProjectDatapoints,
+  fetchRequestConfigTemplates,
   updateProjectDatapoints,
 } from '../redux/dataRequest/asyncThunks';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
@@ -81,6 +82,11 @@ const toggleAttribute = (attributesByTable, tableName, attributeName) => {
 export default function DataRequestSelectAttributes({ projectId, onAction }) {
   const dispatch = useAppDispatch();
   const dictionary = useAppSelector((state) => state.submission.dictionary);
+  const {
+    requestConfigTemplates: templates,
+    isRequestConfigTemplatesPending: isLoadingTemplates,
+    requestConfigTemplatesError: templateError,
+  } = useAppSelector((state) => state.dataRequest);
 
   const [savedDatapointsByTable, setSavedDatapointsByTable] = useState({});
   const [selectedAttributesByTable, setSelectedAttributesByTable] = useState(
@@ -91,6 +97,7 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
   const [expandedTables, setExpandedTables] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [requestError, setRequestError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -166,6 +173,10 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
   useEffect(() => {
     loadProjectDatapoints();
   }, [loadProjectDatapoints]);
+
+  useEffect(() => {
+    dispatch(fetchRequestConfigTemplates());
+  }, [dispatch]);
 
   const toggleTable = (tableName) => {
     setExpandedTables((current) => ({
@@ -266,6 +277,39 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
     setSelectedCheckedByTable({});
     setRequestError('');
     setSuccessMessage('');
+  };
+
+  const loadSelectedTemplate = () => {
+    const template = templates.find(({ id }) => id === selectedTemplateId);
+
+    if (!template) return;
+
+    const templateSelections = Object.entries(template.white_list || {}).reduce(
+      (selections, [tableName, attributes]) => {
+        if (Array.isArray(attributes) && attributes.length > 0) {
+          selections[tableName] = normalizeAttributes(attributes);
+        }
+        return selections;
+      },
+      {},
+    );
+
+    setSelectedAttributesByTable(templateSelections);
+    setExpandedTables(
+      Object.keys(templateSelections).reduce(
+        (expanded, tableName) => ({
+          ...expanded,
+          [`selected-${tableName}`]: true,
+        }),
+        {},
+      ),
+    );
+    setAvailableCheckedByTable({});
+    setSelectedCheckedByTable({});
+    setRequestError('');
+    setSuccessMessage(
+      `${template.name} template loaded. Review the attributes and save to apply them to this request.`,
+    );
   };
 
   const hasAvailableCheckedAttributes = Object.values(
@@ -401,6 +445,39 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
         </div>
       ) : (
         <>
+          <div className='data-request-select-attributes__template-loader'>
+            <label htmlFor='request-configuration-template'>
+              Start with template
+            </label>
+            <select
+              id='request-configuration-template'
+              value={selectedTemplateId}
+              disabled={isLoadingTemplates || templates.length === 0}
+              onChange={(event) => setSelectedTemplateId(event.target.value)}
+            >
+              <option value=''>
+                {isLoadingTemplates
+                  ? 'Loading templates...'
+                  : 'Choose a template'}
+              </option>
+              {templates.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.name}
+                </option>
+              ))}
+            </select>
+            <Button
+              label='Load Template'
+              buttonType='secondary'
+              onClick={loadSelectedTemplate}
+              enabled={Boolean(selectedTemplateId) && !isLoadingTemplates}
+            />
+          </div>
+
+          {templateError && (
+            <div className='data-request__request-error'>{templateError}</div>
+          )}
+
           <div className='data-request-select-attributes__columns'>
             <section className='data-request-select-attributes__column'>
               <h3>Available Attributes</h3>

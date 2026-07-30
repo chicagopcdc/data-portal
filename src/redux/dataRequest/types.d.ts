@@ -100,15 +100,38 @@ export type ProjectFilterSets = {
   ids_list: list[string];
 };
 
+export type ReExportStatus =
+  | 'DISPATCHING'
+  | 'RUNNING'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'UNKNOWN';
+
+export type ReExportJob = {
+  job_uid?: string;
+  project_id?: string;
+  search_id?: number;
+  status: ReExportStatus;
+  error: string | null;
+};
+
 export type DataRequestState = {
   projects: DataRequestProject[];
+  requestConfigTemplates: {
+    id: string;
+    name: string;
+    white_list: Record<string, string[]>;
+  }[];
   projectStates: Record<string, { id: number; code: string }>;
   userRoles: { id: number; code: string; role: string }[];
   projectUsers: { email: string; role: string }[];
   projectFilterSets: ProjectFilterSets[];
+  reExportJobs: Record<number, ReExportJob>;
   isError: boolean;
   isAdminActive: boolean;
   isProjectsReloading: boolean;
+  isRequestConfigTemplatesPending: boolean;
+  requestConfigTemplatesError: string | null;
   isCreatePending: boolean;
   isProjectUsersPending: boolean;
   isUserRolesPending: boolean;

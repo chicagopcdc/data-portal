@@ -2,7 +2,8 @@ import { useState } from 'react';
 import * as Yup from 'yup';
 import Select from 'react-select';
 import { Formik, Field, Form, FieldArray } from 'formik';
-import { useAppDispatch } from '../redux/hooks';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import Button from '../gen3-ui-component/components/Button';
 import IconComponent from '../components/Icon';
 import SimpleInputField from '../components/SimpleInputField';
@@ -15,6 +16,7 @@ import {
   updateProjectUsers,
   updateUserDataAccess,
   deleteRequest,
+  startProjectReExport,
 } from '../redux/dataRequest/asyncThunks';
 import '../GuppyDataExplorer/ExplorerFilterSetForms/ExplorerFilterSetForms.css';
 import UserAccessTable from './UserAccessTable';
@@ -22,7 +24,10 @@ import DataRequestFilterSets from './DataRequestFilterSets';
 import DataRequestApprovedUrl from './DataRequestApprovedUrl';
 import ViewProjectStatusHistory from './ViewProjectStatusHistory';
 import DataRequestSelectAttributes from './DataRequestSelectAttributes';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  isTerminalReExportStatus,
+  RE_EXPORT_STATUS,
+} from '../redux/dataRequest/constants';
 
 const dataAccessSchema = Yup.object().shape({
   email: Yup.string().email().required('Must be a valid email address'),
@@ -64,6 +69,9 @@ export default function AdminProjectActions({
   onShowStatusFlow,
 }) {
   const dispatch = useAppDispatch();
+  const reExportJob = useAppSelector(
+    (state) => state.dataRequest.reExportJobs?.[project.id],
+  );
   const [actionType, setActionType] = useState('');
   const [currentEmailInput, setCurrentEmailInput] = useState('');
   const [isActionPending, setActionPending] = useState(false);
@@ -79,6 +87,25 @@ export default function AdminProjectActions({
     label: name,
     value: projectStates[name].id,
   }));
+  const isReExportPending = Boolean(
+    reExportJob && !isTerminalReExportStatus(reExportJob.status),
+  );
+  const reExportStatusMessage = (() => {
+    switch (reExportJob?.status) {
+      case RE_EXPORT_STATUS.DISPATCHING:
+        return 'Starting export...';
+      case RE_EXPORT_STATUS.RUNNING:
+        return reExportJob.error || 'Export job in progress.';
+      case RE_EXPORT_STATUS.COMPLETED:
+        return 'Export completed successfully.';
+      case RE_EXPORT_STATUS.FAILED:
+        return reExportJob.error || 'The export job failed.';
+      case RE_EXPORT_STATUS.UNKNOWN:
+        return 'Export job status is unavailable. Checking again...';
+      default:
+        return '';
+    }
+  })();
   return (
     <div
       className={`data-request-admin__actions-container
@@ -531,6 +558,31 @@ export default function AdminProjectActions({
                       }
                       buttonType='secondary'
                     />
+                  </li>
+
+                  <li className='data-request-admin__re-export-action'>
+                    <Button
+                      label={
+                        isReExportPending ? 'Exporting...' : 'Export Again'
+                      }
+                      enabled={!isReExportPending}
+                      isPending={isReExportPending}
+                      onClick={() => dispatch(startProjectReExport(project.id))}
+                      buttonType='secondary'
+                    />
+                    {reExportStatusMessage && (
+                      <span
+                        className={`data-request-admin__re-export-status data-request-admin__re-export-status--${
+                          reExportJob.status === RE_EXPORT_STATUS.FAILED ||
+                          reExportJob.error
+                            ? 'error'
+                            : 'info'
+                        }`}
+                        role='status'
+                      >
+                        {reExportStatusMessage}
+                      </span>
+                    )}
                   </li>
 
                   <li>

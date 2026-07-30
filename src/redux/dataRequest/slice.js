@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import {
   fetchProjects,
+  fetchRequestConfigTemplates,
   createProject,
   fetchProjectStates,
   fetchProjectConsortiums,
@@ -15,6 +16,7 @@ const slice = createSlice({
   name: 'dataRequest',
   initialState: /** @type {import("./types").DataRequestState} */ ({
     projects: [],
+    requestConfigTemplates: [],
     userRoles: [],
     projectStates: {},
     projectConsortiums: [],
@@ -23,6 +25,8 @@ const slice = createSlice({
     isError: false,
     isAdminActive: false,
     isProjectsReloading: false,
+    isRequestConfigTemplatesPending: false,
+    requestConfigTemplatesError: null,
     isCreatePending: false,
     isUserRolesPending: false,
     userRolesError: false,
@@ -48,6 +52,20 @@ const slice = createSlice({
     builder.addCase(fetchProjects.rejected, (state) => {
       state.isProjectsReloading = false;
       state.isError = true;
+    });
+    builder.addCase(fetchRequestConfigTemplates.pending, (state) => {
+      state.isRequestConfigTemplatesPending = true;
+      state.requestConfigTemplatesError = null;
+    });
+    builder.addCase(fetchRequestConfigTemplates.fulfilled, (state, action) => {
+      state.isRequestConfigTemplatesPending = false;
+      state.requestConfigTemplates = action.payload;
+    });
+    builder.addCase(fetchRequestConfigTemplates.rejected, (state, action) => {
+      state.isRequestConfigTemplatesPending = false;
+      state.requestConfigTemplates = [];
+      state.requestConfigTemplatesError =
+        action.payload || action.error.message;
     });
     builder.addCase(fetchProjectStates.fulfilled, (state, action) => {
       if (

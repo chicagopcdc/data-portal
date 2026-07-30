@@ -117,6 +117,11 @@ export type ReExportJob = {
 
 export type DataRequestState = {
   projects: DataRequestProject[];
+  requestConfigTemplates: {
+    id: string;
+    name: string;
+    white_list: Record<string, string[]>;
+  }[];
   projectStates: Record<string, { id: number; code: string }>;
   userRoles: { id: number; code: string; role: string }[];
   projectUsers: { email: string; role: string }[];
@@ -125,6 +130,8 @@ export type DataRequestState = {
   isError: boolean;
   isAdminActive: boolean;
   isProjectsReloading: boolean;
+  isRequestConfigTemplatesPending: boolean;
+  requestConfigTemplatesError: string | null;
   isCreatePending: boolean;
   isProjectUsersPending: boolean;
   isUserRolesPending: boolean;

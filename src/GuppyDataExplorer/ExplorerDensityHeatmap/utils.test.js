@@ -62,14 +62,33 @@ describe('Explorer density heatmap helpers', () => {
     expect(model.rows[2].cells.map((cell) => cell.density)).toEqual([0.5, 1]);
   });
 
-  it('formats density and field labels consistently', () => {
+  it('formats density percentages consistently', () => {
     expect(formatDensityPercentage(0.625)).toBe('62.5%');
     expect(formatDensityPercentage(0.85)).toBe('85%');
     expect(formatDensityPercentage(0.855)).toBe('85.5%');
     expect(formatDensityPercentage(0.8567)).toBe('85.67%');
     expect(formatDensityPercentage(0.85678)).toBe('85.68%');
-    expect(getDensityHeatmapFieldLabel('file_type', {})).toBe('File Type');
     expect(getDensityHeatmapColor(0)).toContain('var(--g3-color__silver)');
+  });
+
+  it('prefers mapped field labels from fieldInfo', () => {
+    expect(
+      getDensityHeatmapFieldLabel('histologies.age_at_course_anc_500', {
+        'histologies.age_at_course_anc_500': {
+          label: 'Age at Course ANC 500',
+        },
+      }),
+    ).toBe('Age at Course ANC 500');
+  });
+
+  it('strips the node prefix from nested fields without mapping', () => {
+    expect(
+      getDensityHeatmapFieldLabel('histologies.age_at_course_anc_500', {}),
+    ).toBe('Age At Course Anc 500');
+  });
+
+  it('capitalizes top-level fields without a node prefix', () => {
+    expect(getDensityHeatmapFieldLabel('file_type', {})).toBe('File Type');
   });
 
   it('interpolates colors correctly for low, medium, and high densities', () => {

@@ -26,6 +26,14 @@
   font: inherit;
 }
 
+.data-request-select-attributes__template-warning {
+  padding: 0.75rem;
+  border: 1px solid #d6a700;
+  margin-bottom: 1rem;
+  background: #fff8dc;
+  color: #5f4b00;
+}
+
 .data-request-select-attributes__columns {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -25,7 +25,7 @@ export const validateSelectionsAgainstTables = (
   const skippedTables = [];
   const skippedAttributes = [];
 
-  Object.entries(selections).forEach(([tableName, attributes]) => {
+  Object.entries(selections || {}).forEach(([tableName, attributes]) => {
     if (!attributesByTable[tableName]) {
       skippedTables.push(tableName);
       return;
@@ -106,6 +106,12 @@ const getSelectionsFromSavedDatapoints = (savedDatapoints) =>
     return result;
   }, {});
 
+export const validateSavedDatapointsAgainstTables = (savedDatapoints, tables) =>
+  validateSelectionsAgainstTables(
+    getSelectionsFromSavedDatapoints(savedDatapoints),
+    tables,
+  );
+
 const areAllAttributesChecked = (attributes = [], checkedAttributes = []) =>
   attributes.length > 0 &&
   attributes.every((attribute) => checkedAttributes.includes(attribute));
@@ -176,6 +182,7 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
         .sort((first, second) => first.title.localeCompare(second.title)),
     [dictionary],
   );
+  const isDictionaryLoaded = dictionary !== undefined && dictionary !== null;
 
   const tableTitlesById = useMemo(
     () =>
@@ -206,13 +213,17 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
     const savedDatapoints = buildSavedDatapointsByTable(
       action.payload?.data || [],
     );
+    const validationResult = validateSavedDatapointsAgainstTables(
+      savedDatapoints,
+      tables,
+    );
+    const validSelections = validationResult.validSelections;
 
     setSavedDatapointsByTable(savedDatapoints);
-    setSelectedAttributesByTable(
-      getSelectionsFromSavedDatapoints(savedDatapoints),
-    );
+    setSelectedAttributesByTable(validSelections);
+    setTemplateWarning(getSkippedSelectionsMessage(validationResult));
     setExpandedTables(
-      Object.keys(savedDatapoints).reduce(
+      Object.keys(validSelections).reduce(
         (expanded, tableName) => ({
           ...expanded,
           [`selected-${tableName}`]: true,
@@ -224,11 +235,11 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
     setSelectedCheckedByTable({});
     setIsLoading(false);
     return true;
-  }, [dispatch, projectId]);
+  }, [dispatch, projectId, tables]);
 
   useEffect(() => {
-    loadProjectDatapoints();
-  }, [loadProjectDatapoints]);
+    if (isDictionaryLoaded) loadProjectDatapoints();
+  }, [isDictionaryLoaded, loadProjectDatapoints]);
 
   useEffect(() => {
     dispatch(fetchRequestConfigTemplates());

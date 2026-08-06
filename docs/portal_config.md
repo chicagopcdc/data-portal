@@ -198,6 +198,18 @@ Below is an example, with inline comments describing what each JSON block config
   // saved to the user's additional_info.onboardingVersionSeen field.
   "explorerWizard": {
     "version": 1,
+    // optional; manually opened guides. These do not use version or save
+    // completion. Render an info button with the matching guide ID.
+    "guides": {
+      "dictionary": {
+        "steps": [
+          {
+            "target": "[data-tour-dictionary-views]",
+            "content": "Switch between graph and table views.",
+          },
+        ],
+      },
+    },
     "steps": [
       {
         // optional; navigate before showing this step

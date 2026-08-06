@@ -29,13 +29,15 @@ function Layout({ children }) {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.user);
   const [isExplorerWizardOpen, setExplorerWizardOpen] = useState(false);
+  const [explorerWizardGuideId, setExplorerWizardGuideId] = useState(null);
 
   const isDashboardPage =
     location.pathname.toLowerCase().startsWith('/dd') ||
     location.pathname.toLowerCase().startsWith('/explorer');
 
   useEffect(() => {
-    function openExplorerWizard() {
+    function openExplorerWizard(event) {
+      setExplorerWizardGuideId(event.detail?.guideId ?? null);
       setExplorerWizardOpen(true);
     }
 
@@ -110,9 +112,12 @@ function Layout({ children }) {
       )}
       {isExplorerWizardOpen && (
         <ExplorerWizard
+          guideId={explorerWizardGuideId}
           isOpen={isExplorerWizardOpen}
           onClose={() => setExplorerWizardOpen(false)}
-          onDone={markExplorerWizardCompleted}
+          onDone={
+            explorerWizardGuideId ? undefined : markExplorerWizardCompleted
+          }
         />
       )}
       <ScreenSizeWarning />

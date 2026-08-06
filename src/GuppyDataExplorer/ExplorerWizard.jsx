@@ -51,9 +51,21 @@ function getPopoverPosition(rect) {
   };
 }
 
-function getConfiguredSteps() {
-  const configuredSteps = config.explorerWizard?.steps;
+function getConfiguredSteps(guideId = null) {
+  const configuredSteps = guideId
+    ? config.explorerWizard?.guides?.[guideId]?.steps
+    : config.explorerWizard?.steps;
   return Array.isArray(configuredSteps) ? configuredSteps : [];
+}
+
+export function isExplorerSubGuideEnabled(guideId) {
+  return getConfiguredSteps(guideId).length > 0;
+}
+
+export function openExplorerSubGuide(guideId) {
+  window.dispatchEvent(
+    new CustomEvent(OPEN_EXPLORER_WIZARD_EVENT, { detail: { guideId } }),
+  );
 }
 
 export function getExplorerWizardVersion() {
@@ -99,21 +111,21 @@ function isCurrentRoute(route, location) {
   );
 }
 
-/** @param {{ isOpen: boolean, onClose: () => void, onDone: () => void }} props */
-function ExplorerWizard({ isOpen, onClose, onDone }) {
+/** @param {{ guideId?: string, isOpen: boolean, onClose: () => void, onDone?: () => void }} props */
+function ExplorerWizard({ guideId = null, isOpen, onClose, onDone }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [stepIndex, setStepIndex] = useState(0);
   const [rects, setRects] = useState([]);
   const [popover, setPopover] = useState(null);
   const layoutSignature = useRef('');
-  const steps = useMemo(getConfiguredSteps, []);
+  const steps = useMemo(() => getConfiguredSteps(guideId), [guideId]);
   const step = steps[stepIndex];
 
   const targetSelectors = useMemo(() => step?.target ?? [], [step]);
 
   function completeWizard() {
-    onDone();
+    onDone?.();
     onClose();
   }
 
@@ -165,6 +177,9 @@ function ExplorerWizard({ isOpen, onClose, onDone }) {
     layoutSignature.current = '';
     setRects([]);
     setPopover(null);
+    // A user-triggered guide should respond immediately. It can start centered
+    // and move to the target once the page layout has settled.
+    if (guideId) updateLayout(false, true);
     if (step.route) {
       const nextRoute = getRouteWithMergedSearch(step.route, location);
       if (!isCurrentRoute(step.route, location))
@@ -342,9 +357,10 @@ function ExplorerWizard({ isOpen, onClose, onDone }) {
 }
 
 ExplorerWizard.propTypes = {
+  guideId: PropTypes.string,
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  onDone: PropTypes.func.isRequired,
+  onDone: PropTypes.func,
 };
 
 export default ExplorerWizard;

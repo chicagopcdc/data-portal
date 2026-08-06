@@ -7,6 +7,12 @@
   padding: 12px 12px 5rem;
 }
 
+.explorer-survival-analysis__guide-link {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
 .explorer-survival-analysis__warning {
   color: #e74c3c;
   font-style: italic;

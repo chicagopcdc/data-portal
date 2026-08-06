@@ -109,6 +109,55 @@
   },
   "explorerWizard": {
     "version": 1,
+    "guides": {
+      "dictionary": {
+        "steps": [
+          {
+            "route": "/dd?view=table",
+            "target": "[data-tour-dictionary-views]",
+            "content": "Switch between the graph and table views of the data dictionary. The table view also provides template TSV and JSON downloads for each node."
+          },
+          {
+            "route": "/dd?view=table",
+            "target": "[data-tour-version-info]",
+            "content": "Review the current data release, portal, dictionary, and survival curve versions here."
+          }
+        ]
+      },
+      "survivalCurve": {
+        "steps": [
+          {
+            "route": "/explorer?view=survival%20analysis",
+            "target": "[data-tour-survival-controls]",
+            "content": "Choose saved filter sets and survival settings, then apply them to generate a survival curve."
+          },
+          {
+            "route": "/explorer?view=survival%20analysis",
+            "target": "[data-tour-survival-results]",
+            "content": "The generated survival curve and risk table appear in this results area."
+          }
+        ]
+      },
+      "filterSetWorkspace": {
+        "steps": [
+          {
+            "route": "/explorer",
+            "target": "[data-tour-filter-set-workspace]",
+            "content": "Use the Filter Set Workspace to manage, save, share, and combine the filters in your current exploration."
+          },
+          {
+            "route": "/explorer",
+            "target": "[data-tour-filter-set-actions]",
+            "content": "These actions let you create, compose, duplicate, remove, save, share, and reset filter sets."
+          },
+          {
+            "route": "/explorer",
+            "target": "[data-tour-filter-set-list]",
+            "content": "Your active and saved filter sets are listed here. Select a filter set to review or update it."
+          }
+        ]
+      }
+    },
     "steps": [
       {
         "route": "/explorer",

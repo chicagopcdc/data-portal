@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { config } from '../params';
@@ -67,9 +67,7 @@ export function isExplorerWizardEnabled() {
 
 export function hasSeenExplorerWizard(user) {
   const wizardVersion = getExplorerWizardVersion();
-  const seenVersion = Number(
-    user?.additional_info?.[ONBOARDING_VERSION_FIELD],
-  );
+  const seenVersion = Number(user?.additional_info?.[ONBOARDING_VERSION_FIELD]);
 
   return (
     wizardVersion === null ||
@@ -108,6 +106,7 @@ function ExplorerWizard({ isOpen, onClose, onDone }) {
   const [stepIndex, setStepIndex] = useState(0);
   const [rects, setRects] = useState([]);
   const [popover, setPopover] = useState(null);
+  const layoutSignature = useRef('');
   const steps = useMemo(getConfiguredSteps, []);
   const step = steps[stepIndex];
 
@@ -121,29 +120,38 @@ function ExplorerWizard({ isOpen, onClose, onDone }) {
   function updateLayout(shouldScroll = false, shouldShowFallback = true) {
     const elements = getElements(targetSelectors);
     const nextRects = getRects(elements);
-    setRects(nextRects);
-
     if (nextRects.length === 0) {
-      if (shouldShowFallback)
-        setPopover({
+      if (shouldShowFallback) {
+        const nextPopover = {
           arrowLeft: null,
           arrowPosition: null,
           left: Math.max(20, window.innerWidth / 2 - 340),
           top: Math.max(20, window.innerHeight / 2 - 140),
           width: Math.min(760, window.innerWidth - 40),
-        });
+        };
+        const nextSignature = JSON.stringify([[], nextPopover]);
+        if (layoutSignature.current !== nextSignature) {
+          layoutSignature.current = nextSignature;
+          setRects([]);
+          setPopover(nextPopover);
+        }
+      }
       return false;
     }
 
     const first = nextRects[0];
     if (shouldScroll)
       elements[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setPopover(
-      getPopoverPosition({
-        ...first,
-        bottom: first.top + first.height,
-      }),
-    );
+    const nextPopover = getPopoverPosition({
+      ...first,
+      bottom: first.top + first.height,
+    });
+    const nextSignature = JSON.stringify([nextRects, nextPopover]);
+    if (layoutSignature.current !== nextSignature) {
+      layoutSignature.current = nextSignature;
+      setRects(nextRects);
+      setPopover(nextPopover);
+    }
     return true;
   }
 
@@ -154,6 +162,8 @@ function ExplorerWizard({ isOpen, onClose, onDone }) {
   useEffect(() => {
     if (!isOpen || step === undefined) return undefined;
 
+    layoutSignature.current = '';
+    setRects([]);
     setPopover(null);
     if (step.route) {
       const nextRoute = getRouteWithMergedSearch(step.route, location);
@@ -162,6 +172,10 @@ function ExplorerWizard({ isOpen, onClose, onDone }) {
     }
 
     const retryTimeouts = [];
+    let animationFrame = null;
+    let didRequestScroll = false;
+    let previousTargetSignature = '';
+    let stableMeasurements = 0;
     function expandStepTargets() {
       let didExpand = false;
       getElements(step.expandTargets ?? []).forEach((element) => {
@@ -176,25 +190,52 @@ function ExplorerWizard({ isOpen, onClose, onDone }) {
       return didExpand;
     }
 
+    function trackLayout() {
+      updateLayout(false, false);
+      animationFrame = window.requestAnimationFrame(trackLayout);
+    }
+
+    function retryWhenReady(remainingAttempts) {
+      retryTimeouts.push(
+        window.setTimeout(() => updateLayoutWhenReady(remainingAttempts), 150),
+      );
+    }
+
     function updateLayoutWhenReady(remainingAttempts = 40) {
       if (expandStepTargets()) {
-        retryTimeouts.push(
-          window.setTimeout(
-            () => updateLayoutWhenReady(remainingAttempts),
-            120,
-          ),
-        );
+        retryWhenReady(remainingAttempts);
         return;
       }
-      const foundTarget = updateLayout(true, remainingAttempts === 0);
-      if (!foundTarget && remainingAttempts > 0) {
-        retryTimeouts.push(
-          window.setTimeout(
-            () => updateLayoutWhenReady(remainingAttempts - 1),
-            250,
-          ),
-        );
+
+      const elements = getElements(targetSelectors);
+      const nextRects = getRects(elements);
+      if (nextRects.length === 0) {
+        if (remainingAttempts > 0) retryWhenReady(remainingAttempts - 1);
+        else updateLayout(false, true);
+        return;
       }
+
+      if (!didRequestScroll) {
+        elements[0].scrollIntoView({ behavior: 'auto', block: 'center' });
+        didRequestScroll = true;
+        retryWhenReady(remainingAttempts);
+        return;
+      }
+
+      const nextTargetSignature = JSON.stringify(nextRects);
+      stableMeasurements =
+        nextTargetSignature === previousTargetSignature
+          ? stableMeasurements + 1
+          : 0;
+      previousTargetSignature = nextTargetSignature;
+
+      if (stableMeasurements < 2 && remainingAttempts > 0) {
+        retryWhenReady(remainingAttempts - 1);
+        return;
+      }
+
+      updateLayout(false, true);
+      animationFrame = window.requestAnimationFrame(trackLayout);
     }
 
     const timeout = window.setTimeout(
@@ -212,6 +253,7 @@ function ExplorerWizard({ isOpen, onClose, onDone }) {
     return () => {
       window.clearTimeout(timeout);
       retryTimeouts.forEach((id) => window.clearTimeout(id));
+      if (animationFrame !== null) window.cancelAnimationFrame(animationFrame);
       window.removeEventListener('resize', updateLayout);
       window.removeEventListener('scroll', updateLayout, true);
     };
@@ -276,16 +318,21 @@ function ExplorerWizard({ isOpen, onClose, onDone }) {
                 Back
               </button>
             )}
+            {!isLastStep && (
+              <button
+                className='explorer-wizard__next'
+                onClick={() => setStepIndex((i) => i + 1)}
+                type='button'
+              >
+                {`Next (Step ${stepIndex + 1} of ${steps.length})`}
+              </button>
+            )}
             <button
-              className='explorer-wizard__next'
-              onClick={() =>
-                isLastStep ? completeWizard() : setStepIndex((i) => i + 1)
-              }
+              className='explorer-wizard__done'
+              onClick={completeWizard}
               type='button'
             >
-              {isLastStep
-                ? 'Done'
-                : `Next (Step ${stepIndex + 1} of ${steps.length})`}
+              Done
             </button>
           </div>
         </footer>

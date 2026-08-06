@@ -13,6 +13,61 @@ import './DataRequestSelectAttributes.css';
 const normalizeAttributes = (attributes = []) =>
   [...new Set(attributes)].sort((a, b) => a.localeCompare(b));
 
+export const validateSelectionsAgainstTables = (
+  selections = {},
+  tables = [],
+) => {
+  const attributesByTable = tables.reduce((result, table) => {
+    result[table.id] = new Set(table.attributes);
+    return result;
+  }, {});
+  const validSelections = {};
+  const skippedTables = [];
+  const skippedAttributes = [];
+
+  Object.entries(selections).forEach(([tableName, attributes]) => {
+    if (!attributesByTable[tableName]) {
+      skippedTables.push(tableName);
+      return;
+    }
+
+    if (!Array.isArray(attributes)) return;
+
+    const validAttributes = attributes.filter((attribute) => {
+      const isValid = attributesByTable[tableName].has(attribute);
+
+      if (!isValid) skippedAttributes.push(`${tableName}.${attribute}`);
+      return isValid;
+    });
+
+    if (validAttributes.length > 0) {
+      validSelections[tableName] = normalizeAttributes(validAttributes);
+    }
+  });
+
+  return {
+    validSelections,
+    skippedTables: normalizeAttributes(skippedTables),
+    skippedAttributes: normalizeAttributes(skippedAttributes),
+  };
+};
+
+const getSkippedSelectionsMessage = ({ skippedTables, skippedAttributes }) => {
+  const messages = [];
+
+  if (skippedTables.length > 0) {
+    messages.push(`unavailable tables: ${skippedTables.join(', ')}`);
+  }
+
+  if (skippedAttributes.length > 0) {
+    messages.push(`unavailable attributes: ${skippedAttributes.join(', ')}`);
+  }
+
+  return messages.length > 0
+    ? `Skipped ${messages.join('; ')} because they are not in this project's current data dictionary.`
+    : '';
+};
+
 const selectionsEqual = (first = {}, second = {}) => {
   const tableNames = new Set([...Object.keys(first), ...Object.keys(second)]);
 
@@ -100,6 +155,7 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [requestError, setRequestError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [templateWarning, setTemplateWarning] = useState('');
 
   const tables = useMemo(
     () =>
@@ -284,15 +340,11 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
 
     if (!template) return;
 
-    const templateSelections = Object.entries(template.white_list || {}).reduce(
-      (selections, [tableName, attributes]) => {
-        if (Array.isArray(attributes) && attributes.length > 0) {
-          selections[tableName] = normalizeAttributes(attributes);
-        }
-        return selections;
-      },
-      {},
+    const validationResult = validateSelectionsAgainstTables(
+      template.white_list,
+      tables,
     );
+    const templateSelections = validationResult.validSelections;
 
     setSelectedAttributesByTable(templateSelections);
     setExpandedTables(
@@ -307,6 +359,7 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
     setAvailableCheckedByTable({});
     setSelectedCheckedByTable({});
     setRequestError('');
+    setTemplateWarning(getSkippedSelectionsMessage(validationResult));
     setSuccessMessage(
       `${template.name} template loaded. Review the attributes and save to apply them to this request.`,
     );
@@ -330,9 +383,19 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
     setRequestError('');
     setSuccessMessage('');
 
+    const validationResult = validateSelectionsAgainstTables(
+      selectedAttributesByTable,
+      tables,
+    );
+    const validSelections = validationResult.validSelections;
+    const validationWarning = getSkippedSelectionsMessage(validationResult);
+
+    setSelectedAttributesByTable(validSelections);
+    setTemplateWarning(validationWarning);
+
     const tableNames = new Set([
       ...Object.keys(savedDatapointsByTable),
-      ...Object.keys(selectedAttributesByTable),
+      ...Object.keys(validSelections),
     ]);
 
     const requests = [];
@@ -340,7 +403,7 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
     tableNames.forEach((tableName) => {
       const savedDatapoint = savedDatapointsByTable[tableName];
       const selectedAttributes = normalizeAttributes(
-        selectedAttributesByTable[tableName] || [],
+        validSelections[tableName] || [],
       );
 
       if (!savedDatapoint && selectedAttributes.length > 0) {
@@ -476,6 +539,15 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
 
           {templateError && (
             <div className='data-request__request-error'>{templateError}</div>
+          )}
+
+          {templateWarning && (
+            <div
+              className='data-request-select-attributes__template-warning'
+              role='alert'
+            >
+              {templateWarning}
+            </div>
           )}
 
           <div className='data-request-select-attributes__columns'>

@@ -58,6 +58,14 @@ test('removes duplicate valid attributes', () => {
   ).toEqual({ subject: ['age'] });
 });
 
+test('handles a missing template white list', () => {
+  expect(validateSelectionsAgainstTables(null, tables)).toEqual({
+    validSelections: {},
+    skippedTables: [],
+    skippedAttributes: [],
+  });
+});
+
 test('validates previously saved datapoints against the current dictionary', () => {
   expect(
     validateSavedDatapointsAgainstTables(

@@ -25,7 +25,7 @@ export const validateSelectionsAgainstTables = (
   const skippedTables = [];
   const skippedAttributes = [];
 
-  Object.entries(selections).forEach(([tableName, attributes]) => {
+  Object.entries(selections || {}).forEach(([tableName, attributes]) => {
     if (!attributesByTable[tableName]) {
       skippedTables.push(tableName);
       return;
@@ -182,6 +182,7 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
         .sort((first, second) => first.title.localeCompare(second.title)),
     [dictionary],
   );
+  const isDictionaryLoaded = dictionary !== undefined && dictionary !== null;
 
   const tableTitlesById = useMemo(
     () =>
@@ -237,8 +238,8 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
   }, [dispatch, projectId, tables]);
 
   useEffect(() => {
-    loadProjectDatapoints();
-  }, [loadProjectDatapoints]);
+    if (isDictionaryLoaded) loadProjectDatapoints();
+  }, [isDictionaryLoaded, loadProjectDatapoints]);
 
   useEffect(() => {
     dispatch(fetchRequestConfigTemplates());

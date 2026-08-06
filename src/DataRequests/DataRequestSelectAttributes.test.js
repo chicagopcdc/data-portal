@@ -1,4 +1,7 @@
-import { validateSelectionsAgainstTables } from './DataRequestSelectAttributes';
+import {
+  validateSavedDatapointsAgainstTables,
+  validateSelectionsAgainstTables,
+} from './DataRequestSelectAttributes';
 
 const tables = [
   {
@@ -53,4 +56,28 @@ test('removes duplicate valid attributes', () => {
     validateSelectionsAgainstTables({ subject: ['age', 'age'] }, tables)
       .validSelections,
   ).toEqual({ subject: ['age'] });
+});
+
+test('validates previously saved datapoints against the current dictionary', () => {
+  expect(
+    validateSavedDatapointsAgainstTables(
+      {
+        subject: {
+          id: 1,
+          value_list: ['age', 'removed_attribute'],
+        },
+        molecular_analysis: {
+          id: 2,
+          value_list: ['gene_symbol'],
+        },
+      },
+      tables,
+    ),
+  ).toEqual({
+    validSelections: {
+      subject: ['age'],
+    },
+    skippedTables: ['molecular_analysis'],
+    skippedAttributes: ['subject.removed_attribute'],
+  });
 });

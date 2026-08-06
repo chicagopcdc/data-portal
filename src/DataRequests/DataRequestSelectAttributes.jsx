@@ -106,6 +106,12 @@ const getSelectionsFromSavedDatapoints = (savedDatapoints) =>
     return result;
   }, {});
 
+export const validateSavedDatapointsAgainstTables = (savedDatapoints, tables) =>
+  validateSelectionsAgainstTables(
+    getSelectionsFromSavedDatapoints(savedDatapoints),
+    tables,
+  );
+
 const areAllAttributesChecked = (attributes = [], checkedAttributes = []) =>
   attributes.length > 0 &&
   attributes.every((attribute) => checkedAttributes.includes(attribute));
@@ -206,13 +212,17 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
     const savedDatapoints = buildSavedDatapointsByTable(
       action.payload?.data || [],
     );
+    const validationResult = validateSavedDatapointsAgainstTables(
+      savedDatapoints,
+      tables,
+    );
+    const validSelections = validationResult.validSelections;
 
     setSavedDatapointsByTable(savedDatapoints);
-    setSelectedAttributesByTable(
-      getSelectionsFromSavedDatapoints(savedDatapoints),
-    );
+    setSelectedAttributesByTable(validSelections);
+    setTemplateWarning(getSkippedSelectionsMessage(validationResult));
     setExpandedTables(
-      Object.keys(savedDatapoints).reduce(
+      Object.keys(validSelections).reduce(
         (expanded, tableName) => ({
           ...expanded,
           [`selected-${tableName}`]: true,
@@ -224,7 +234,7 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
     setSelectedCheckedByTable({});
     setIsLoading(false);
     return true;
-  }, [dispatch, projectId]);
+  }, [dispatch, projectId, tables]);
 
   useEffect(() => {
     loadProjectDatapoints();

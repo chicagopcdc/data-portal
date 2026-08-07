@@ -71,14 +71,14 @@ function ExplorerSurvivalAnalysis() {
 
   return (
     <div className='explorer-survival-analysis'>
-      <div className='explorer-survival-analysis__guide-link'>
-        <GuideInfoButton
-          guideId='survivalCurve'
-          label='Show survival curve guide'
-        />
-      </div>
       {isUserCompliant ? (
         <>
+          <div className='explorer-survival-analysis__guide-link'>
+            <GuideInfoButton
+              guideId='survivalCurve'
+              label='Show survival curve guide'
+            />
+          </div>
           <div
             className='explorer-survival-analysis__column-left'
             data-tour-survival-controls

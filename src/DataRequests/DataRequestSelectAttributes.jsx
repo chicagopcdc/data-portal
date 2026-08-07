@@ -116,6 +116,25 @@ const areAllAttributesChecked = (attributes = [], checkedAttributes = []) =>
   attributes.length > 0 &&
   attributes.every((attribute) => checkedAttributes.includes(attribute));
 
+export const toggleAllAttributes = (
+  attributesByTable,
+  tableName,
+  attributes,
+) => {
+  const checkedAttributes = attributesByTable[tableName] || [];
+
+  if (areAllAttributesChecked(attributes, checkedAttributes)) {
+    const nextAttributesByTable = { ...attributesByTable };
+    delete nextAttributesByTable[tableName];
+    return nextAttributesByTable;
+  }
+
+  return {
+    ...attributesByTable,
+    [tableName]: attributes,
+  };
+};
+
 const toggleAttribute = (attributesByTable, tableName, attributeName) => {
   const currentAttributes = attributesByTable[tableName] || [];
   const isSelected = currentAttributes.includes(attributeName);
@@ -258,45 +277,15 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
       (attribute) => !selectedAttributes.includes(attribute),
     );
 
-    setAvailableCheckedByTable((current) => {
-      const checkedAttributes = current[table.id] || [];
-      const areAllAvailableChecked = areAllAttributesChecked(
-        availableAttributes,
-        checkedAttributes,
-      );
-
-      if (areAllAvailableChecked) {
-        const nextCheckedAttributes = { ...current };
-        delete nextCheckedAttributes[table.id];
-        return nextCheckedAttributes;
-      }
-
-      return {
-        ...current,
-        [table.id]: availableAttributes,
-      };
-    });
+    setAvailableCheckedByTable((current) =>
+      toggleAllAttributes(current, table.id, availableAttributes),
+    );
   };
 
   const toggleAllSelectedAttributes = (tableName, attributes) => {
-    setSelectedCheckedByTable((current) => {
-      const checkedAttributes = current[tableName] || [];
-      const areAllSelected = areAllAttributesChecked(
-        attributes,
-        checkedAttributes,
-      );
-
-      if (areAllSelected) {
-        const nextCheckedAttributes = { ...current };
-        delete nextCheckedAttributes[tableName];
-        return nextCheckedAttributes;
-      }
-
-      return {
-        ...current,
-        [tableName]: attributes,
-      };
-    });
+    setSelectedCheckedByTable((current) =>
+      toggleAllAttributes(current, tableName, attributes),
+    );
   };
 
   const moveAvailableAttributes = () => {

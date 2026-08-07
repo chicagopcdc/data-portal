@@ -1,4 +1,5 @@
 import {
+  toggleAllAttributes,
   validateSavedDatapointsAgainstTables,
   validateSelectionsAgainstTables,
 } from './DataRequestSelectAttributes';
@@ -64,6 +65,32 @@ test('handles a missing template white list', () => {
     skippedTables: [],
     skippedAttributes: [],
   });
+});
+
+test('checks all attributes for a table when some are unchecked', () => {
+  expect(
+    toggleAllAttributes(
+      { subject: ['age'], diagnosis: ['disease_type'] },
+      'subject',
+      ['age', 'submitter_id'],
+    ),
+  ).toEqual({
+    subject: ['age', 'submitter_id'],
+    diagnosis: ['disease_type'],
+  });
+});
+
+test('clears a table when all of its attributes are checked', () => {
+  expect(
+    toggleAllAttributes(
+      {
+        subject: ['age', 'submitter_id'],
+        diagnosis: ['disease_type'],
+      },
+      'subject',
+      ['age', 'submitter_id'],
+    ),
+  ).toEqual({ diagnosis: ['disease_type'] });
 });
 
 test('validates previously saved datapoints against the current dictionary', () => {

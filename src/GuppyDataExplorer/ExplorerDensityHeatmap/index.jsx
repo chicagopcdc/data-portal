@@ -1,16 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { capitalizeFirstLetter } from '../../utils';
-import { useAppSelector } from '../../redux/hooks';
-import { getGQLFilter } from '../../GuppyComponents/Utils/queries';
-import { fetchWithCreds } from '../../utils.fetch';
-import { guppyGraphQLUrl } from '../../localconf';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import {
+  loadDensityHeatmap,
+  prioritizeDensityHeatmapCategory,
+} from '../../redux/explorer/densityHeatmapThunks';
 import UserAgreement from '../ExplorerSurvivalAnalysis/UserAgreement';
 
 import {
   extractFieldsFromFilter,
   formatDensityPercentage,
   getDensityHeatmapFieldLabel,
+  groupFieldPathsByCategory,
 } from './utils';
 import './ExplorerDensityHeatmap.css';
 
@@ -22,78 +24,6 @@ function checkUserAgreement() {
 
 function handleUserAgreement() {
   return window.localStorage.setItem(userAgreementLocalStorageKey, 'true');
-}
-
-function buildSelectionTree(fieldPaths) {
-  const root = {};
-
-  fieldPaths.forEach((fieldPath) => {
-    const segments = fieldPath.split('.').filter(Boolean);
-    let cursor = root;
-
-    segments.forEach((segment, index) => {
-      if (!cursor[segment]) {
-        cursor[segment] = {};
-      }
-
-      if (index === segments.length - 1) {
-        cursor[segment].__leaf = true;
-        return;
-      }
-
-      cursor = cursor[segment];
-    });
-  });
-
-  return root;
-}
-
-function renderSelectionTree(tree, depth = 0) {
-  const indent = '  '.repeat(depth);
-
-  return Object.entries(tree)
-    .map(([fieldName, child]) => {
-      const childEntries = Object.keys(child).filter((key) => key !== '__leaf');
-
-      if (child.__leaf || childEntries.length === 0) {
-        return `${indent}${fieldName} { histogram { key count } }`;
-      }
-
-      return `${indent}${fieldName} {
-${renderSelectionTree(child, depth + 1)}
-${indent}}`;
-    })
-    .join('\n');
-}
-
-function collectHistogramCount(node) {
-  if (node === null || node === undefined) {
-    return 0;
-  }
-
-  if (Array.isArray(node)) {
-    return node.reduce((sum, value) => sum + collectHistogramCount(value), 0);
-  }
-
-  if (typeof node !== 'object') {
-    return 0;
-  }
-
-  let total = 0;
-  if (Array.isArray(node.histogram)) {
-    total += node.histogram.reduce(
-      (sum, bucket) => sum + Math.max(bucket?.count ?? 0, 0),
-      0,
-    );
-  }
-
-  for (const value of Object.values(node)) {
-    if (value && typeof value === 'object') {
-      total += collectHistogramCount(value);
-    }
-  }
-
-  return total;
 }
 
 /**
@@ -117,13 +47,17 @@ function ExplorerDensityHeatmap({
   dataType,
   fieldInfo = {},
 }) {
+  const dispatch = useAppDispatch();
   const [isUserCompliant, setIsUserCompliant] = useState(checkUserAgreement());
-  const [densityRows, setDensityRows] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const [showAllFields, setShowAllFields] = useState(false);
+  const sectionObserverRef = useRef(/** @type {IntersectionObserver | null} */ (null));
+  const sectionNodeMapRef = useRef(/** @type {Map<string, Element>} */ (new Map()));
+
   const guppyConfigDataType = useAppSelector(
     (state) => state.explorer.config.guppyConfig.dataType,
+  );
+  const densityHeatmapResult = useAppSelector(
+    (state) => state.explorer.densityHeatmapResult,
   );
   const activeDataType = dataType || guppyConfigDataType;
   const propFieldPaths = useMemo(
@@ -131,7 +65,6 @@ function ExplorerDensityHeatmap({
     [fields],
   );
 
-  // Extract field names from active filter selections
   const secondaryFields = useMemo(
     () => (expandByFilter ? extractFieldsFromFilter(filter) : []),
     [expandByFilter, filter],
@@ -145,16 +78,13 @@ function ExplorerDensityHeatmap({
   const hasPrimaryFields = primaryFields.length > 0;
 
   const fieldPaths = useMemo(() => {
-    // If showAllFields or no primary fields configured, use all available fields
     if (showAllFields || !hasPrimaryFields) {
       return propFieldPaths;
     }
 
-    // Combine primary + secondary (filter-derived) fields
     const combined = new Set([...primaryFields]);
     secondaryFields.forEach((f) => combined.add(f));
 
-    // Filter by what's actually available in the schema
     const available = new Set(propFieldPaths);
 
     return [...combined].filter((path) => available.has(path));
@@ -166,89 +96,76 @@ function ExplorerDensityHeatmap({
     showAllFields,
   ]);
 
-  const fieldQuery = useMemo(() => {
-    if (!fieldPaths.length) return '';
-
-    return renderSelectionTree(buildSelectionTree(fieldPaths));
-  }, [fieldPaths]);
-
   useEffect(() => {
-    if (!isUserCompliant || !fieldQuery || !activeDataType) {
-      setDensityRows([]);
-      setError('');
-      return undefined;
-    }
+    if (!isUserCompliant) return undefined;
 
-    let isCancelled = false;
+    dispatch(
+      loadDensityHeatmap({
+        dataType: activeDataType,
+        fieldPaths,
+        filter,
+        totalCount,
+      }),
+    );
 
-    async function loadDensityData() {
-      setIsLoading(true);
-      setError('');
-
-      try {
-        const query = `query ($filter_main: JSON) {
-          _aggregation {
-            main: ${activeDataType}(filter: $filter_main, accessibility: all) {
-              ${fieldQuery}
-            }
-          }
-        }`;
-        const body = {
-          query,
-          variables: { filter_main: getGQLFilter(filter) ?? {} },
-        };
-        const response = await fetchWithCreds({
-          path: guppyGraphQLUrl,
-          method: 'POST',
-          body: JSON.stringify(body),
-        });
-        const aggregation = response?.data?.data?._aggregation?.main;
-        const nextRows = fieldPaths.map((fieldPath) => {
-          const selection = fieldPath
-            .split('.')
-            .filter(Boolean)
-            .reduce((current, segment) => current?.[segment], aggregation);
-          const availableCount = collectHistogramCount(selection);
-          const completeness =
-            totalCount > 0 ? Math.min(availableCount / totalCount, 1) : 0;
-
-          return {
-            availableCount,
-            completeness,
-            field: fieldPath,
-            missingCount: Math.max(totalCount - availableCount, 0),
-          };
-        });
-
-        if (!isCancelled) {
-          setDensityRows(nextRows);
-        }
-      } catch (err) {
-        if (!isCancelled) {
-          setError('Unable to load density data from the GraphQL API.');
-          setDensityRows([]);
-        }
-        console.error(err); // eslint-disable-line no-console
-      } finally {
-        if (!isCancelled) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    loadDensityData();
-
-    return () => {
-      isCancelled = true;
-    };
+    return undefined;
   }, [
     activeDataType,
+    dispatch,
     fieldPaths,
-    fieldQuery,
     filter,
     isUserCompliant,
     totalCount,
   ]);
+
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return undefined;
+
+    sectionObserverRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const categoryKey = /** @type {HTMLElement} */ (entry.target).dataset
+            .categoryKey;
+          if (categoryKey) prioritizeDensityHeatmapCategory(categoryKey);
+        });
+      },
+      { root: null, rootMargin: '120px 0px', threshold: 0.01 },
+    );
+
+    sectionNodeMapRef.current.forEach((node) => {
+      sectionObserverRef.current?.observe(node);
+    });
+
+    return () => {
+      sectionObserverRef.current?.disconnect();
+      sectionObserverRef.current = null;
+    };
+  }, []);
+
+  /**
+   * @param {string} categoryKey
+   * @param {HTMLElement | null} node
+   */
+  function bindSectionNode(categoryKey, node) {
+    const previous = sectionNodeMapRef.current.get(categoryKey);
+    if (previous && previous !== node) {
+      sectionObserverRef.current?.unobserve(previous);
+      sectionNodeMapRef.current.delete(categoryKey);
+    }
+    if (node) {
+      sectionNodeMapRef.current.set(categoryKey, node);
+      sectionObserverRef.current?.observe(node);
+    }
+  }
+
+  const densityRows = useMemo(
+    () =>
+      fieldPaths
+        .map((fieldPath) => densityHeatmapResult.rowsByField[fieldPath])
+        .filter(Boolean),
+    [densityHeatmapResult.rowsByField, fieldPaths],
+  );
 
   const stats = useMemo(
     () => [
@@ -258,88 +175,85 @@ function ExplorerDensityHeatmap({
     [fieldPaths.length, totalCount],
   );
 
-  /** Groups density rows by top-level field prefix, then wraps them in sections */
-  function groupRows(rows) {
-    const groups = [];
-    const groupIndex = new Map();
-
-    rows.forEach((row) => {
-      const groupKey = row.field.split('.')[0] || row.field;
-      if (!groupIndex.has(groupKey)) {
-        groupIndex.set(groupKey, groups.length);
-        groups.push({ key: groupKey, rows: [] });
-      }
-
-      groups[groupIndex.get(groupKey)].rows.push({
-        ...row,
-        groupKey,
-      });
-    });
-
-    return groups.map((group) => ({
-      ...group,
-      label: capitalizeFirstLetter(group.key.split('_').join(' ')),
-    }));
-  }
-
   const secondaryFieldSet = useMemo(
     () => new Set(secondaryFields),
     [secondaryFields],
   );
 
-  const groupedDensityRows = useMemo(() => {
-    // When there are no primary fields (or showAllFields is on),
-    // fall back to the original flat grouping
+  /**
+   * Stable category-ordered sections (loaded rows or skeleton placeholders).
+   * Order follows fieldPaths grouping so sections do not jump as batches arrive.
+   */
+  const matrixSections = useMemo(() => {
+    /**
+     * @param {string[]} partitionFields
+     * @param {'all' | 'primary' | 'secondary' | 'expanded'} sectionType
+     */
+    function buildSections(partitionFields, sectionType) {
+      if (partitionFields.length === 0) return [];
+
+      return groupFieldPathsByCategory(partitionFields).map(
+        ({ key, fields }) => {
+          const rows = fields
+            .map((fieldPath) => densityHeatmapResult.rowsByField[fieldPath])
+            .filter(Boolean);
+          const status =
+            densityHeatmapResult.categoryStatus[key] || 'pending';
+
+          if (rows.length > 0) {
+            return {
+              key,
+              label: capitalizeFirstLetter(key.split('_').join(' ')),
+              rows: rows.map((row) => ({ ...row, groupKey: key })),
+              sectionType,
+              status: 'loaded',
+              fieldCount: fields.length,
+            };
+          }
+
+          return {
+            key,
+            label: capitalizeFirstLetter(key.split('_').join(' ')),
+            rows: [],
+            sectionType,
+            status,
+            fieldCount: fields.length,
+          };
+        },
+      );
+    }
+
     if (!hasPrimaryFields || showAllFields) {
-      const allGroups = groupRows(densityRows);
-      return allGroups.map((g) => ({ ...g, sectionType: 'all' }));
+      return buildSections(fieldPaths, 'all');
     }
 
-    // Partition rows into primary, secondary, and expanded
-    const primaryRows = [];
-    const secondaryRows = [];
-    const expandedRows = [];
+    const primaryPartition = fieldPaths.filter((field) =>
+      primaryFieldSet.has(field),
+    );
+    const secondaryPartition = fieldPaths.filter(
+      (field) =>
+        secondaryFieldSet.has(field) && !primaryFieldSet.has(field),
+    );
+    const expandedPartition = fieldPaths.filter(
+      (field) =>
+        !primaryFieldSet.has(field) && !secondaryFieldSet.has(field),
+    );
 
-    densityRows.forEach((row) => {
-      if (primaryFieldSet.has(row.field)) {
-        primaryRows.push(row);
-      } else if (secondaryFieldSet.has(row.field)) {
-        secondaryRows.push(row);
-      } else {
-        expandedRows.push(row);
-      }
-    });
-
-    const sections = [];
-
-    if (primaryRows.length > 0) {
-      groupRows(primaryRows).forEach((g) =>
-        sections.push({ ...g, sectionType: 'primary' }),
-      );
-    }
-
-    if (secondaryRows.length > 0) {
-      groupRows(secondaryRows).forEach((g) =>
-        sections.push({ ...g, sectionType: 'secondary' }),
-      );
-    }
-
-    if (expandedRows.length > 0) {
-      groupRows(expandedRows).forEach((g) =>
-        sections.push({ ...g, sectionType: 'expanded' }),
-      );
-    }
-
-    return sections;
+    return [
+      ...buildSections(primaryPartition, 'primary'),
+      ...buildSections(secondaryPartition, 'secondary'),
+      ...buildSections(expandedPartition, 'expanded'),
+    ];
   }, [
-    densityRows,
+    densityHeatmapResult.categoryStatus,
+    densityHeatmapResult.rowsByField,
+    fieldPaths,
     hasPrimaryFields,
     primaryFieldSet,
     secondaryFieldSet,
     showAllFields,
   ]);
 
-  /** How many total fields are available from the schema mapping */
   const allFieldCount = propFieldPaths.length;
 
   const canShowToggle =
@@ -355,74 +269,116 @@ function ExplorerDensityHeatmap({
     return group.label;
   }
 
+  const hasLoadedRows = densityRows.length > 0;
+  const isBootstrapping =
+    densityHeatmapResult.isPending &&
+    !hasLoadedRows &&
+    matrixSections.length === 0 &&
+    !densityHeatmapResult.error;
+  const showFatalError =
+    !hasLoadedRows &&
+    !!densityHeatmapResult.error &&
+    !densityHeatmapResult.isPending;
+
   let heatmapContent = null;
-  if (isLoading) {
+  if (isBootstrapping) {
     heatmapContent = (
-      <div className='explorer-density-heatmap__state'>Loading...</div>
+      <div className='explorer-density-heatmap__state'>
+        Loading categories...
+      </div>
     );
-  } else if (error) {
+  } else if (showFatalError) {
     heatmapContent = (
       <div className='explorer-density-heatmap__state explorer-density-heatmap__state--error'>
-        {error}
+        {densityHeatmapResult.error}
       </div>
     );
-  } else if (groupedDensityRows.length > 0) {
-    heatmapContent = groupedDensityRows.map((group) => (
-      <div
-        className={`explorer-density-heatmap__section${
-          group.sectionType === 'secondary'
-            ? ' explorer-density-heatmap__section--secondary'
-            : ''
-        }`}
-        key={`${group.sectionType}-${group.key}`}
-      >
-        <div className='explorer-density-heatmap__section-header'>
-          <h3 className='explorer-density-heatmap__section-title'>
-            {getSectionLabel(group)}
-            {group.sectionType === 'secondary' && (
-              <span className='explorer-density-heatmap__badge'>
-                Active Filters
-              </span>
-            )}
-          </h3>
-          <span className='explorer-density-heatmap__section-count'>
-            {group.rows.length} field
-            {group.rows.length === 1 ? '' : 's'}
-          </span>
-        </div>
+  } else if (matrixSections.length > 0) {
+    heatmapContent = matrixSections.map((group) => {
+      const isLoaded = group.status === 'loaded';
+      const sectionRefKey = `${group.sectionType}-${group.key}`;
 
-        {group.rows.map((row) => (
-          <div className='explorer-density-heatmap__row' key={row.field}>
-            <div className='explorer-density-heatmap__field-name'>
-              {getFieldLabel(row.field)}
-              <span className='explorer-density-heatmap__field-path'>
-                {row.field}
-              </span>
-            </div>
-
-            <div
-              className='explorer-density-heatmap__strip'
-              aria-label={`${row.field} completeness ${formatDensityPercentage(row.completeness)}`}
-            >
-              <div
-                className='explorer-density-heatmap__strip-fill'
-                style={{
-                  clipPath: `inset(0 ${100 - row.completeness * 100}% 0 0)`,
-                }}
-              />
-            </div>
-
-            <div className='explorer-density-heatmap__counts'>
-              <span className='explorer-density-heatmap__bar-label'>
-                {formatDensityPercentage(row.completeness)} complete
-              </span>
-              <span>{row.availableCount.toLocaleString()} available</span>
-              <span>{row.missingCount.toLocaleString()} missing</span>
-            </div>
+      return (
+        <div
+          className={`explorer-density-heatmap__section${
+            group.sectionType === 'secondary'
+              ? ' explorer-density-heatmap__section--secondary'
+              : ''
+          }${
+            isLoaded
+              ? ''
+              : ` explorer-density-heatmap__section--${group.status}`
+          }`}
+          data-category-key={group.key}
+          key={sectionRefKey}
+          ref={(node) => bindSectionNode(sectionRefKey, node)}
+        >
+          <div className='explorer-density-heatmap__section-header'>
+            <h3 className='explorer-density-heatmap__section-title'>
+              {getSectionLabel(group)}
+              {group.sectionType === 'secondary' && (
+                <span className='explorer-density-heatmap__badge'>
+                  Active Filters
+                </span>
+              )}
+            </h3>
+            <span className='explorer-density-heatmap__section-count'>
+              {isLoaded
+                ? `${group.rows.length} field${
+                    group.rows.length === 1 ? '' : 's'
+                  }`
+                : group.status === 'error'
+                  ? 'Failed to load'
+                  : `Loading ${group.fieldCount} field${
+                      group.fieldCount === 1 ? '' : 's'
+                    }...`}
+            </span>
           </div>
-        ))}
-      </div>
-    ));
+
+          {isLoaded ? (
+            group.rows.map((row) => (
+              <div className='explorer-density-heatmap__row' key={row.field}>
+                <div className='explorer-density-heatmap__field-name'>
+                  {getFieldLabel(row.field)}
+                  <span className='explorer-density-heatmap__field-path'>
+                    {row.field}
+                  </span>
+                </div>
+
+                <div
+                  className='explorer-density-heatmap__strip'
+                  aria-label={`${row.field} completeness ${formatDensityPercentage(row.completeness)}`}
+                >
+                  <div
+                    className='explorer-density-heatmap__strip-fill'
+                    style={{
+                      clipPath: `inset(0 ${100 - row.completeness * 100}% 0 0)`,
+                    }}
+                  />
+                </div>
+
+                <div className='explorer-density-heatmap__counts'>
+                  <span className='explorer-density-heatmap__bar-label'>
+                    {formatDensityPercentage(row.completeness)} complete
+                  </span>
+                  <span>{row.availableCount.toLocaleString()} available</span>
+                  <span>{row.missingCount.toLocaleString()} missing</span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div
+              className='explorer-density-heatmap__section-skeleton'
+              aria-hidden
+            >
+              <div className='explorer-density-heatmap__skeleton-row' />
+              <div className='explorer-density-heatmap__skeleton-row' />
+              <div className='explorer-density-heatmap__skeleton-row' />
+            </div>
+          )}
+        </div>
+      );
+    });
   } else {
     heatmapContent = (
       <div className='explorer-density-heatmap__state'>
@@ -443,6 +399,13 @@ function ExplorerDensityHeatmap({
               <p className='explorer-density-heatmap__description'>
                 Field availability and completeness across the dataset
               </p>
+              {densityHeatmapResult.isPending && hasLoadedRows && (
+                <p className='explorer-density-heatmap__progress'>
+                  Loading categories in the background (
+                  {densityHeatmapResult.loadedCount}/
+                  {densityHeatmapResult.totalCategories})
+                </p>
+              )}
             </div>
             <div className='explorer-density-heatmap__header-right'>
               {canShowToggle && (

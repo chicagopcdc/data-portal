@@ -6,6 +6,7 @@ import './ExplorerWizard.css';
 
 export const ONBOARDING_VERSION_FIELD = 'onboardingVersionSeen';
 export const OPEN_EXPLORER_WIZARD_EVENT = 'pcdc-open-explorer-wizard';
+const LAYOUT_RETRY_DELAY = 50;
 
 function getElements(selectors) {
   const selectorList = Array.isArray(selectors) ? selectors : [selectors];
@@ -51,13 +52,28 @@ function getPopoverPosition(rect) {
   };
 }
 
-function getConfiguredSteps() {
-  const configuredSteps = config.explorerWizard?.steps;
+function getConfiguredGuide(guideId = null) {
+  const configuredGuideId = guideId || 'intro';
+  return config.explorerWizard?.guides?.[configuredGuideId];
+}
+
+function getConfiguredSteps(guideId = null) {
+  const configuredSteps = getConfiguredGuide(guideId)?.steps;
   return Array.isArray(configuredSteps) ? configuredSteps : [];
 }
 
+export function isExplorerSubGuideEnabled(guideId) {
+  return getConfiguredSteps(guideId).length > 0;
+}
+
+export function openExplorerSubGuide(guideId) {
+  window.dispatchEvent(
+    new CustomEvent(OPEN_EXPLORER_WIZARD_EVENT, { detail: { guideId } }),
+  );
+}
+
 export function getExplorerWizardVersion() {
-  const version = Number(config.explorerWizard?.version);
+  const version = Number(getConfiguredGuide()?.version);
   return Number.isFinite(version) && version > 0 ? version : null;
 }
 
@@ -99,21 +115,21 @@ function isCurrentRoute(route, location) {
   );
 }
 
-/** @param {{ isOpen: boolean, onClose: () => void, onDone: () => void }} props */
-function ExplorerWizard({ isOpen, onClose, onDone }) {
+/** @param {{ guideId?: string, isOpen: boolean, onClose: () => void, onDone?: () => void }} props */
+function ExplorerWizard({ guideId = null, isOpen, onClose, onDone }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [stepIndex, setStepIndex] = useState(0);
   const [rects, setRects] = useState([]);
   const [popover, setPopover] = useState(null);
   const layoutSignature = useRef('');
-  const steps = useMemo(getConfiguredSteps, []);
+  const steps = useMemo(() => getConfiguredSteps(guideId), [guideId]);
   const step = steps[stepIndex];
 
   const targetSelectors = useMemo(() => step?.target ?? [], [step]);
 
   function completeWizard() {
-    onDone();
+    onDone?.();
     onClose();
   }
 
@@ -165,6 +181,13 @@ function ExplorerWizard({ isOpen, onClose, onDone }) {
     layoutSignature.current = '';
     setRects([]);
     setPopover(null);
+    // Manually opened guides respond immediately. Once the automatic intro is
+    // underway, same-page steps can do the same; its first step and any step
+    // that navigates still wait for the page to settle before showing overlay.
+    const isStepOnCurrentPage =
+      !step.route || isCurrentRoute(step.route, location);
+    if (guideId || (stepIndex > 0 && isStepOnCurrentPage))
+      updateLayout(false, true);
     if (step.route) {
       const nextRoute = getRouteWithMergedSearch(step.route, location);
       if (!isCurrentRoute(step.route, location))
@@ -197,7 +220,10 @@ function ExplorerWizard({ isOpen, onClose, onDone }) {
 
     function retryWhenReady(remainingAttempts) {
       retryTimeouts.push(
-        window.setTimeout(() => updateLayoutWhenReady(remainingAttempts), 150),
+        window.setTimeout(
+          () => updateLayoutWhenReady(remainingAttempts),
+          LAYOUT_RETRY_DELAY,
+        ),
       );
     }
 
@@ -229,7 +255,7 @@ function ExplorerWizard({ isOpen, onClose, onDone }) {
           : 0;
       previousTargetSignature = nextTargetSignature;
 
-      if (stableMeasurements < 2 && remainingAttempts > 0) {
+      if (stableMeasurements < 1 && remainingAttempts > 0) {
         retryWhenReady(remainingAttempts - 1);
         return;
       }
@@ -242,10 +268,10 @@ function ExplorerWizard({ isOpen, onClose, onDone }) {
       () => {
         if (step.clickTarget) document.querySelector(step.clickTarget)?.click();
         retryTimeouts.push(
-          window.setTimeout(updateLayoutWhenReady, step.delay ?? 300),
+          window.setTimeout(updateLayoutWhenReady, step.delay ?? 100),
         );
       },
-      step.route ? 300 : 120,
+      step.route ? 150 : 50,
     );
     window.addEventListener('resize', updateLayout);
     window.addEventListener('scroll', updateLayout, true);
@@ -342,9 +368,10 @@ function ExplorerWizard({ isOpen, onClose, onDone }) {
 }
 
 ExplorerWizard.propTypes = {
+  guideId: PropTypes.string,
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  onDone: PropTypes.func.isRequired,
+  onDone: PropTypes.func,
 };
 
 export default ExplorerWizard;

@@ -9,6 +9,7 @@ import DataDictionaryGraph from './graph/DataDictionaryGraph';
 import ReduxGraphCalculator from './graph/GraphCalculator';
 import ReduxDictionarySearcher from './search/DictionarySearcher';
 import ReduxDictionarySearchHistory from './search/DictionarySearchHistory';
+import GuideInfoButton from '../GuppyDataExplorer/GuideInfoButton';
 import { getDictionaryVersion } from './utils';
 import './DataDictionary.css';
 
@@ -68,6 +69,12 @@ function DataDictionary({
     <Dashboard>
       <Dashboard.Sidebar className='data-dictionary__sidebar'>
         <div>
+          <div className='data-dictionary__guide-link'>
+            <GuideInfoButton
+              guideId='dictionary'
+              label='Show dictionary guide'
+            />
+          </div>
           <div className='data-dictionary__switch' data-tour-dictionary-views>
             <span
               className={`data-dictionary__switch-button ${

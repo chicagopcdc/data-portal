@@ -61,17 +61,10 @@ function Popup({
             <div className='h2-typo popup__title-text'>{title}</div>
           </div>
           {onClose && (
-            <div
-              role='button'
-              tabIndex={-1}
+            <button
+              type='button'
               className='popup__close-button'
               onClick={onClose}
-              onKeyPress={(e) => {
-                if (e.charCode === 13 || e.charCode === 32) {
-                  e.preventDefault();
-                  onClose?.();
-                }
-              }}
               aria-label='Close popup'
             >
               <IconComponent
@@ -79,7 +72,7 @@ function Popup({
                 dictIcons={dictIcons}
                 style={{ verticalAlign: 'middle' }}
               />
-            </div>
+            </button>
           )}
         </div>
         <div className='popup__message'>

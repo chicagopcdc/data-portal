@@ -13,6 +13,32 @@ import './DataRequestSelectAttributes.css';
 const normalizeAttributes = (attributes = []) =>
   [...new Set(attributes)].sort((a, b) => a.localeCompare(b));
 
+const getNestedDictionaryAttributes = (property, prefix) => {
+  const schemas = [property, ...(property?.anyOf || [])].flatMap((schema) =>
+    [schema, schema?.items].filter(Boolean),
+  );
+
+  return schemas.flatMap((schema) =>
+    Object.entries(schema.properties || {}).flatMap(
+      ([attributeName, attribute]) => {
+        const fullName = `${prefix}.${attributeName}`;
+        return [
+          fullName,
+          ...getNestedDictionaryAttributes(attribute, fullName),
+        ];
+      },
+    ),
+  );
+};
+
+export const getDictionaryAttributes = (properties = {}) =>
+  normalizeAttributes(
+    Object.entries(properties).flatMap(([attributeName, attribute]) => [
+      attributeName,
+      ...getNestedDictionaryAttributes(attribute, attributeName),
+    ]),
+  );
+
 export const validateSelectionsAgainstTables = (
   selections = {},
   tables = [],
@@ -175,9 +201,7 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
         .map((node) => ({
           id: node.id,
           title: node.title || node.id,
-          attributes: Object.keys(node.properties).sort((a, b) =>
-            a.localeCompare(b),
-          ),
+          attributes: getDictionaryAttributes(node.properties),
         }))
         .sort((first, second) => first.title.localeCompare(second.title)),
     [dictionary],

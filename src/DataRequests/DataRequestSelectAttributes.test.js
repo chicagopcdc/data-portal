@@ -1,4 +1,5 @@
 import {
+  getDictionaryAttributes,
   validateSavedDatapointsAgainstTables,
   validateSelectionsAgainstTables,
 } from './DataRequestSelectAttributes';
@@ -13,6 +14,31 @@ const tables = [
     attributes: ['disease_type'],
   },
 ];
+
+test('includes nested relationship attributes from the dictionary', () => {
+  const attributes = getDictionaryAttributes({
+    submitter_id: { type: ['string'] },
+    subjects: {
+      anyOf: [
+        {
+          items: {
+            properties: {
+              id: { type: 'string' },
+              submitter_id: { type: 'string' },
+            },
+          },
+        },
+      ],
+    },
+  });
+
+  expect(attributes).toEqual([
+    'subjects',
+    'subjects.id',
+    'subjects.submitter_id',
+    'submitter_id',
+  ]);
+});
 
 test('keeps template datapoints that exist in the project dictionary', () => {
   expect(

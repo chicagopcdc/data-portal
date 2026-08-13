@@ -13,7 +13,18 @@ import './DataRequestSelectAttributes.css';
 const normalizeAttributes = (attributes = []) =>
   [...new Set(attributes)].sort((a, b) => a.localeCompare(b));
 
-const getNestedDictionaryAttributes = (property, prefix) => {
+const getNestedDictionaryAttributes = (
+  property,
+  prefix,
+  visitedSchemas = new Set(),
+) => {
+  if (!property || visitedSchemas.has(property)) {
+    return [];
+  }
+
+  const currentPathSchemas = new Set(visitedSchemas);
+  currentPathSchemas.add(property);
+
   const schemas = [property, ...(property?.anyOf || [])].flatMap((schema) =>
     [schema, schema?.items].filter(Boolean),
   );
@@ -24,7 +35,11 @@ const getNestedDictionaryAttributes = (property, prefix) => {
         const fullName = `${prefix}.${attributeName}`;
         return [
           fullName,
-          ...getNestedDictionaryAttributes(attribute, fullName),
+          ...getNestedDictionaryAttributes(
+            attribute,
+            fullName,
+            currentPathSchemas,
+          ),
         ];
       },
     ),

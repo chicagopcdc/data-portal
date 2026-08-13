@@ -41,6 +41,20 @@ test('includes nested relationship attributes from the dictionary', () => {
   ]);
 });
 
+test('stops traversing a circular dictionary schema', () => {
+  const subject = { properties: {} };
+  const procedure = { properties: {} };
+
+  subject.properties.procedures = procedure;
+  procedure.properties.subject = subject;
+
+  expect(getDictionaryAttributes({ subject })).toEqual([
+    'subject',
+    'subject.procedures',
+    'subject.procedures.subject',
+  ]);
+});
+
 test('keeps template datapoints that exist in the project dictionary', () => {
   expect(
     validateSelectionsAgainstTables(

@@ -13,6 +13,9 @@ import './DataRequestSelectAttributes.css';
 const normalizeAttributes = (attributes = []) =>
   [...new Set(attributes)].sort((a, b) => a.localeCompare(b));
 
+export const canTransferAttributes = (hasCheckedAttributes, isSaving) =>
+  hasCheckedAttributes && !isSaving;
+
 export const validateSelectionsAgainstTables = (
   selections = {},
   tables = [],
@@ -641,7 +644,10 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
                 label='Add selected attributes →'
                 buttonType='secondary'
                 onClick={moveAvailableAttributes}
-                enabled={hasAvailableCheckedAttributes}
+                enabled={canTransferAttributes(
+                  hasAvailableCheckedAttributes,
+                  isSaving,
+                )}
               />
             </section>
 
@@ -737,7 +743,10 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
                 label='← Remove selected attributes'
                 buttonType='secondary'
                 onClick={removeSelectedAttributes}
-                enabled={hasSelectedCheckedAttributes}
+                enabled={canTransferAttributes(
+                  hasSelectedCheckedAttributes,
+                  isSaving,
+                )}
               />
             </section>
           </div>

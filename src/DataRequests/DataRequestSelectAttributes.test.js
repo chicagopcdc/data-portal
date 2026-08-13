@@ -1,8 +1,15 @@
 import {
+  canTransferAttributes,
   toggleAllAttributes,
   validateSavedDatapointsAgainstTables,
   validateSelectionsAgainstTables,
 } from './DataRequestSelectAttributes';
+
+test('disables attribute transfers while attributes are saving', () => {
+  expect(canTransferAttributes(true, true)).toBe(false);
+  expect(canTransferAttributes(true, false)).toBe(true);
+  expect(canTransferAttributes(false, false)).toBe(false);
+});
 
 const tables = [
   {

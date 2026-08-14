@@ -1,4 +1,5 @@
 import {
+  getDictionaryAttributes,
   toggleAllAttributes,
   validateSavedDatapointsAgainstTables,
   validateSelectionsAgainstTables,
@@ -14,6 +15,45 @@ const tables = [
     attributes: ['disease_type'],
   },
 ];
+
+test('includes nested relationship attributes from the dictionary', () => {
+  const attributes = getDictionaryAttributes({
+    submitter_id: { type: ['string'] },
+    subjects: {
+      anyOf: [
+        {
+          items: {
+            properties: {
+              id: { type: 'string' },
+              submitter_id: { type: 'string' },
+            },
+          },
+        },
+      ],
+    },
+  });
+
+  expect(attributes).toEqual([
+    'subjects',
+    'subjects.id',
+    'subjects.submitter_id',
+    'submitter_id',
+  ]);
+});
+
+test('stops traversing a circular dictionary schema', () => {
+  const subject = { properties: {} };
+  const procedure = { properties: {} };
+
+  subject.properties.procedures = procedure;
+  procedure.properties.subject = subject;
+
+  expect(getDictionaryAttributes({ subject })).toEqual([
+    'subject',
+    'subject.procedures',
+    'subject.procedures.subject',
+  ]);
+});
 
 test('keeps template datapoints that exist in the project dictionary', () => {
   expect(

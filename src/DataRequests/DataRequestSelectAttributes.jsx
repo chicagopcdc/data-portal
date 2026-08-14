@@ -16,6 +16,47 @@ const normalizeAttributes = (attributes = []) =>
 export const canTransferAttributes = (hasCheckedAttributes, isSaving) =>
   hasCheckedAttributes && !isSaving;
 
+const getNestedDictionaryAttributes = (
+  property,
+  prefix,
+  visitedSchemas = new Set(),
+) => {
+  if (!property || visitedSchemas.has(property)) {
+    return [];
+  }
+
+  const currentPathSchemas = new Set(visitedSchemas);
+  currentPathSchemas.add(property);
+
+  const schemas = [property, ...(property?.anyOf || [])].flatMap((schema) =>
+    [schema, schema?.items].filter(Boolean),
+  );
+
+  return schemas.flatMap((schema) =>
+    Object.entries(schema.properties || {}).flatMap(
+      ([attributeName, attribute]) => {
+        const fullName = `${prefix}.${attributeName}`;
+        return [
+          fullName,
+          ...getNestedDictionaryAttributes(
+            attribute,
+            fullName,
+            currentPathSchemas,
+          ),
+        ];
+      },
+    ),
+  );
+};
+
+export const getDictionaryAttributes = (properties = {}) =>
+  normalizeAttributes(
+    Object.entries(properties).flatMap(([attributeName, attribute]) => [
+      attributeName,
+      ...getNestedDictionaryAttributes(attribute, attributeName),
+    ]),
+  );
+
 export const validateSelectionsAgainstTables = (
   selections = {},
   tables = [],
@@ -197,9 +238,7 @@ export default function DataRequestSelectAttributes({ projectId, onAction }) {
         .map((node) => ({
           id: node.id,
           title: node.title || node.id,
-          attributes: Object.keys(node.properties).sort((a, b) =>
-            a.localeCompare(b),
-          ),
+          attributes: getDictionaryAttributes(node.properties),
         }))
         .sort((first, second) => first.title.localeCompare(second.title)),
     [dictionary],

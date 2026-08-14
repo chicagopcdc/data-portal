@@ -128,16 +128,6 @@ function ExplorerExploreExternalButton({
     setSelected(newSelected);
     setIsCodeCopied(false);
 
-    const newSelectedExternalCommonsConfig =
-      externalCommonsConfig?.[newSelected.value] || {};
-
-    if (
-      newSelectedExternalCommonsConfig.type === 'code' &&
-      newSelectedExternalCommonsConfig.data
-    ) {
-      return;
-    }
-
     if (newSelected.value === '') return;
 
     try {
@@ -268,52 +258,50 @@ function ExplorerExploreExternalButton({
                 />
               </div>
             )}
-            {!isCodeExternalCommons &&
-              commonsInfo?.type === 'file' &&
-              commonsInfo?.data && (
-                <>
+            {commonsInfo?.type === 'file' && commonsInfo?.data && (
+              <>
+                <div className='explorer-explore-external__download-manifest'>
+                  <p>
+                    <FontAwesomeIcon
+                      icon='triangle-exclamation'
+                      color='var(--pcdc-color__secondary)'
+                    />
+                    Download a manifest file and upload it to the selected
+                    commons to use the current cohort.
+                  </p>
+                  <Button
+                    label='Download manifest'
+                    onClick={handleDownloadManifest}
+                  />
+                </div>
+                {/* Show documentation only if not admin */}
+                {!isAdmin && (
                   <div className='explorer-explore-external__download-manifest'>
                     <p>
                       <FontAwesomeIcon
-                        icon='triangle-exclamation'
+                        icon='circle-info'
                         color='var(--pcdc-color__secondary)'
                       />
-                      Download a manifest file and upload it to the selected
-                      commons to use the current cohort.
+                      &nbsp; Check the{' '}
+                      <a
+                        href='#'
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleOpenInstructions();
+                        }}
+                        style={{
+                          textDecoration: 'underline',
+                          color: 'var(--pcdc-color__secondary)',
+                        }}
+                      >
+                        PCDC User Guide
+                      </a>{' '}
+                      for information about how to upload a file.
                     </p>
-                    <Button
-                      label='Download manifest'
-                      onClick={handleDownloadManifest}
-                    />
                   </div>
-                  {/* Show documentation only if not admin */}
-                  {!isAdmin && (
-                    <div className='explorer-explore-external__download-manifest'>
-                      <p>
-                        <FontAwesomeIcon
-                          icon='circle-info'
-                          color='var(--pcdc-color__secondary)'
-                        />
-                        &nbsp; Check the{' '}
-                        <a
-                          href='#'
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleOpenInstructions();
-                          }}
-                          style={{
-                            textDecoration: 'underline',
-                            color: 'var(--pcdc-color__secondary)',
-                          }}
-                        >
-                          PCDC User Guide
-                        </a>{' '}
-                        for information about how to upload a file.
-                      </p>
-                    </div>
-                  )}
-                </>
-              )}
+                )}
+              </>
+            )}
             <div>
               <Button
                 className='explorer-explore-external__button'

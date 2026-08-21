@@ -143,7 +143,7 @@ module.exports = {
     allowedHosts: 'all',
     hot: true,
     port: 9443,
-    https: true,
+    server: 'https',
     headers: {
       'Access-Control-Allow-Origin': devProxyTarget || 'https://localhost',
       'Access-Control-Allow-Credentials': 'true',

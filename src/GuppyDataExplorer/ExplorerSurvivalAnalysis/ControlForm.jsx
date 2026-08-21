@@ -236,60 +236,62 @@ function ControlForm({ countByFilterSet, onSubmit }) {
 
   return (
     <form className='explorer-survival-analysis__control-form'>
-      <ControlFormSelect
-        inputId='allowed-consortium'
-        label={
-          <Tooltip
-            arrowContent={<div className='rc-tooltip-arrow-inner' />}
-            mouseLeaveDelay={0}
-            overlay='Survival curves can only be generated for Filter Sets that include patients from allowed consortia.'
-            placement='left'
-          >
-            <span>
-              <FontAwesomeIcon
-                icon='circle-info'
-                color='var(--pcdc-color__primary-light)'
-              />{' '}
-              Allowed Consortia
-            </span>
-          </Tooltip>
-        }
-        components={{
-          IndicatorsContainer: () => null,
-          MultiValueRemove: () => null,
-        }}
-        isMulti
-        isDisabled
-        value={consortiums.map((label) => ({ label }))}
-        theme={overrideSelectTheme}
-      />
-      <ControlFormSelect
-        inputId='disallowed-variables'
-        label={
-          <Tooltip
-            arrowContent={<div className='rc-tooltip-arrow-inner' />}
-            mouseLeaveDelay={0}
-            overlay='Filter sets that use disallowed variables cannot be utilized for survival analysis'
-            placement='left'
-          >
-            <span>
-              <FontAwesomeIcon
-                icon='circle-info'
-                color='var(--pcdc-color__primary-light)'
-              />{' '}
-              Disallowed Variables
-            </span>
-          </Tooltip>
-        }
-        components={{
-          IndicatorsContainer: () => null,
-          MultiValueRemove: () => null,
-        }}
-        isMulti
-        isDisabled
-        value={disallowedVariables}
-        theme={overrideSelectTheme}
-      />
+      <div data-tour-survival-scope>
+        <ControlFormSelect
+          inputId='allowed-consortium'
+          label={
+            <Tooltip
+              arrowContent={<div className='rc-tooltip-arrow-inner' />}
+              mouseLeaveDelay={0}
+              overlay='Survival curves can only be generated for Filter Sets that include patients from allowed consortia.'
+              placement='left'
+            >
+              <span>
+                <FontAwesomeIcon
+                  icon='circle-info'
+                  color='var(--pcdc-color__primary-light)'
+                />{' '}
+                Allowed Consortia
+              </span>
+            </Tooltip>
+          }
+          components={{
+            IndicatorsContainer: () => null,
+            MultiValueRemove: () => null,
+          }}
+          isMulti
+          isDisabled
+          value={consortiums.map((label) => ({ label }))}
+          theme={overrideSelectTheme}
+        />
+        <ControlFormSelect
+          inputId='disallowed-variables'
+          label={
+            <Tooltip
+              arrowContent={<div className='rc-tooltip-arrow-inner' />}
+              mouseLeaveDelay={0}
+              overlay='Filter sets that use disallowed variables cannot be utilized for survival analysis'
+              placement='left'
+            >
+              <span>
+                <FontAwesomeIcon
+                  icon='circle-info'
+                  color='var(--pcdc-color__primary-light)'
+                />{' '}
+                Disallowed Variables
+              </span>
+            </Tooltip>
+          }
+          components={{
+            IndicatorsContainer: () => null,
+            MultiValueRemove: () => null,
+          }}
+          isMulti
+          isDisabled
+          value={disallowedVariables}
+          theme={overrideSelectTheme}
+        />
+      </div>
       <ControlFormSelect
         inputId='survival-type'
         label='Survival type'

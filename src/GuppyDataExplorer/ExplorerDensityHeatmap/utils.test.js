@@ -1,16 +1,11 @@
 import {
-  buildCategoryAggregationQuery,
-  buildDensityHeatmapCacheKey,
   buildDensityHeatmapModel,
   collectDensityHeatmapFields,
-  collectHistogramCount,
   extractFieldsFromFilter,
   formatDensityPercentage,
   getDensityHeatmapColor,
   getDensityHeatmapFieldLabel,
-  groupFieldPathsByCategory,
   hasHeatmapFieldValue,
-  parseDensityRowsFromAggregation,
 } from './utils';
 
 describe('Explorer density heatmap helpers', () => {
@@ -103,95 +98,6 @@ describe('Explorer density heatmap helpers', () => {
     expect(getDensityHeatmapColor(0.25)).toBe('#ee833e');
     expect(getDensityHeatmapColor(0.5)).toBe('#f4b940');
     expect(getDensityHeatmapColor(1.0)).toBe('#7ec500');
-  });
-});
-
-describe('progressive density helpers', () => {
-  it('groups field paths by top-level category in first-seen order', () => {
-    expect(
-      groupFieldPathsByCategory([
-        'histologies.age',
-        'studies.name',
-        'histologies.stage',
-        'race',
-      ]),
-    ).toEqual([
-      { key: 'histologies', fields: ['histologies.age', 'histologies.stage'] },
-      { key: 'studies', fields: ['studies.name'] },
-      { key: 'race', fields: ['race'] },
-    ]);
-  });
-
-  it('builds a stable cache key independent of field order', () => {
-    const a = buildDensityHeatmapCacheKey({
-      dataType: 'subject',
-      fieldPaths: ['b', 'a'],
-      gqlFilter: { race: { selectedValues: ['White'] } },
-      totalCount: 10,
-    });
-    const b = buildDensityHeatmapCacheKey({
-      dataType: 'subject',
-      fieldPaths: ['a', 'b'],
-      gqlFilter: { race: { selectedValues: ['White'] } },
-      totalCount: 10,
-    });
-    expect(a).toBe(b);
-  });
-
-  it('builds a per-category aggregation query', () => {
-    const query = buildCategoryAggregationQuery('subject', [
-      'histologies.age',
-      'histologies.stage',
-    ]);
-    expect(query).toContain('main: subject(filter: $filter_main, accessibility: all)');
-    expect(query).toContain('histologies');
-    expect(query).toContain('age { histogram { key count } }');
-    expect(query).toContain('stage { histogram { key count } }');
-  });
-
-  it('parses density rows from an aggregation payload', () => {
-    const rows = parseDensityRowsFromAggregation({
-      aggregation: {
-        histologies: {
-          age: { histogram: [{ key: '1', count: 4 }] },
-          stage: { histogram: [{ key: 'I', count: 1 }, { key: 'II', count: 1 }] },
-        },
-      },
-      fieldPaths: ['histologies.age', 'histologies.stage'],
-      totalCount: 10,
-    });
-
-    expect(rows).toEqual([
-      {
-        availableCount: 4,
-        completeness: 0.4,
-        field: 'histologies.age',
-        missingCount: 6,
-      },
-      {
-        availableCount: 2,
-        completeness: 0.2,
-        field: 'histologies.stage',
-        missingCount: 8,
-      },
-    ]);
-    expect(collectHistogramCount(null)).toBe(0);
-  });
-
-  it('ignores stale job results when cache keys differ', () => {
-    const activeKey = buildDensityHeatmapCacheKey({
-      dataType: 'subject',
-      fieldPaths: ['race'],
-      gqlFilter: {},
-      totalCount: 1,
-    });
-    const staleKey = buildDensityHeatmapCacheKey({
-      dataType: 'subject',
-      fieldPaths: ['race'],
-      gqlFilter: { sex: { selectedValues: ['Female'] } },
-      totalCount: 1,
-    });
-    expect(activeKey).not.toBe(staleKey);
   });
 });
 

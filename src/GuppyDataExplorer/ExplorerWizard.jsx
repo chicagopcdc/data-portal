@@ -27,6 +27,34 @@ function getRects(elements) {
     }));
 }
 
+/**
+ * Renders a step's content, which can be either a plain string or an array
+ * of string/icon-descriptor segments. Icon descriptors map to g3-icon classes:
+ *   { icon: "lock", size: "sm", color: "base-blue" }
+ *   → <i class="g3-icon g3-icon--lock g3-icon--sm g3-icon-color__base-blue" />
+ *
+ * @param {string | Array<string | { icon: string, size?: string, color?: string }>} content
+ */
+function renderContent(content) {
+  if (!Array.isArray(content)) return content;
+  return content.map((segment, i) => {
+    if (typeof segment === 'string') return segment;
+    if (segment?.icon) {
+      const classes = [
+        'g3-icon',
+        `g3-icon--${segment.icon}`,
+        segment.size && `g3-icon--${segment.size}`,
+        segment.color && `g3-icon-color__${segment.color}`,
+      ]
+        .filter(Boolean)
+        .join(' ');
+      // eslint-disable-next-line react/no-array-index-key
+      return <i key={i} className={classes} />;
+    }
+    return null;
+  });
+}
+
 function getPopoverPosition(rect) {
   const margin = 20;
   const width = Math.min(760, window.innerWidth - margin * 2);
@@ -325,7 +353,7 @@ function ExplorerWizard({ guideId = null, isOpen, onClose, onDone }) {
           onClick={onClose}
           type='button'
         />
-        <p>{step.content}</p>
+        <p>{renderContent(step.content)}</p>
         <footer>
           <button
             className='explorer-wizard__skip'

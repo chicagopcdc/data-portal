@@ -88,6 +88,26 @@ export type ExplorerState = {
     isPending: boolean;
     error: Error;
   };
+  densityHeatmapResult: {
+    cacheKey: string | null;
+    categoryOrder: string[];
+    categoryStatus: {
+      [categoryKey: string]: 'pending' | 'loading' | 'loaded' | 'error';
+    };
+    error: string | null;
+    isPending: boolean;
+    loadedCategoryKeys: string[];
+    loadedCount: number;
+    rowsByField: {
+      [fieldPath: string]: {
+        availableCount: number;
+        completeness: number;
+        field: string;
+        missingCount: number;
+      };
+    };
+    totalCategories: number;
+  };
   workspaces: {
     [explorerId: ExplorerState['explorerId']]: ExplorerWorkspace;
   };

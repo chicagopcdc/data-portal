@@ -196,60 +196,62 @@ function CovarForm({ onSubmit, options }) {
 
   return (
     <form className='explorer-table-one__control-form'>
-      <ControlFormSelect
-        inputId='allowed-consortium'
-        label={
-          <Tooltip
-            arrowContent={<div className='rc-tooltip-arrow-inner' />}
-            mouseLeaveDelay={0}
-            overlay='Table ones can only be generated for Filter Sets that include patients from allowed consortia.'
-            placement='left'
-          >
-            <span>
-              <FontAwesomeIcon
-                icon='circle-info'
-                color='var(--pcdc-color__primary-light)'
-              />{' '}
-              Allowed Consortia
-            </span>
-          </Tooltip>
-        }
-        components={{
-          IndicatorsContainer: () => null,
-          MultiValueRemove: () => null,
-        }}
-        isMulti
-        isDisabled
-        value={consortiums.map((label) => ({ label }))}
-        theme={overrideSelectTheme}
-      />
-      <ControlFormSelect
-        inputId='disallowed-variables'
-        label={
-          <Tooltip
-            arrowContent={<div className='rc-tooltip-arrow-inner' />}
-            mouseLeaveDelay={0}
-            overlay='Filter sets that use disallowed variables cannot be utilized for Table One analysis.'
-            placement='left'
-          >
-            <span>
-              <FontAwesomeIcon
-                icon='circle-info'
-                color='var(--pcdc-color__primary-light)'
-              />{' '}
-              Disallowed Variables
-            </span>
-          </Tooltip>
-        }
-        components={{
-          IndicatorsContainer: () => null,
-          MultiValueRemove: () => null,
-        }}
-        isMulti
-        isDisabled
-        value={disallowedVariables}
-        theme={overrideSelectTheme}
-      />
+      <div data-tour-table-one-scope>
+        <ControlFormSelect
+          inputId='allowed-consortium'
+          label={
+            <Tooltip
+              arrowContent={<div className='rc-tooltip-arrow-inner' />}
+              mouseLeaveDelay={0}
+              overlay='Table ones can only be generated for Filter Sets that include patients from allowed consortia.'
+              placement='left'
+            >
+              <span>
+                <FontAwesomeIcon
+                  icon='circle-info'
+                  color='var(--pcdc-color__primary-light)'
+                />{' '}
+                Allowed Consortia
+              </span>
+            </Tooltip>
+          }
+          components={{
+            IndicatorsContainer: () => null,
+            MultiValueRemove: () => null,
+          }}
+          isMulti
+          isDisabled
+          value={consortiums.map((label) => ({ label }))}
+          theme={overrideSelectTheme}
+        />
+        <ControlFormSelect
+          inputId='disallowed-variables'
+          label={
+            <Tooltip
+              arrowContent={<div className='rc-tooltip-arrow-inner' />}
+              mouseLeaveDelay={0}
+              overlay='Filter sets that use disallowed variables cannot be utilized for Table One analysis.'
+              placement='left'
+            >
+              <span>
+                <FontAwesomeIcon
+                  icon='circle-info'
+                  color='var(--pcdc-color__primary-light)'
+                />{' '}
+                Disallowed Variables
+              </span>
+            </Tooltip>
+          }
+          components={{
+            IndicatorsContainer: () => null,
+            MultiValueRemove: () => null,
+          }}
+          isMulti
+          isDisabled
+          value={disallowedVariables}
+          theme={overrideSelectTheme}
+        />
+      </div>
       <div className='explorer-table-one__filter-group'>
         <div className='explorer-table-one__filter-set-select'>
           <Select

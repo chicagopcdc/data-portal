@@ -13,6 +13,7 @@ import CovarForm from './CovarForm';
 import { useUserAgreement } from './useUserAgreement';
 import UserAgreementGate from './UserAgreementGate';
 import TableOneResultTable from './TableOneResultTable';
+import GuideInfoButton from '../GuideInfoButton';
 /** @typedef {import('./types').UserInputSubmitHandler} UserInputSubmitHandler */
 
 function ExplorerTableOne() {
@@ -66,6 +67,9 @@ function ExplorerTableOne() {
     <div className='explorer-table-one'>
       <UserAgreementGate isCompliant={isCompliant} onAgree={agree}>
         <div className='explorer-table-one__column-left'>
+          <div className='explorer-table-one__guide-link'>
+            <GuideInfoButton guideId='tableOne' label='Show table one guide' />
+          </div>
           <CovarForm onSubmit={handleSubmit} options={options} />
         </div>
         <div className='explorer-table-one__column-right'>

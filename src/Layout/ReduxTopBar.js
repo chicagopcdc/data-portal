@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 import TopBar from '../components/layout/TopBar';
-import { isExplorerWizardEnabled } from '../GuppyDataExplorer/ExplorerWizard';
+import { isExplorerWizardEnabled, getExplorerWizardGuides } from '../GuppyDataExplorer/ExplorerWizard';
 import { logoutAPI } from '../redux/user/asyncThunks';
 
 const resourcePath = '/services/sheepdog/submission/project';
@@ -10,6 +10,7 @@ const mapStateToProps = (state) => ({
   username: state.user.username,
   isAdminUser: state.user.authz?.[resourcePath]?.[0].method === '*',
   isExplorerWizardEnabled: isExplorerWizardEnabled(),
+  explorerWizardGuides: getExplorerWizardGuides(),
 });
 
 /** @param {import('../redux/types').AppDispatch} dispatch */

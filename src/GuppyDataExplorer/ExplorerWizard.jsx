@@ -109,6 +109,24 @@ export function isExplorerWizardEnabled() {
   return getExplorerWizardVersion() !== null && getConfiguredSteps().length > 0;
 }
 
+/**
+ * Returns all configured guides that have at least one step, with a
+ * human-readable label derived from the camelCase guide ID.
+ * @returns {{ id: string, label: string }[]}
+ */
+export function getExplorerWizardGuides() {
+  const guides = config.explorerWizard?.guides ?? {};
+  return Object.entries(guides)
+    .filter(([, guide]) => Array.isArray(guide?.steps) && guide.steps.length > 0)
+    .map(([id]) => ({
+      id,
+      label: id
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/^./, (c) => c.toUpperCase())
+        .trim(),
+    }));
+}
+
 export function hasSeenExplorerWizard(user) {
   const wizardVersion = getExplorerWizardVersion();
   const seenVersion = Number(user?.additional_info?.[ONBOARDING_VERSION_FIELD]);

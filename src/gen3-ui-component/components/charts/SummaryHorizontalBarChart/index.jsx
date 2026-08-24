@@ -82,19 +82,19 @@ function SummaryBarChart({
                   />
                   {showPercentage ? (
                     <div className='summary-horizontal-bar-chart__item-value percentage'>
-                      {item.value}
+                      {Number(item.value).toLocaleString()}
                       <br />({item.percentage}%)
                     </div>
                   ) : (
                     <div className='summary-horizontal-bar-chart__item-value'>
-                      {item.value}
+                      {Number(item.value).toLocaleString()}
                     </div>
                   )}
                 </div>
               </div>
             ) : (
               <Fragment key={item.name} />
-            )
+            ),
           )}
           {barChartData.length > maximumDisplayItem &&
             (showMore ? (

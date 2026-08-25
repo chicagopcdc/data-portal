@@ -16,8 +16,9 @@
   border: 2px solid var(--pcdc-color__secondary);
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.05);
   pointer-events: none;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 .explorer-wizard__card {
@@ -80,7 +81,8 @@
 
 .explorer-wizard__skip,
 .explorer-wizard__back,
-.explorer-wizard__next {
+.explorer-wizard__next,
+.explorer-wizard__done {
   width: auto;
   height: auto;
   border: none;
@@ -100,12 +102,14 @@
   background: var(--g3-color__silver);
 }
 
-.explorer-wizard__next {
+.explorer-wizard__next,
+.explorer-wizard__done {
   background: #ef2f54;
   color: var(--g3-color__white);
 }
 
-.explorer-wizard__next:hover {
+.explorer-wizard__next:hover,
+.explorer-wizard__done:hover {
   background: #d9274a;
 }
 
@@ -138,6 +142,27 @@
   transform: rotate(-45deg);
 }
 
+.explorer-guide-info-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  margin: 0 0.5rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--pcdc-color__primary);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.explorer-guide-info-button:hover,
+.explorer-guide-info-button:focus {
+  color: var(--pcdc-color__primary-dark);
+}
+
 @media screen and (max-width: 820px) {
   .explorer-wizard__card {
     padding: 52px 24px 24px;
@@ -153,7 +178,8 @@
 
   .explorer-wizard__skip,
   .explorer-wizard__back,
-  .explorer-wizard__next {
+  .explorer-wizard__next,
+  .explorer-wizard__done {
     font-size: 16px;
   }
 }

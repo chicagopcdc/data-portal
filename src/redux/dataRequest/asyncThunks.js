@@ -605,8 +605,9 @@ export const getProjectDatapoints = createAsyncThunk(
   async (projectId, { rejectWithValue }) => {
     try {
       const { data, response, status } = await fetchWithCreds({
-        path: `/amanuensis/project-datapoints/project/${projectId}`,
-        method: 'GET',
+        path: '/amanuensis/project-datapoints/get-datapoints',
+        method: 'POST',
+        body: JSON.stringify({ project_id: projectId, many: true }),
       });
 
       if (statusCategory(status) !== '2XX') {

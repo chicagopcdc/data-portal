@@ -22,9 +22,22 @@ export function collectDensityHeatmapFields({
   return orderedFields;
 }
 
-/** @param {string} field @param {{ [field: string]: { label?: string } }} fieldInfo */
+/**
+ * Prefer fieldMapping / filterConfig.info label; otherwise strip the first
+ * path segment (node/table) so nested fields read as attribute names only.
+ *
+ * @param {string} field
+ * @param {{ [field: string]: { label?: string } }} fieldInfo
+ */
 export function getDensityHeatmapFieldLabel(field, fieldInfo = {}) {
-  return fieldInfo[field]?.label ?? capitalizeFirstLetter(field);
+  const mappedLabel = fieldInfo[field]?.label;
+  if (mappedLabel) return mappedLabel;
+
+  const dotIndex = field.indexOf('.');
+  const labelSource =
+    dotIndex === -1 ? field : field.slice(dotIndex + 1);
+
+  return capitalizeFirstLetter(labelSource);
 }
 
 /** @param {any} value */

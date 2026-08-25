@@ -258,6 +258,8 @@ function ExplorerVisualization({
     if (
       !isExplorerWizardConfigured ||
       !user.fetched_user ||
+      isLoadingAggsData ||
+      isLoadingRawData ||
       hasRequestedExplorerWizard.current ||
       hasSeenExplorerWizard(user)
     )
@@ -265,7 +267,7 @@ function ExplorerVisualization({
 
     hasRequestedExplorerWizard.current = true;
     window.dispatchEvent(new Event(OPEN_EXPLORER_WIZARD_EVENT));
-  }, [isExplorerWizardConfigured, user]);
+  }, [isExplorerWizardConfigured, isLoadingAggsData, isLoadingRawData, user]);
 
   const chartData = getChartData({
     aggsChartData,

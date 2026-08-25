@@ -12,6 +12,7 @@ import UserAgreement from './UserAgreement';
 import { checkUserAgreement, handleUserAgreement } from './utils';
 import './ExplorerSurvivalAnalysis.css';
 import { DEFAULT_END_YEAR, DEFAULT_INTERVAL } from './const';
+import GuideInfoButton from '../GuideInfoButton';
 
 /** @typedef {import('./types').UserInputSubmitHandler} UserInputSubmitHandler */
 
@@ -72,13 +73,25 @@ function ExplorerSurvivalAnalysis() {
     <div className='explorer-survival-analysis'>
       {isUserCompliant ? (
         <>
-          <div className='explorer-survival-analysis__column-left'>
+          <div className='explorer-survival-analysis__guide-link'>
+            <GuideInfoButton
+              guideId='survivalCurve'
+              label='Show survival curve guide'
+            />
+          </div>
+          <div
+            className='explorer-survival-analysis__column-left'
+            data-tour-survival-controls
+          >
             <ControlForm
               countByFilterSet={result.parsed.count}
               onSubmit={handleSubmit}
             />
           </div>
-          <div className='explorer-survival-analysis__column-right'>
+          <div
+            className='explorer-survival-analysis__column-right'
+            data-tour-survival-results
+          >
             {result.isPending ? (
               <Spinner />
             ) : (

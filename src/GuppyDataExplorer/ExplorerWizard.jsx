@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { config } from '../params';
@@ -6,6 +6,7 @@ import './ExplorerWizard.css';
 
 export const ONBOARDING_VERSION_FIELD = 'onboardingVersionSeen';
 export const OPEN_EXPLORER_WIZARD_EVENT = 'pcdc-open-explorer-wizard';
+const LAYOUT_RETRY_DELAY = 50;
 
 function getElements(selectors) {
   const selectorList = Array.isArray(selectors) ? selectors : [selectors];
@@ -24,6 +25,34 @@ function getRects(elements) {
       top: rect.top,
       width: rect.width,
     }));
+}
+
+/**
+ * Renders a step's content, which can be either a plain string or an array
+ * of string/icon-descriptor segments. Icon descriptors map to g3-icon classes:
+ *   { icon: "lock", size: "sm", color: "base-blue" }
+ *   → <i class="g3-icon g3-icon--lock g3-icon--sm g3-icon-color__base-blue" />
+ *
+ * @param {string | Array<string | { icon: string, size?: string, color?: string }>} content
+ */
+function renderContent(content) {
+  if (!Array.isArray(content)) return content;
+  return content.map((segment, i) => {
+    if (typeof segment === 'string') return segment;
+    if (segment?.icon) {
+      const classes = [
+        'g3-icon',
+        `g3-icon--${segment.icon}`,
+        segment.size && `g3-icon--${segment.size}`,
+        segment.color && `g3-icon-color__${segment.color}`,
+      ]
+        .filter(Boolean)
+        .join(' ');
+      // eslint-disable-next-line react/no-array-index-key
+      return <i key={i} className={classes} />;
+    }
+    return null;
+  });
 }
 
 function getPopoverPosition(rect) {
@@ -51,13 +80,28 @@ function getPopoverPosition(rect) {
   };
 }
 
-function getConfiguredSteps() {
-  const configuredSteps = config.explorerWizard?.steps;
+function getConfiguredGuide(guideId = null) {
+  const configuredGuideId = guideId || 'intro';
+  return config.explorerWizard?.guides?.[configuredGuideId];
+}
+
+function getConfiguredSteps(guideId = null) {
+  const configuredSteps = getConfiguredGuide(guideId)?.steps;
   return Array.isArray(configuredSteps) ? configuredSteps : [];
 }
 
+export function isExplorerSubGuideEnabled(guideId) {
+  return getConfiguredSteps(guideId).length > 0;
+}
+
+export function openExplorerSubGuide(guideId) {
+  window.dispatchEvent(
+    new CustomEvent(OPEN_EXPLORER_WIZARD_EVENT, { detail: { guideId } }),
+  );
+}
+
 export function getExplorerWizardVersion() {
-  const version = Number(config.explorerWizard?.version);
+  const version = Number(getConfiguredGuide()?.version);
   return Number.isFinite(version) && version > 0 ? version : null;
 }
 
@@ -65,11 +109,27 @@ export function isExplorerWizardEnabled() {
   return getExplorerWizardVersion() !== null && getConfiguredSteps().length > 0;
 }
 
+/**
+ * Returns all configured guides that have at least one step, with a
+ * human-readable label derived from the camelCase guide ID.
+ * @returns {{ id: string, label: string }[]}
+ */
+export function getExplorerWizardGuides() {
+  const guides = config.explorerWizard?.guides ?? {};
+  return Object.entries(guides)
+    .filter(([, guide]) => Array.isArray(guide?.steps) && guide.steps.length > 0)
+    .map(([id]) => ({
+      id,
+      label: id
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/^./, (c) => c.toUpperCase())
+        .trim(),
+    }));
+}
+
 export function hasSeenExplorerWizard(user) {
   const wizardVersion = getExplorerWizardVersion();
-  const seenVersion = Number(
-    user?.additional_info?.[ONBOARDING_VERSION_FIELD],
-  );
+  const seenVersion = Number(user?.additional_info?.[ONBOARDING_VERSION_FIELD]);
 
   return (
     wizardVersion === null ||
@@ -101,49 +161,59 @@ function isCurrentRoute(route, location) {
   );
 }
 
-/** @param {{ isOpen: boolean, onClose: () => void, onDone: () => void }} props */
-function ExplorerWizard({ isOpen, onClose, onDone }) {
+/** @param {{ guideId?: string, isOpen: boolean, onClose: () => void, onDone?: () => void }} props */
+function ExplorerWizard({ guideId = null, isOpen, onClose, onDone }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [stepIndex, setStepIndex] = useState(0);
   const [rects, setRects] = useState([]);
   const [popover, setPopover] = useState(null);
-  const steps = useMemo(getConfiguredSteps, []);
+  const layoutSignature = useRef('');
+  const steps = useMemo(() => getConfiguredSteps(guideId), [guideId]);
   const step = steps[stepIndex];
 
   const targetSelectors = useMemo(() => step?.target ?? [], [step]);
 
   function completeWizard() {
-    onDone();
+    onDone?.();
     onClose();
   }
 
   function updateLayout(shouldScroll = false, shouldShowFallback = true) {
     const elements = getElements(targetSelectors);
     const nextRects = getRects(elements);
-    setRects(nextRects);
-
     if (nextRects.length === 0) {
-      if (shouldShowFallback)
-        setPopover({
+      if (shouldShowFallback) {
+        const nextPopover = {
           arrowLeft: null,
           arrowPosition: null,
           left: Math.max(20, window.innerWidth / 2 - 340),
           top: Math.max(20, window.innerHeight / 2 - 140),
           width: Math.min(760, window.innerWidth - 40),
-        });
+        };
+        const nextSignature = JSON.stringify([[], nextPopover]);
+        if (layoutSignature.current !== nextSignature) {
+          layoutSignature.current = nextSignature;
+          setRects([]);
+          setPopover(nextPopover);
+        }
+      }
       return false;
     }
 
     const first = nextRects[0];
     if (shouldScroll)
       elements[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setPopover(
-      getPopoverPosition({
-        ...first,
-        bottom: first.top + first.height,
-      }),
-    );
+    const nextPopover = getPopoverPosition({
+      ...first,
+      bottom: first.top + first.height,
+    });
+    const nextSignature = JSON.stringify([nextRects, nextPopover]);
+    if (layoutSignature.current !== nextSignature) {
+      layoutSignature.current = nextSignature;
+      setRects(nextRects);
+      setPopover(nextPopover);
+    }
     return true;
   }
 
@@ -154,7 +224,16 @@ function ExplorerWizard({ isOpen, onClose, onDone }) {
   useEffect(() => {
     if (!isOpen || step === undefined) return undefined;
 
+    layoutSignature.current = '';
+    setRects([]);
     setPopover(null);
+    // Manually opened guides respond immediately. Once the automatic intro is
+    // underway, same-page steps can do the same; its first step and any step
+    // that navigates still wait for the page to settle before showing overlay.
+    const isStepOnCurrentPage =
+      !step.route || isCurrentRoute(step.route, location);
+    if (guideId || (stepIndex > 0 && isStepOnCurrentPage))
+      updateLayout(false, true);
     if (step.route) {
       const nextRoute = getRouteWithMergedSearch(step.route, location);
       if (!isCurrentRoute(step.route, location))
@@ -162,6 +241,10 @@ function ExplorerWizard({ isOpen, onClose, onDone }) {
     }
 
     const retryTimeouts = [];
+    let animationFrame = null;
+    let didRequestScroll = false;
+    let previousTargetSignature = '';
+    let stableMeasurements = 0;
     function expandStepTargets() {
       let didExpand = false;
       getElements(step.expandTargets ?? []).forEach((element) => {
@@ -176,35 +259,65 @@ function ExplorerWizard({ isOpen, onClose, onDone }) {
       return didExpand;
     }
 
+    function trackLayout() {
+      updateLayout(false, false);
+      animationFrame = window.requestAnimationFrame(trackLayout);
+    }
+
+    function retryWhenReady(remainingAttempts) {
+      retryTimeouts.push(
+        window.setTimeout(
+          () => updateLayoutWhenReady(remainingAttempts),
+          LAYOUT_RETRY_DELAY,
+        ),
+      );
+    }
+
     function updateLayoutWhenReady(remainingAttempts = 40) {
       if (expandStepTargets()) {
-        retryTimeouts.push(
-          window.setTimeout(
-            () => updateLayoutWhenReady(remainingAttempts),
-            120,
-          ),
-        );
+        retryWhenReady(remainingAttempts);
         return;
       }
-      const foundTarget = updateLayout(true, remainingAttempts === 0);
-      if (!foundTarget && remainingAttempts > 0) {
-        retryTimeouts.push(
-          window.setTimeout(
-            () => updateLayoutWhenReady(remainingAttempts - 1),
-            250,
-          ),
-        );
+
+      const elements = getElements(targetSelectors);
+      const nextRects = getRects(elements);
+      if (nextRects.length === 0) {
+        if (remainingAttempts > 0) retryWhenReady(remainingAttempts - 1);
+        else updateLayout(false, true);
+        return;
       }
+
+      if (!didRequestScroll) {
+        elements[0].scrollIntoView({ behavior: 'auto', block: 'center' });
+        didRequestScroll = true;
+        retryWhenReady(remainingAttempts);
+        return;
+      }
+
+      const nextTargetSignature = JSON.stringify(nextRects);
+      stableMeasurements =
+        nextTargetSignature === previousTargetSignature
+          ? stableMeasurements + 1
+          : 0;
+      previousTargetSignature = nextTargetSignature;
+
+      if (stableMeasurements < 1 && remainingAttempts > 0) {
+        retryWhenReady(remainingAttempts - 1);
+        return;
+      }
+
+      updateLayout(false, true);
+      animationFrame = window.requestAnimationFrame(trackLayout);
     }
 
     const timeout = window.setTimeout(
       () => {
         if (step.clickTarget) document.querySelector(step.clickTarget)?.click();
         retryTimeouts.push(
-          window.setTimeout(updateLayoutWhenReady, step.delay ?? 300),
+          window.setTimeout(updateLayoutWhenReady, step.delay ?? 100),
         );
       },
-      step.route ? 300 : 120,
+      step.route ? 150 : 50,
     );
     window.addEventListener('resize', updateLayout);
     window.addEventListener('scroll', updateLayout, true);
@@ -212,6 +325,7 @@ function ExplorerWizard({ isOpen, onClose, onDone }) {
     return () => {
       window.clearTimeout(timeout);
       retryTimeouts.forEach((id) => window.clearTimeout(id));
+      if (animationFrame !== null) window.cancelAnimationFrame(animationFrame);
       window.removeEventListener('resize', updateLayout);
       window.removeEventListener('scroll', updateLayout, true);
     };
@@ -257,7 +371,7 @@ function ExplorerWizard({ isOpen, onClose, onDone }) {
           onClick={onClose}
           type='button'
         />
-        <p>{step.content}</p>
+        <p>{renderContent(step.content)}</p>
         <footer>
           <button
             className='explorer-wizard__skip'
@@ -276,16 +390,21 @@ function ExplorerWizard({ isOpen, onClose, onDone }) {
                 Back
               </button>
             )}
+            {!isLastStep && (
+              <button
+                className='explorer-wizard__next'
+                onClick={() => setStepIndex((i) => i + 1)}
+                type='button'
+              >
+                {`Next (Step ${stepIndex + 1} of ${steps.length})`}
+              </button>
+            )}
             <button
-              className='explorer-wizard__next'
-              onClick={() =>
-                isLastStep ? completeWizard() : setStepIndex((i) => i + 1)
-              }
+              className='explorer-wizard__done'
+              onClick={completeWizard}
               type='button'
             >
-              {isLastStep
-                ? 'Done'
-                : `Next (Step ${stepIndex + 1} of ${steps.length})`}
+              Done
             </button>
           </div>
         </footer>
@@ -295,9 +414,10 @@ function ExplorerWizard({ isOpen, onClose, onDone }) {
 }
 
 ExplorerWizard.propTypes = {
+  guideId: PropTypes.string,
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  onDone: PropTypes.func.isRequired,
+  onDone: PropTypes.func,
 };
 
 export default ExplorerWizard;

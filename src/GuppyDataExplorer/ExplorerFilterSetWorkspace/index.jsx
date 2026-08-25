@@ -28,6 +28,7 @@ import {
   pluckFromFilter,
 } from './utils';
 import './ExplorerFilterSetWorkspace.css';
+import GuideInfoButton from '../GuideInfoButton';
 
 /** @typedef {import('../types').SavedExplorerFilterSet} SavedExplorerFilterSet */
 /** @typedef {import('./FilterSetActionForm').ActionFormType} ActionFormType */
@@ -227,6 +228,10 @@ function ExplorerFilterSetWorkspace() {
     >
       <header>
         <h2>Filter Set Workspace</h2>
+        <GuideInfoButton
+          guideId='filterSetWorkspace'
+          label='Show filter set workspace guide'
+        />
         {/* eslint-disable-next-line no-nested-ternary */}
         {savedFilterSets.isError ? (
           <div className='explorer-filter-set-workspace__error'>
@@ -284,7 +289,10 @@ function ExplorerFilterSetWorkspace() {
           </div>
         ) : (
           <>
-            <div className='explorer-filter-set-workspace__action-button-group'>
+            <div
+              className='explorer-filter-set-workspace__action-button-group'
+              data-tour-filter-set-actions
+            >
               <button
                 className='explorer-filter-set-workspace__action-button'
                 type='button'
@@ -413,7 +421,7 @@ function ExplorerFilterSetWorkspace() {
           </>
         )}
       </header>
-      <main>
+      <main data-tour-filter-set-list>
         {Object.keys(workspace.all).map((id, i) => {
           const filterSet = workspace.all[id];
           const isFilterEmpty = checkIfFilterEmpty(filterSet.filter);

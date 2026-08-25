@@ -34,6 +34,13 @@
   margin: 15px;
 }
 
+.data-dictionary__guide-link {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
 .data-dictionary__switch-button {
   width: 50%;
   text-align: center;

@@ -2,6 +2,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import PropTypes from 'prop-types';
 import ConnectedFilter from '../../GuppyComponents/ConnectedFilter';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import GuideInfoButton from '../GuideInfoButton';
 import './ExplorerFilter.css';
 
 /** @typedef {import('../../redux/types').RootState} RootState */
@@ -74,6 +75,7 @@ function ExplorerFilter({ className = '', ...filterProps }) {
     <div className={className}>
       <div className='explorer-filter__title-container'>
         <h4 className='explorer-filter__title'>Filters</h4>
+        <GuideInfoButton guideId='filterBar' label='Show filter bar guide' />
         {hasExplorerFilter && (
           <button
             type='button'

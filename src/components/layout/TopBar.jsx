@@ -6,7 +6,7 @@ import useLatestDocuments from '../../hooks/useDocumentItems';
 import { TopBarLink } from './TopBarItems';
 import TopBarMenu from './TopBarMenu';
 import Banner from './Banner';
-import { OPEN_EXPLORER_WIZARD_EVENT } from '../../GuppyDataExplorer/ExplorerWizard';
+import { openExplorerSubGuide } from '../../GuppyDataExplorer/ExplorerWizard';
 import './TopBar.css';
 
 /**
@@ -32,6 +32,7 @@ function TopBar({
   config,
   isAdminUser,
   isExplorerWizardEnabled,
+  explorerWizardGuides,
   onLogoutClick,
   username,
 }) {
@@ -85,21 +86,20 @@ function TopBar({
               }
               onClose={() => setOpenMenu(null)}
             >
-              {isExplorerWizardEnabled && (
-                <TopBarMenu.Item>
-                  <button
-                    onClick={() => {
-                      window.dispatchEvent(
-                        new Event(OPEN_EXPLORER_WIZARD_EVENT),
-                      );
-                      setOpenMenu(null);
-                    }}
-                    type='button'
-                  >
-                    Guide
-                  </button>
-                </TopBarMenu.Item>
-              )}
+              {isExplorerWizardEnabled &&
+                explorerWizardGuides.map(({ id, label }) => (
+                  <TopBarMenu.Item key={id}>
+                    <button
+                      onClick={() => {
+                        openExplorerSubGuide(id);
+                        setOpenMenu(null);
+                      }}
+                      type='button'
+                    >
+                      {label}
+                    </button>
+                  </TopBarMenu.Item>
+                ))}
 
               {isExplorerWizardEnabled &&
                 (documents.data?.length > 0 || documents.isError) && <hr />}
@@ -196,6 +196,12 @@ TopBar.propTypes = {
   }).isRequired,
   isAdminUser: PropTypes.bool.isRequired,
   isExplorerWizardEnabled: PropTypes.bool.isRequired,
+  explorerWizardGuides: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      label: PropTypes.string.isRequired,
+    }),
+  ).isRequired,
   onLogoutClick: PropTypes.func.isRequired,
   username: PropTypes.string,
 };

@@ -192,32 +192,48 @@ Below is an example, with inline comments describing what each JSON block config
   "requiredCerts": [],
   // optional; will hide certain parts of the site if needed
   "featureFlags": {},
-  // optional; configures the Exploration guide shown by the Guide button.
-  // The guide is disabled when this block, version, or steps are missing.
-  // Increment version when users should see the guide again. Completion is
-  // saved to the user's additional_info.onboardingVersionSeen field.
+  // optional; configures the automatic intro guide and manually opened guides.
+  // Each guide is disabled when its version or steps are missing.
   "explorerWizard": {
-    "version": 1,
-    "steps": [
-      {
-        // optional; navigate before showing this step
-        "route": "/explorer?view=survival%20analysis",
-        // required; CSS selector or list of selectors to highlight
-        "target": ".explorer-survival-analysis",
-        // optional; click this selector after route navigation and before
-        // measuring the target, useful for filter tabs
-        "clickTarget": "[data-tour-filter-tab=\"Disease\"]",
-        // optional; expand collapsed filter sections before highlighting them
-        "expandTargets": [
-          "[data-tour-filter-section=\"Tumor Site\"]",
-          "[data-tour-filter-section=\"Tumor State\"]",
+    "guides": {
+      // The intro guide opens automatically. Increment its version when users
+      // should see it again. Completion is saved to the user's
+      // additional_info.onboardingVersionSeen field.
+      "intro": {
+        "version": 1,
+        "steps": [
+          {
+            // optional; navigate before showing this step
+            "route": "/explorer?view=survival%20analysis",
+            // required; CSS selector or list of selectors to highlight
+            "target": ".explorer-survival-analysis",
+            // optional; click this selector after route navigation and before
+            // measuring the target, useful for filter tabs
+            "clickTarget": "[data-tour-filter-tab=\"Disease\"]",
+            // optional; expand collapsed filter sections before highlighting them
+            "expandTargets": [
+              "[data-tour-filter-section=\"Tumor Site\"]",
+              "[data-tour-filter-section=\"Tumor State\"]",
+            ],
+            // optional; additional milliseconds to wait before measuring
+            "delay": 120,
+            // required; text shown in the guide popover
+            "content": "You can build a survival curve for any saved filter.",
+          },
         ],
-        // optional; additional milliseconds to wait before measuring
-        "delay": 120,
-        // required; text shown in the guide popover
-        "content": "You can build a survival curve for any saved filter.",
       },
-    ],
+      // Manually opened guides do not save completion. Render an info button
+      // with the matching guide ID to open one.
+      "dictionary": {
+        "version": 1,
+        "steps": [
+          {
+            "target": "[data-tour-dictionary-views]",
+            "content": "Switch between graph and table views.",
+          },
+        ],
+      },
+    },
   },
   // optional; set false to not list fence project access on profile page
   "showFenceAuthzOnProfile": true,

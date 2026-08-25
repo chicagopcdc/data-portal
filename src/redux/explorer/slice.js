@@ -73,6 +73,17 @@ const slice = createSlice({
       error: null,
       isPending: false,
     },
+    densityHeatmapResult: {
+      cacheKey: null,
+      categoryOrder: [],
+      categoryStatus: {},
+      error: null,
+      isPending: false,
+      loadedCategoryKeys: [],
+      loadedCount: 0,
+      rowsByField: {},
+      totalCategories: 0,
+    },
     workspaces: initialWorkspaces,
   }),
   reducers: {
@@ -283,6 +294,112 @@ const slice = createSlice({
         isPending: false,
       };
     },
+    /**
+     * @param {PayloadAction<{
+     *  cacheKey: string;
+     *  categoryKeys: string[];
+     *  keepRows?: boolean;
+     * }>} action
+     */
+    densityHeatmapJobStarted(state, action) {
+      const { cacheKey, categoryKeys, keepRows = false } = action.payload;
+      const previousRows = keepRows
+        ? { ...state.densityHeatmapResult.rowsByField }
+        : {};
+      const previousLoaded = keepRows
+        ? [...state.densityHeatmapResult.loadedCategoryKeys]
+        : [];
+      const retainedLoaded = previousLoaded.filter((key) =>
+        categoryKeys.includes(key),
+      );
+      /** @type {ExplorerState['densityHeatmapResult']['categoryStatus']} */
+      const categoryStatus = {};
+      categoryKeys.forEach((key) => {
+        categoryStatus[key] = retainedLoaded.includes(key)
+          ? 'loaded'
+          : 'pending';
+      });
+
+      state.densityHeatmapResult = {
+        cacheKey,
+        categoryOrder: categoryKeys,
+        categoryStatus,
+        error: null,
+        isPending: true,
+        loadedCategoryKeys: retainedLoaded,
+        loadedCount: retainedLoaded.length,
+        rowsByField: previousRows,
+        totalCategories: categoryKeys.length,
+      };
+    },
+    /**
+     * @param {PayloadAction<{ cacheKey: string; categoryKey: string }>} action
+     */
+    densityHeatmapCategoryLoading(state, action) {
+      const { cacheKey, categoryKey } = action.payload;
+      if (state.densityHeatmapResult.cacheKey !== cacheKey) return;
+      state.densityHeatmapResult.categoryStatus[categoryKey] = 'loading';
+      state.densityHeatmapResult.error = null;
+    },
+    /**
+     * @param {PayloadAction<{
+     *  cacheKey: string;
+     *  categoryKey: string;
+     *  rows: ExplorerState['densityHeatmapResult']['rowsByField'][string][];
+     * }>} action
+     */
+    densityHeatmapCategoryLoaded(state, action) {
+      const { cacheKey, categoryKey, rows } = action.payload;
+      if (state.densityHeatmapResult.cacheKey !== cacheKey) return;
+
+      rows.forEach((row) => {
+        state.densityHeatmapResult.rowsByField[row.field] = row;
+      });
+      state.densityHeatmapResult.categoryStatus[categoryKey] = 'loaded';
+      if (!state.densityHeatmapResult.loadedCategoryKeys.includes(categoryKey)) {
+        state.densityHeatmapResult.loadedCategoryKeys.push(categoryKey);
+        state.densityHeatmapResult.loadedCount =
+          state.densityHeatmapResult.loadedCategoryKeys.length;
+      }
+    },
+    /**
+     * @param {PayloadAction<{
+     *  cacheKey: string;
+     *  categoryKey: string;
+     *  error: string;
+     * }>} action
+     */
+    densityHeatmapCategoryFailed(state, action) {
+      const { cacheKey, categoryKey, error } = action.payload;
+      if (state.densityHeatmapResult.cacheKey !== cacheKey) return;
+      state.densityHeatmapResult.categoryStatus[categoryKey] = 'error';
+      state.densityHeatmapResult.error = error;
+      if (!state.densityHeatmapResult.loadedCategoryKeys.includes(categoryKey)) {
+        state.densityHeatmapResult.loadedCategoryKeys.push(categoryKey);
+        state.densityHeatmapResult.loadedCount =
+          state.densityHeatmapResult.loadedCategoryKeys.length;
+      }
+    },
+    /**
+     * @param {PayloadAction<{ cacheKey: string }>} action
+     */
+    densityHeatmapJobFinished(state, action) {
+      if (state.densityHeatmapResult.cacheKey !== action.payload.cacheKey) return;
+      state.densityHeatmapResult.isPending = false;
+    },
+    resetDensityHeatmapResult(state) {
+      state.densityHeatmapResult = {
+        cacheKey: null,
+        categoryOrder: [],
+        categoryStatus: {},
+        error: null,
+        isPending: false,
+        loadedCategoryKeys: [],
+        loadedCount: 0,
+        rowsByField: {},
+        totalCategories: 0,
+      };
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -431,9 +548,15 @@ export const {
   clearWorkspaceAllFilterSets,
   clearWorkspaceFilterSet,
   createWorkspaceFilterSet,
+  densityHeatmapCategoryFailed,
+  densityHeatmapCategoryLoaded,
+  densityHeatmapCategoryLoading,
+  densityHeatmapJobFinished,
+  densityHeatmapJobStarted,
   duplicateWorkspaceFilterSet,
   loadWorkspaceFilterSet,
   removeWorkspaceFilterSet,
+  resetDensityHeatmapResult,
   resetTableOneResult,
   updateExplorerFilter,
   useExplorerById,

@@ -11,7 +11,7 @@ permissions:
 jobs:
   integration_tests:
     name: Integration tests
-    uses: uc-cdis/.github/.github/workflows/integration_tests.yaml@master
+    uses: chicagopcdc/.github/.github/workflows/integration_tests.yaml@master
     with:
       SERVICE_TO_TEST: frontend
     secrets:

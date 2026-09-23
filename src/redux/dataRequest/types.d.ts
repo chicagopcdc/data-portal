@@ -110,7 +110,8 @@ export type ReExportStatus =
 export type ReExportJob = {
   job_uid?: string;
   project_id?: string;
-  search_id?: number;
+  /** a data request can have several associated searches; all of them are exported into one cohort */
+  search_ids?: number[];
   status: ReExportStatus;
   error: string | null;
 };

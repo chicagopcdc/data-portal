@@ -22,6 +22,214 @@ export function collectDensityHeatmapFields({
   return orderedFields;
 }
 
+/** @param {string} fieldPath */
+export function getDensityFieldCategoryKey(fieldPath) {
+  const [head] = String(fieldPath).split('.').filter(Boolean);
+  return head || String(fieldPath);
+}
+
+/**
+ * Groups field paths by top-level category prefix, preserving first-seen order.
+ * @param {string[]} fieldPaths
+ * @returns {{ key: string, fields: string[] }[]}
+ */
+export function groupFieldPathsByCategory(fieldPaths = []) {
+  /** @type {{ key: string, fields: string[] }[]} */
+  const groups = [];
+  /** @type {Map<string, number>} */
+  const groupIndex = new Map();
+
+  fieldPaths.forEach((fieldPath) => {
+    const key = getDensityFieldCategoryKey(fieldPath);
+    if (!groupIndex.has(key)) {
+      groupIndex.set(key, groups.length);
+      groups.push({ key, fields: [] });
+    }
+    groups[groupIndex.get(key)].fields.push(fieldPath);
+  });
+
+  return groups;
+}
+
+/**
+ * Stable cache key for a density job (filter + fields + data type + cohort size).
+ * @param {{
+ *  dataType: string;
+ *  fieldPaths: string[];
+ *  gqlFilter: object;
+ *  totalCount: number;
+ * }} args
+ */
+export function buildDensityHeatmapCacheKey({
+  dataType,
+  fieldPaths = [],
+  gqlFilter = {},
+  totalCount = 0,
+}) {
+  return JSON.stringify({
+    dataType,
+    fieldPaths: [...fieldPaths].sort(),
+    gqlFilter,
+    totalCount,
+  });
+}
+
+/** @param {string[]} fieldPaths */
+export function buildSelectionTree(fieldPaths) {
+  const root = {};
+
+  fieldPaths.forEach((fieldPath) => {
+    const segments = fieldPath.split('.').filter(Boolean);
+    let cursor = root;
+
+    segments.forEach((segment, index) => {
+      if (!cursor[segment]) {
+        cursor[segment] = {};
+      }
+
+      if (index === segments.length - 1) {
+        cursor[segment].__leaf = true;
+        return;
+      }
+
+      cursor = cursor[segment];
+    });
+  });
+
+  return root;
+}
+
+/** @param {object} tree @param {number} [depth] */
+export function renderSelectionTree(tree, depth = 0) {
+  const indent = '  '.repeat(depth);
+
+  return Object.entries(tree)
+    .map(([fieldName, child]) => {
+      const childEntries = Object.keys(child).filter((key) => key !== '__leaf');
+
+      if (childEntries.length > 0 && !child.__leaf) {
+        return `${indent}${fieldName} {
+${renderSelectionTree(child, depth + 1)}
+${indent}}`;
+      }
+
+      return `${indent}${fieldName} { histogram { key count } }`;
+    })
+    .join('\n');
+}
+
+/**
+ * Guppy `_mapping` includes nested object paths as well as their leaves.
+ * Histogram on the parent object is invalid and fails the whole category query.
+ * @param {string[]} fieldPaths
+ */
+export function dropObjectPrefixFieldPaths(fieldPaths = []) {
+  return fieldPaths.filter((fieldPath) => {
+    const prefix = `${fieldPath}.`;
+    return !fieldPaths.some(
+      (other) => other !== fieldPath && other.startsWith(prefix),
+    );
+  });
+}
+
+/** @param {object} gqlFilter */
+export function isEmptyGqlFilter(gqlFilter) {
+  return (
+    gqlFilter == null ||
+    (typeof gqlFilter === 'object' && Object.keys(gqlFilter).length === 0)
+  );
+}
+
+/**
+ * @param {string} dataType
+ * @param {string[]} fieldPaths
+ * @param {object} [gqlFilter]
+ */
+export function buildCategoryAggregationQuery(
+  dataType,
+  fieldPaths,
+  gqlFilter,
+) {
+  const selection = renderSelectionTree(
+    buildSelectionTree(dropObjectPrefixFieldPaths(fieldPaths)),
+  );
+  const hasFilter = !isEmptyGqlFilter(gqlFilter);
+  // filterSelf: false — density counts exclude the field's own filter so completeness
+  // reflects the full filtered cohort, not just the sub-cohort matching that field's filter.
+  const typeArgs = hasFilter
+    ? '(filter: $filter_main, filterSelf: false, accessibility: all)'
+    : '(accessibility: all)';
+  const queryHeader = hasFilter ? 'query ($filter_main: JSON)' : 'query';
+  return `${queryHeader} {
+          _aggregation {
+            main: ${dataType}${typeArgs} {
+${selection}
+            }
+          }
+        }`;
+}
+
+/** @param {any} node */
+export function collectHistogramCount(node) {
+  if (node === null || node === undefined) {
+    return 0;
+  }
+
+  if (Array.isArray(node)) {
+    return node.reduce((sum, value) => sum + collectHistogramCount(value), 0);
+  }
+
+  if (typeof node !== 'object') {
+    return 0;
+  }
+
+  let total = 0;
+  if (Array.isArray(node.histogram)) {
+    total += node.histogram.reduce(
+      (sum, bucket) => sum + Math.max(bucket?.count ?? 0, 0),
+      0,
+    );
+  }
+
+  for (const value of Object.values(node)) {
+    if (value && typeof value === 'object') {
+      total += collectHistogramCount(value);
+    }
+  }
+
+  return total;
+}
+
+/**
+ * @param {{
+ *  aggregation: any;
+ *  fieldPaths: string[];
+ *  totalCount: number;
+ * }} args
+ */
+export function parseDensityRowsFromAggregation({
+  aggregation,
+  fieldPaths = [],
+  totalCount = 0,
+}) {
+  return fieldPaths.map((fieldPath) => {
+    const selection = fieldPath
+      .split('.')
+      .filter(Boolean)
+      .reduce((current, segment) => current?.[segment], aggregation);
+    const availableCount = collectHistogramCount(selection);
+    const completeness =
+      totalCount > 0 ? Math.min(availableCount / totalCount, 1) : 0;
+
+    return {
+      availableCount,
+      completeness,
+      field: fieldPath,
+      missingCount: Math.max(totalCount - availableCount, 0),
+    };
+  });
+}
+
 /**
  * Prefer fieldMapping / filterConfig.info label; otherwise strip the first
  * path segment (node/table) so nested fields read as attribute names only.

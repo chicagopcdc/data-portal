@@ -44,32 +44,54 @@ export async function fetchCategoryDensityWithRetry(fetchOnce, { signal } = {}) 
   throw lastError;
 }
 
-let jobGeneration = 0;
-/** @type {AbortController | null} */
-let jobAbortController = null;
-/** @type {ReturnType<typeof createDensityHeatmapScheduler> | null} */
-let activeScheduler = null;
+/**
+ * Per-instance job state — keyed by the instanceId generated in the component.
+ * Using a Map (rather than module-level scalars) ensures that two simultaneous
+ * ExplorerDensityHeatmap mounts do not cancel each other's in-flight requests.
+ * @type {Map<string, { generation: number; controller: AbortController | null; scheduler: ReturnType<typeof createDensityHeatmapScheduler> | null }>}
+ */
+const instanceJobMap = new Map();
 
-function cancelActiveJob() {
-  jobGeneration += 1;
-  if (jobAbortController) jobAbortController.abort();
-  jobAbortController = null;
-  activeScheduler?.cancel();
-  activeScheduler = null;
+function getInstanceJobState(instanceId) {
+  if (!instanceJobMap.has(instanceId)) {
+    instanceJobMap.set(instanceId, { generation: 0, controller: null, scheduler: null });
+  }
+  return instanceJobMap.get(instanceId);
+}
+
+function cancelActiveJob(instanceId) {
+  const s = getInstanceJobState(instanceId);
+  s.generation += 1;
+  s.controller?.abort();
+  s.controller = null;
+  s.scheduler?.cancel();
+  s.scheduler = null;
 }
 
 /**
  * Prefer loading a category next (e.g. when its section scrolls into view).
+ * @param {string} instanceId
  * @param {string} categoryKey
  */
-export function prioritizeDensityHeatmapCategory(categoryKey) {
-  activeScheduler?.prioritize(categoryKey);
+export function prioritizeDensityHeatmapCategory(instanceId, categoryKey) {
+  instanceJobMap.get(instanceId)?.scheduler?.prioritize(categoryKey);
+}
+
+/**
+ * Cancel the active job for the given instance and clean up its state.
+ * Call this when the component unmounts.
+ * @param {string} instanceId
+ */
+export function cancelDensityHeatmapJob(instanceId) {
+  cancelActiveJob(instanceId);
+  instanceJobMap.delete(instanceId);
 }
 
 /**
  * Progressive, cancellable density load: one category at a time, concurrency 2.
  * Survives leaving the heatmap view because work is owned by Redux + this module.
  *
+ * @param {string} instanceId
  * @param {{
  *  dataType: string;
  *  fieldPaths: string[];
@@ -77,12 +99,12 @@ export function prioritizeDensityHeatmapCategory(categoryKey) {
  *  totalCount: number;
  * }} args
  */
-export function loadDensityHeatmap(args) {
+export function loadDensityHeatmap(instanceId, args) {
   return async (dispatch, getState) => {
     const { dataType, fieldPaths = [], filter = {}, totalCount = 0 } = args;
 
     if (!dataType || fieldPaths.length === 0) {
-      cancelActiveJob();
+      cancelActiveJob(instanceId);
       dispatch(resetDensityHeatmapResult());
       return;
     }
@@ -107,12 +129,13 @@ export function loadDensityHeatmap(args) {
       }
     }
 
-    jobGeneration += 1;
-    const myGeneration = jobGeneration;
-    if (jobAbortController) jobAbortController.abort();
-    jobAbortController = new AbortController();
-    const { signal } = jobAbortController;
-    activeScheduler?.cancel();
+    const s = getInstanceJobState(instanceId);
+    s.generation += 1;
+    const myGeneration = s.generation;
+    s.controller?.abort();
+    s.controller = new AbortController();
+    const { signal } = s.controller;
+    s.scheduler?.cancel();
 
     const resumeSameJob = current.cacheKey === cacheKey;
     const alreadyLoaded = new Set(
@@ -136,7 +159,7 @@ export function loadDensityHeatmap(args) {
      * @param {{ key: string, fields: string[] }} category
      */
     async function fetchOne(category) {
-      if (myGeneration !== jobGeneration) return;
+      if (myGeneration !== s.generation) return;
 
       dispatch(
         densityHeatmapCategoryLoading({
@@ -157,7 +180,7 @@ export function loadDensityHeatmap(args) {
             }),
           { signal },
         );
-        if (myGeneration !== jobGeneration) return;
+        if (myGeneration !== s.generation) return;
         dispatch(
           densityHeatmapCategoryLoaded({
             cacheKey,
@@ -167,7 +190,7 @@ export function loadDensityHeatmap(args) {
         );
       } catch (err) {
         if (err?.name === 'AbortError') return;
-        if (myGeneration !== jobGeneration) return;
+        if (myGeneration !== s.generation) return;
         // eslint-disable-next-line no-console
         console.error(err);
         dispatch(
@@ -184,13 +207,13 @@ export function loadDensityHeatmap(args) {
       concurrency: CONCURRENCY,
       fetchCategory: fetchOne,
     });
-    activeScheduler = scheduler;
+    s.scheduler = scheduler;
     await scheduler.run(queue);
 
-    if (myGeneration === jobGeneration) {
+    if (myGeneration === s.generation) {
       dispatch(densityHeatmapJobFinished({ cacheKey }));
-      jobAbortController = null;
-      if (activeScheduler === scheduler) activeScheduler = null;
+      s.controller = null;
+      if (s.scheduler === scheduler) s.scheduler = null;
     }
   };
 }

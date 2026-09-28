@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { capitalizeFirstLetter } from '../../utils';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import {
+  cancelDensityHeatmapJob,
   loadDensityHeatmap,
   prioritizeDensityHeatmapCategory,
 } from '../../redux/explorer/densityHeatmapThunks';
 import UserAgreement from '../ExplorerSurvivalAnalysis/UserAgreement';
 
 import {
+  dropObjectPrefixFieldPaths,
   extractFieldsFromFilter,
   formatDensityPercentage,
   getDensityHeatmapFieldLabel,
@@ -50,6 +52,7 @@ function ExplorerDensityHeatmap({
   const dispatch = useAppDispatch();
   const [isUserCompliant, setIsUserCompliant] = useState(checkUserAgreement());
   const [showAllFields, setShowAllFields] = useState(false);
+  const instanceId = useRef(`heatmap-${Math.random().toString(36).slice(2, 9)}`).current;
   const sectionObserverRef = useRef(/** @type {IntersectionObserver | null} */ (null));
   const sectionNodeMapRef = useRef(/** @type {Map<string, Element>} */ (new Map()));
 
@@ -100,7 +103,7 @@ function ExplorerDensityHeatmap({
     if (!isUserCompliant) return undefined;
 
     dispatch(
-      loadDensityHeatmap({
+      loadDensityHeatmap(instanceId, {
         dataType: activeDataType,
         fieldPaths,
         filter,
@@ -127,7 +130,7 @@ function ExplorerDensityHeatmap({
           if (!entry.isIntersecting) return;
           const categoryKey = /** @type {HTMLElement} */ (entry.target).dataset
             .categoryKey;
-          if (categoryKey) prioritizeDensityHeatmapCategory(categoryKey);
+          if (categoryKey) prioritizeDensityHeatmapCategory(instanceId, categoryKey);
         });
       },
       { root: null, rootMargin: '120px 0px', threshold: 0.01 },
@@ -143,11 +146,18 @@ function ExplorerDensityHeatmap({
     };
   }, []);
 
+  useEffect(
+    () => () => {
+      cancelDensityHeatmapJob(instanceId);
+    },
+    [instanceId],
+  );
+
   /**
    * @param {string} categoryKey
    * @param {HTMLElement | null} node
    */
-  function bindSectionNode(categoryKey, node) {
+  const bindSectionNode = useCallback((categoryKey, node) => {
     const previous = sectionNodeMapRef.current.get(categoryKey);
     if (previous && previous !== node) {
       sectionObserverRef.current?.unobserve(previous);
@@ -157,6 +167,15 @@ function ExplorerDensityHeatmap({
       sectionNodeMapRef.current.set(categoryKey, node);
       sectionObserverRef.current?.observe(node);
     }
+  }, []);
+
+  const sectionRefCallbacksRef = useRef(/** @type {Map<string, (node: Element | null) => void>} */ (new Map()));
+
+  function getSectionRef(key) {
+    if (!sectionRefCallbacksRef.current.has(key)) {
+      sectionRefCallbacksRef.current.set(key, (node) => bindSectionNode(key, node));
+    }
+    return sectionRefCallbacksRef.current.get(key);
   }
 
   const densityRows = useMemo(
@@ -200,6 +219,8 @@ function ExplorerDensityHeatmap({
           const status =
             densityHeatmapResult.categoryStatus[key] || 'pending';
 
+          const leafCount = dropObjectPrefixFieldPaths(fields).length;
+
           if (rows.length > 0) {
             return {
               key,
@@ -207,7 +228,7 @@ function ExplorerDensityHeatmap({
               rows: rows.map((row) => ({ ...row, groupKey: key })),
               sectionType,
               status: 'loaded',
-              fieldCount: fields.length,
+              fieldCount: leafCount,
             };
           }
 
@@ -217,7 +238,7 @@ function ExplorerDensityHeatmap({
             rows: [],
             sectionType,
             status,
-            fieldCount: fields.length,
+            fieldCount: leafCount,
           };
         },
       );
@@ -270,11 +291,6 @@ function ExplorerDensityHeatmap({
   }
 
   const hasLoadedRows = densityRows.length > 0;
-  const isBootstrapping =
-    densityHeatmapResult.isPending &&
-    !hasLoadedRows &&
-    matrixSections.length === 0 &&
-    !densityHeatmapResult.error;
   const showFatalError =
     !hasLoadedRows &&
     !!densityHeatmapResult.error &&
@@ -282,13 +298,7 @@ function ExplorerDensityHeatmap({
     matrixSections.length === 0;
 
   let heatmapContent = null;
-  if (isBootstrapping) {
-    heatmapContent = (
-      <div className='explorer-density-heatmap__state'>
-        Loading categories...
-      </div>
-    );
-  } else if (showFatalError) {
+  if (showFatalError) {
     heatmapContent = (
       <div className='explorer-density-heatmap__state explorer-density-heatmap__state--error'>
         {densityHeatmapResult.error}
@@ -312,7 +322,7 @@ function ExplorerDensityHeatmap({
           }`}
           data-category-key={group.key}
           key={sectionRefKey}
-          ref={(node) => bindSectionNode(sectionRefKey, node)}
+          ref={getSectionRef(sectionRefKey)}
         >
           <div className='explorer-density-heatmap__section-header'>
             <h3 className='explorer-density-heatmap__section-title'>

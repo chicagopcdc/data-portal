@@ -107,7 +107,7 @@ export function renderSelectionTree(tree, depth = 0) {
     .map(([fieldName, child]) => {
       const childEntries = Object.keys(child).filter((key) => key !== '__leaf');
 
-      if (childEntries.length > 0) {
+      if (childEntries.length > 0 && !child.__leaf) {
         return `${indent}${fieldName} {
 ${renderSelectionTree(child, depth + 1)}
 ${indent}}`;
@@ -154,6 +154,8 @@ export function buildCategoryAggregationQuery(
     buildSelectionTree(dropObjectPrefixFieldPaths(fieldPaths)),
   );
   const hasFilter = !isEmptyGqlFilter(gqlFilter);
+  // filterSelf: false — density counts exclude the field's own filter so completeness
+  // reflects the full filtered cohort, not just the sub-cohort matching that field's filter.
   const typeArgs = hasFilter
     ? '(filter: $filter_main, filterSelf: false, accessibility: all)'
     : '(accessibility: all)';

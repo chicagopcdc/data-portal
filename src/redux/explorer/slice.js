@@ -339,7 +339,6 @@ const slice = createSlice({
       const { cacheKey, categoryKey } = action.payload;
       if (state.densityHeatmapResult.cacheKey !== cacheKey) return;
       state.densityHeatmapResult.categoryStatus[categoryKey] = 'loading';
-      state.densityHeatmapResult.error = null;
     },
     /**
      * @param {PayloadAction<{

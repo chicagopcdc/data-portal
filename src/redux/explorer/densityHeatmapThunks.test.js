@@ -79,7 +79,7 @@ describe('loadDensityHeatmap retries', () => {
 
     const store = createStore();
     await store.dispatch(
-      loadDensityHeatmap({
+      loadDensityHeatmap('test-instance', {
         dataType: 'subject',
         fieldPaths: ['A.field'],
         filter: {},
@@ -100,7 +100,7 @@ describe('loadDensityHeatmap retries', () => {
 
     const store = createStore();
     await store.dispatch(
-      loadDensityHeatmap({
+      loadDensityHeatmap('test-instance', {
         dataType: 'subject',
         fieldPaths: ['B.field'],
         filter: {},

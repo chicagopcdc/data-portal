@@ -1,4 +1,4 @@
-FROM quay.io/pcdc/node-lts-alpine:18-alpine
+FROM quay.io/pcdc/node-lts-alpine:20-alpine
 ARG APP=pcdc
 ARG BASENAME
 RUN apk update \

@@ -128,19 +128,12 @@ function NavBar({ dictIcons, navItems, navTitle, userAccess }) {
       </div>
       {screenWidth <= breakpoints.tablet ? (
         <>
-          <div
+          <button
+            type='button'
             className='nav-bar__menu'
             onClick={toggleMenu}
-            onKeyPress={(e) => {
-              if (e.charCode === 13 || e.charCode === 32) {
-                e.preventDefault();
-                toggleMenu();
-              }
-            }}
-            role='button'
-            tabIndex={0}
             aria-expanded={isMenuOpen}
-            aria-label={`${isMenuOpen ? 'Expand' : 'Collapse'} navigation menu`}
+            aria-label={`${isMenuOpen ? 'Collapse' : 'Expand'} navigation menu`}
           >
             Menu
             <FontAwesomeIcon
@@ -148,7 +141,7 @@ function NavBar({ dictIcons, navItems, navTitle, userAccess }) {
               icon={isMenuOpen ? 'angle-down' : 'angle-up'}
               size='lg'
             />
-          </div>
+          </button>
           {isMenuOpen && (
             <div className='nav-bar__nav--items'>{navButtons}</div>
           )}

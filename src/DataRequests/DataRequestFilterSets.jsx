@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import Button from '../gen3-ui-component/components/Button';
+import SimplePopup from '../components/SimplePopup';
 import ExplorerFilterDisplay from '../GuppyDataExplorer/ExplorerFilterDisplay';
 import '../GuppyDataExplorer/ExplorerFilterSetForms/ExplorerFilterSetForms.css';
 import './DataRequestFilterSets.css';
 import {
   addFiltersetToRequest,
   getProjectFilterSets,
+  removeFiltersetFromRequest,
 } from '../redux/dataRequest/asyncThunks';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { getFilterState } from '../GuppyComponents/Utils/queries';
@@ -28,6 +30,10 @@ export default function DataRequestFilterSets({
   const [selectedFiltersetId, setSelectedFiltersetId] = useState(undefined);
   const [copyFilterAsJson, setCopyFilterAsJson] = useState(false);
   const [projectFilterSets, setProjectFilterSets] = useState([]);
+  const [filterSetToRemove, setFilterSetToRemove] = useState(null);
+
+  // a project has to keep at least one filter set
+  const canRemoveFilterSets = projectFilterSets.length > 1;
 
   const fetchProjectFilterSets = (projectId) => {
     const actionRequest =
@@ -58,6 +64,7 @@ export default function DataRequestFilterSets({
           addFiltersetToRequest({
             filtersetId,
             projectId: projectId,
+            mode: 'add',
           }),
         )
       );
@@ -68,7 +75,34 @@ export default function DataRequestFilterSets({
       } else {
         setChangeFilterSetRequestError({
           isError: true,
-          message: action.payload.message,
+          message:
+            'Unable to add this filter set to the project request. A project can only hold a limited number of filter sets, so remove one first if it is full.',
+        });
+      }
+    });
+  };
+
+  const removeFilterset = async (searchId) => {
+    const actionRequest =
+      /** @type {import("../redux/dataRequest/types").Request} */
+      (
+        dispatch(
+          removeFiltersetFromRequest({
+            searchIds: [searchId],
+            projectId: projectId,
+          }),
+        )
+      );
+    actionRequest.then((action) => {
+      setFilterSetToRemove(null);
+      if (!action.payload.isError) {
+        onAction?.('SUCCESSFUL_FILTER_SET_CHANGE');
+        fetchProjectFilterSets(projectId);
+      } else {
+        setChangeFilterSetRequestError({
+          isError: true,
+          message:
+            'Unable to remove this filter set from the project request. A project has to keep at least one filter set.',
         });
       }
     });
@@ -88,6 +122,30 @@ export default function DataRequestFilterSets({
       prev.isError ? { isError: false, message: '' } : prev,
     );
   }, []);
+
+  /**
+   * @param {{ id: number; name: string }} filterSet
+   * @param {object} filter
+   * @param {boolean} manual
+   */
+  const renderProjectFilterSet = (filterSet, filter, manual) => (
+    <div className='data-request-filter-sets__item' key={filterSet.id}>
+      <ExplorerFilterDisplay
+        filter={filter}
+        title={filterSet.name}
+        manual={manual}
+      />
+      {admin && (
+        <Button
+          className='data-request-filter-sets__remove'
+          buttonType='secondary'
+          label='Remove'
+          enabled={canRemoveFilterSets}
+          onClick={() => setFilterSetToRemove(filterSet)}
+        />
+      )}
+    </div>
+  );
 
   return (
     <div className='data-request-filter-sets'>
@@ -112,14 +170,14 @@ export default function DataRequestFilterSets({
         {selectedFiltersetId !== undefined && (
           <Button
             className='data-request__submit data-request-filter-sets__submit'
-            label='Change Project Filter Set'
+            label='Add Filter Set to Project'
             onClick={() => submitFilterset(selectedFiltersetId)}
           />
         )}
 
         {changeFilterSetRequestError.isError && (
           <span className='data-request__request-error'>
-            Unable to change filter's for this project request.
+            {changeFilterSetRequestError.message}
           </span>
         )}
       </div>
@@ -132,7 +190,7 @@ export default function DataRequestFilterSets({
           <div className='data-request__form'>
             <div className='data-request__header'>
               <h3>Current Filters:</h3>
- 
+
               {admin && (
                 <Button
                   label={copyFilterAsJson ? 'Close JSON' : 'Open JSON'}
@@ -153,13 +211,13 @@ export default function DataRequestFilterSets({
                 <div className='explorer-filter-set-form'>
                   <h4>Explorer:</h4>
                   {projectFilterSets.map((filterSet) =>
-                    filterSet.filter_object ? (
-                      <ExplorerFilterDisplay
-                        filter={filterSet.filter_object}
-                        title={filterSet.name}
-                        manual={false}
-                      />
-                    ) : null,
+                    filterSet.filter_object
+                      ? renderProjectFilterSet(
+                          filterSet,
+                          filterSet.filter_object,
+                          false,
+                        )
+                      : null,
                   )}
                 </div>
               )}
@@ -175,13 +233,13 @@ export default function DataRequestFilterSets({
                     filterSet.graphql_object &&
                     typeof filterSet.graphql_object === 'object' &&
                     Object.keys(filterSet.graphql_object).length > 0 &&
-                    !filterSet.filter_source_internal_id ? (
-                      <ExplorerFilterDisplay
-                        filter={getFilterState(filterSet.graphql_object)}
-                        title={filterSet.name}
-                        manual={true}
-                      />
-                    ) : null,
+                    !filterSet.filter_source_internal_id
+                      ? renderProjectFilterSet(
+                          filterSet,
+                          getFilterState(filterSet.graphql_object),
+                          true,
+                        )
+                      : null,
                   )}
                 </div>
               )}
@@ -200,21 +258,21 @@ export default function DataRequestFilterSets({
                     (!filterSet.graphql_object ||
                       (typeof filterSet.graphql_object === 'object' &&
                         Object.keys(filterSet.graphql_object).length === 0)) &&
-                    !filterSet.filter_source_internal_id ? (
-                      <ExplorerFilterDisplay
-                        filter={getFilterState({
-                          AND: [
-                            {
-                              IN: {
-                                subject_submitter_id: filterSet.ids_list,
+                    !filterSet.filter_source_internal_id
+                      ? renderProjectFilterSet(
+                          filterSet,
+                          getFilterState({
+                            AND: [
+                              {
+                                IN: {
+                                  subject_submitter_id: filterSet.ids_list,
+                                },
                               },
-                            },
-                          ],
-                        })}
-                        title={filterSet.name}
-                        manual={true}
-                      />
-                    ) : null,
+                            ],
+                          }),
+                          true,
+                        )
+                      : null,
                   )}
                 </div>
               )}
@@ -227,6 +285,29 @@ export default function DataRequestFilterSets({
           </div>
         )}
       </div>
+      {filterSetToRemove !== null && (
+        <SimplePopup>
+          <div className='data-request-filter-sets__confirm'>
+            <h3>Remove “{filterSetToRemove.name}” from this project?</h3>
+            <p>
+              The project's cohort will no longer include this filter set. Any
+              consortium request that no remaining filter set covers will be
+              deprecated.
+            </p>
+            <div className='data-request-filter-sets__confirm-actions'>
+              <Button
+                buttonType='default'
+                label='Cancel'
+                onClick={() => setFilterSetToRemove(null)}
+              />
+              <Button
+                label='Remove'
+                onClick={() => removeFilterset(filterSetToRemove.id)}
+              />
+            </div>
+          </div>
+        </SimplePopup>
+      )}
     </div>
   );
 }

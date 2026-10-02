@@ -76,6 +76,14 @@ export type UserRoleUpdateParams = {
 export type AddFilterSetIdUpdateParams = {
   projectId: number;
   filtersetId: number;
+  /** "add" (the default) keeps the project's other filter sets, "replace" swaps them out */
+  mode?: 'add' | 'replace';
+};
+
+export type RemoveFilterSetParams = {
+  projectId: number;
+  /** the project's own copies of its filter sets, as returned by project_filter_sets */
+  searchIds: number[];
 };
 
 export type DeleteRequestParams = {

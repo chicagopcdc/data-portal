@@ -500,6 +500,27 @@ export const addFiltersetToRequest = createAsyncThunk(
   },
 );
 
+export const removeFiltersetFromRequest = createAsyncThunk(
+  'dataRequest/removeFiltersetFromRequest',
+  /** @param {import("./types").RemoveFilterSetParams} removeParams */
+  async (removeParams, { rejectWithValue }) => {
+    try {
+      const { data, response, status } = await fetchWithCreds({
+        path: '/amanuensis/admin/remove-search-from-project',
+        method: 'DELETE',
+        body: JSON.stringify(removeParams),
+      });
+
+      if (statusCategory(status) !== '2XX') {
+        return handleRequestError(status, response, data);
+      }
+      return { data, isError: false, message: '', status: status };
+    } catch (e) {
+      return rejectWithValue(e);
+    }
+  },
+);
+
 export const deleteRequest = createAsyncThunk(
   'dataRequest/deleteRequest',
   /** @param {import("./types").DeleteRequestParams} deleteParams */

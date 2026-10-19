@@ -17,6 +17,7 @@ import ExplorerTable from '../ExplorerTable';
 import ExplorerSurvivalAnalysis from '../ExplorerSurvivalAnalysis';
 import ExplorerTableOne from '../ExplorerTableOne';
 import ExplorerDensityHeatmap from '../ExplorerDensityHeatmap';
+import { excludeDensityHeatmapFields } from '../ExplorerDensityHeatmap/utils';
 import ReduxExplorerButtonGroup from '../ExplorerButtonGroup/ReduxExplorerButtonGroup';
 import {
   hasSeenExplorerWizard,
@@ -462,7 +463,10 @@ function ExplorerVisualization({
           isLoading={isLoadingRawData}
         >
           <ExplorerDensityHeatmap
-            fields={allFields}
+            fields={excludeDensityHeatmapFields(
+              allFields,
+              heatmapConfig.excludeFields
+            )}
             primaryFields={Object.keys(chartConfig)}
             expandByFilter
             fieldInfo={filterConfig.info}

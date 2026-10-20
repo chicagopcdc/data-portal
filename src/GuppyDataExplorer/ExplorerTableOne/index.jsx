@@ -1,5 +1,7 @@
 /* eslint-disable no-shadow */
 import { memo, useState, useEffect } from 'react';
+import Tooltip from 'rc-tooltip';
+import 'rc-tooltip/assets/bootstrap_white.css';
 import './ExplorerTableOne.css';
 import Spinner from '../../components/Spinner';
 import ErrorBoundary from '../../components/ErrorBoundary';
@@ -15,6 +17,9 @@ import UserAgreementGate from './UserAgreementGate';
 import TableOneResultTable from './TableOneResultTable';
 import GuideInfoButton from '../GuideInfoButton';
 /** @typedef {import('./types').UserInputSubmitHandler} UserInputSubmitHandler */
+
+const multipleObservationsNote =
+  'In the case of variables for which a patient may have multiple observations (e.g., age at tumor assessment for initial diagnosis and at relapse(s)), the first observation will be selected and so a patient will only be counted once';
 
 function ExplorerTableOne() {
   const dispatch = useAppDispatch();
@@ -69,6 +74,22 @@ function ExplorerTableOne() {
         <div className='explorer-table-one__column-left'>
           <div className='explorer-table-one__guide-link'>
             <GuideInfoButton guideId='tableOne' label='Show table one guide' />
+            <Tooltip
+              arrowContent={<div className='rc-tooltip-arrow-inner' />}
+              mouseLeaveDelay={0}
+              overlay={multipleObservationsNote}
+              overlayStyle={{ maxWidth: 360 }}
+              placement='left'
+            >
+              <span
+                aria-label={multipleObservationsNote}
+                className='explorer-table-one__note-marker'
+                role='note'
+                tabIndex={0}
+              >
+                *
+              </span>
+            </Tooltip>
           </div>
           <CovarForm onSubmit={handleSubmit} options={options} />
         </div>

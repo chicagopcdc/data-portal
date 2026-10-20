@@ -13,6 +13,39 @@ import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { getFilterState } from '../GuppyComponents/Utils/queries';
 import { FilterSetOpenFormFields } from '../GuppyDataExplorer/ExplorerFilterSetForms/FilterSetOpenForm';
 import { fetchWithToken } from '../redux/explorer/filterSetsAPI';
+const hasKeys = (obj) =>
+  !!obj && typeof obj === 'object' && Object.keys(obj).length > 0;
+
+/** Mirrors the three groups ("Explorer", "Manual", "Subject Submitter Ids Only") rendered below */
+function isListedFilterSet(filterSet) {
+  if (filterSet.filter_object) return true;
+  if (filterSet.filter_source_internal_id) return false;
+  return hasKeys(filterSet.graphql_object) || !!filterSet.ids_list;
+}
+
+/**
+ * The request failed if the thunk was rejected (e.g. network error, no
+ * `payload.isError`) or resolved with an error payload.
+ */
+function didRequestFail(action) {
+  return Boolean(action.error) || !action.payload || action.payload.isError;
+}
+
+/**
+ * amanuensis can answer with an HTML page, so only show the reason it gave
+ * when it is a short plain message, followed by the likely cause.
+ */
+function getFailureMessage(action, summary, hint) {
+  const reason = action.payload?.message;
+  const detail =
+    typeof reason === 'string' &&
+    reason.length < 200 &&
+    !reason.trim().startsWith('<')
+      ? reason
+      : '';
+  return [summary, detail, hint].filter(Boolean).join(' ');
+}
+
 export default function DataRequestFilterSets({
   projectId,
   savedFilterSets,
@@ -32,8 +65,10 @@ export default function DataRequestFilterSets({
   const [projectFilterSets, setProjectFilterSets] = useState([]);
   const [filterSetToRemove, setFilterSetToRemove] = useState(null);
 
-  // a project has to keep at least one filter set
-  const canRemoveFilterSets = projectFilterSets.length > 1;
+  // a project has to keep at least one filter set; only count the ones listed
+  // below, since those are the ones an admin can see
+  const canRemoveFilterSets =
+    projectFilterSets.filter(isListedFilterSet).length > 1;
 
   const fetchProjectFilterSets = (projectId) => {
     const actionRequest =
@@ -57,6 +92,7 @@ export default function DataRequestFilterSets({
   };
 
   const submitFilterset = async (filtersetId) => {
+    setChangeFilterSetRequestError({ isError: false, message: '' });
     const actionRequest =
       /** @type {import("../redux/dataRequest/types").Request} */
       (
@@ -69,20 +105,26 @@ export default function DataRequestFilterSets({
         )
       );
     actionRequest.then((action) => {
-      if (!action.payload.isError) {
+      if (!didRequestFail(action)) {
         onAction?.('SUCCESSFUL_FILTER_SET_CHANGE');
         fetchProjectFilterSets(projectId);
       } else {
         setChangeFilterSetRequestError({
           isError: true,
-          message:
-            'Unable to add this filter set to the project request. A project can only hold a limited number of filter sets, so remove one first if it is full.',
+          message: getFailureMessage(
+            action,
+            'Unable to add this filter set to the project request.',
+            'If the project is already at its filter set limit, remove one first.',
+          ),
         });
       }
     });
   };
 
   const removeFilterset = async (searchId) => {
+    // close the confirmation right away so it cannot be submitted twice
+    setFilterSetToRemove(null);
+    setChangeFilterSetRequestError({ isError: false, message: '' });
     const actionRequest =
       /** @type {import("../redux/dataRequest/types").Request} */
       (
@@ -94,15 +136,17 @@ export default function DataRequestFilterSets({
         )
       );
     actionRequest.then((action) => {
-      setFilterSetToRemove(null);
-      if (!action.payload.isError) {
+      if (!didRequestFail(action)) {
         onAction?.('SUCCESSFUL_FILTER_SET_CHANGE');
         fetchProjectFilterSets(projectId);
       } else {
         setChangeFilterSetRequestError({
           isError: true,
-          message:
-            'Unable to remove this filter set from the project request. A project has to keep at least one filter set.',
+          message: getFailureMessage(
+            action,
+            'Unable to remove this filter set from the project request.',
+            'A project has to keep at least one filter set.',
+          ),
         });
       }
     });

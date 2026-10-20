@@ -128,6 +128,34 @@ describe('DataRequestFilterSets', () => {
     expect(requestsTo('/remove-search-from-project')).toHaveLength(0);
   });
 
+  it('shows an error, not success, when the remove request cannot be sent', async () => {
+    fetch.mockResponse((request) =>
+      request.url.includes('/remove-search-from-project')
+        ? Promise.reject(new Error('network down'))
+        : Promise.resolve(
+            JSON.stringify([
+              projectFilterSet(11, 'INRG cohort', 'INRG'),
+              projectFilterSet(12, 'INSTRUCT cohort', 'INSTRUCT'),
+            ]),
+          ),
+    );
+    const onAction = jest.fn();
+    const { findAllByRole, findByText } = renderFilterSets(onAction);
+
+    fireEvent.click((await findAllByRole('button', { name: 'Remove' }))[1]);
+    const popup = document.getElementById('root');
+    fireEvent.click(
+      [...popup.querySelectorAll('button')].find(
+        (button) => button.textContent === 'Remove',
+      ),
+    );
+
+    expect(
+      await findByText(/Unable to remove this filter set/),
+    ).toBeInTheDocument();
+    expect(onAction).not.toHaveBeenCalled();
+  });
+
   it('does not offer to remove the only filter set', async () => {
     mockAmanuensis([projectFilterSet(11, 'INRG cohort', 'INRG')]);
     const { findByRole } = renderFilterSets();

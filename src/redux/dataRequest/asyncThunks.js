@@ -495,7 +495,11 @@ export const addFiltersetToRequest = createAsyncThunk(
       }
       return { data, isError: false, message: '', status: status };
     } catch (e) {
-      return rejectWithValue(e);
+      return rejectWithValue({
+        isError: true,
+        message: e?.message ?? 'The request could not be sent',
+        data: null,
+      });
     }
   },
 );
@@ -516,7 +520,11 @@ export const removeFiltersetFromRequest = createAsyncThunk(
       }
       return { data, isError: false, message: '', status: status };
     } catch (e) {
-      return rejectWithValue(e);
+      return rejectWithValue({
+        isError: true,
+        message: e?.message ?? 'The request could not be sent',
+        data: null,
+      });
     }
   },
 );

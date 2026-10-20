@@ -173,6 +173,7 @@ export function getCurrentConfig(explorerId) {
       enabled: false,
       buildOptions: false,
       options: {},
+      multipleObservationsNote: config.tableOneConfig?.multipleObservationsNote,
     },
     heatmapConfig: config.heatmapConfig || { enabled: false },
   };

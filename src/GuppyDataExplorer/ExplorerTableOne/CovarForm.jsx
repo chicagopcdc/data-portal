@@ -44,6 +44,10 @@ function CovarForm({ onSubmit, options }) {
     (state) => state.explorer.config.tableOneConfig.excludedVariables ?? [],
   );
 
+  const isGenerating = useAppSelector(
+    (state) => state.explorer.tableOneResult.isPending,
+  );
+
   const [isInputChanged, setIsInputChanged] = useState(false);
 
   const [selectedFilterSet, setSelectedFilterSet] = useState(null);
@@ -138,6 +142,7 @@ function CovarForm({ onSubmit, options }) {
   }
 
   const submitUserInput = () => {
+    if (isGenerating) return;
     setIsInputChanged(false);
     const filterSets = [];
     for (const filterSet of usedFilterSets) {
@@ -391,7 +396,7 @@ function CovarForm({ onSubmit, options }) {
         </div>
         <div className='explorer-table-one__action-buttons'>
           <Button label='Reset' buttonType='default' onClick={resetUserInput} />
-          {enableApplyButton ? (
+          {enableApplyButton && !isGenerating ? (
             <Button
               label='Apply'
               buttonType='primary'
@@ -402,7 +407,11 @@ function CovarForm({ onSubmit, options }) {
             <Tooltip
               arrowContent={<div className='rc-tooltip-arrow-inner' />}
               mouseLeaveDelay={0}
-              overlay={'You are missing some required fields'}
+              overlay={
+                isGenerating
+                  ? 'Table one is being generated'
+                  : 'You are missing some required fields'
+              }
               placement='right'
             >
               <span>

@@ -1,5 +1,7 @@
 /* eslint-disable no-shadow */
 import { memo, useState, useEffect } from 'react';
+import Tooltip from 'rc-tooltip';
+import 'rc-tooltip/assets/bootstrap_white.css';
 import './ExplorerTableOne.css';
 import Spinner from '../../components/Spinner';
 import ErrorBoundary from '../../components/ErrorBoundary';
@@ -30,6 +32,9 @@ function ExplorerTableOne() {
     }
   }, [rebuild]);
 
+  const multipleObservationsNote = useAppSelector(
+    (state) => state.explorer.config.tableOneConfig.multipleObservationsNote,
+  );
   const options = useAppSelector(
     (state) => state.explorer.config.tableOneConfig.options,
   );
@@ -69,6 +74,24 @@ function ExplorerTableOne() {
         <div className='explorer-table-one__column-left'>
           <div className='explorer-table-one__guide-link'>
             <GuideInfoButton guideId='tableOne' label='Show table one guide' />
+            {multipleObservationsNote && (
+              <Tooltip
+                arrowContent={<div className='rc-tooltip-arrow-inner' />}
+                mouseLeaveDelay={0}
+                overlay={multipleObservationsNote}
+                overlayStyle={{ maxWidth: 360 }}
+                placement='left'
+              >
+                <span
+                  aria-label={multipleObservationsNote}
+                  className='explorer-table-one__note-marker'
+                  role='note'
+                  tabIndex={0}
+                >
+                  *
+                </span>
+              </Tooltip>
+            )}
           </div>
           <CovarForm onSubmit={handleSubmit} options={options} />
         </div>

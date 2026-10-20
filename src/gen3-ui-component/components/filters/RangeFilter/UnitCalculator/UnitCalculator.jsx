@@ -6,6 +6,7 @@ export default function UnitCalculator({
   setShowCalculator,
   parameters,
   updateBound,
+  actions,
 }) {
   const quantity = parameters.quantity; // string, like 'age'
   const desiredUnit = parameters.desiredUnit; // string, like 'days'
@@ -31,15 +32,12 @@ export default function UnitCalculator({
     setUnit(event.target.value);
   }
 
-  function assignMin() {
-    const parsed = parseFloat(convertedQuantity);
-    updateBound(parsed, 'lower');
-  }
-
-  function assignMax() {
-    const parsed = parseFloat(convertedQuantity);
-    updateBound(parsed, 'upper');
-  }
+  // by default the output is assigned to the min or max of a range filter;
+  // callers can pass their own actions, e.g. { label, onClick(value), isDisabled(value) }
+  const outputActions = actions ?? [
+    { label: 'Assign to min', onClick: (value) => updateBound(value, 'lower') },
+    { label: 'Assign to max', onClick: (value) => updateBound(value, 'upper') },
+  ];
 
   function handleConvert() {
     const input = parseFloat(quantityInput);
@@ -115,12 +113,20 @@ export default function UnitCalculator({
         }}
       />
       <div className='button-group-inline'>
-        <button className='button-assign' onClick={assignMin}>
-          Assign to min
-        </button>
-        <button className='button-assign' onClick={assignMax}>
-          Assign to max
-        </button>
+        {outputActions.map(({ label, onClick, isDisabled }) => {
+          const parsed = parseFloat(convertedQuantity);
+          return (
+            <button
+              key={label}
+              className='button-assign'
+              type='button'
+              disabled={isNaN(parsed) || Boolean(isDisabled?.(parsed))}
+              onClick={() => onClick(parsed)}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
     </section>
   );

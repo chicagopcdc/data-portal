@@ -509,6 +509,9 @@
           "survival": true
         }
       },
+      "tableOneConfig": {
+        "multipleObservationsNote": "In the case of variables for which a patient may have multiple observations (e.g., age at tumor assessment for initial diagnosis and at relapse(s)), the first observation will be selected and so a patient will only be counted once"
+      },
       "heatmapConfig": {
         "enabled": true,
         "excludeFields": [
@@ -1661,6 +1664,9 @@
           "risktable": true,
           "survival": true
         }
+      },
+      "tableOneConfig": {
+        "multipleObservationsNote": "In the case of variables for which a patient may have multiple observations (e.g., age at tumor assessment for initial diagnosis and at relapse(s)), the first observation will be selected and so a patient will only be counted once"
       },
       "heatmapConfig": {
         "enabled": true,

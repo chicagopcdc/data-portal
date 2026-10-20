@@ -28,7 +28,7 @@ describe('project re-export', () => {
       JSON.stringify({
         job_uid: 'export-job-uid',
         project_id: '904',
-        search_id: 1805,
+        search_ids: [1805],
       }),
       { status: 200 },
     );
@@ -45,7 +45,7 @@ describe('project re-export', () => {
     expect(store.getState().dataRequest.reExportJobs[904]).toEqual({
       job_uid: 'export-job-uid',
       project_id: '904',
-      search_id: 1805,
+      search_ids: [1805],
       status: RE_EXPORT_STATUS.RUNNING,
       error: null,
     });
@@ -58,7 +58,7 @@ describe('project re-export', () => {
         JSON.stringify({
           job_uid: 'export-job-uid',
           project_id: '904',
-          search_id: 1805,
+          search_ids: [1805],
         }),
         { status: 200 },
       )
@@ -93,7 +93,7 @@ describe('project re-export', () => {
         JSON.stringify({
           job_uid: 'export-job-uid',
           project_id: '904',
-          search_id: 1805,
+          search_ids: [1805],
         }),
         { status: 200 },
       )
@@ -126,7 +126,7 @@ describe('project re-export', () => {
         JSON.stringify({
           job_uid: 'export-job-uid',
           project_id: '904',
-          search_id: 1805,
+          search_ids: [1805],
         }),
         { status: 200 },
       )

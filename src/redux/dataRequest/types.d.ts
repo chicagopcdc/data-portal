@@ -76,6 +76,14 @@ export type UserRoleUpdateParams = {
 export type AddFilterSetIdUpdateParams = {
   projectId: number;
   filtersetId: number;
+  /** "add" (the default) keeps the project's other filter sets, "replace" swaps them out */
+  mode?: 'add' | 'replace';
+};
+
+export type RemoveFilterSetParams = {
+  projectId: number;
+  /** the project's own copies of its filter sets, as returned by project_filter_sets */
+  searchIds: number[];
 };
 
 export type DeleteRequestParams = {
@@ -110,7 +118,8 @@ export type ReExportStatus =
 export type ReExportJob = {
   job_uid?: string;
   project_id?: string;
-  search_id?: number;
+  /** a data request can have several associated searches; all of them are exported into one cohort */
+  search_ids?: number[];
   status: ReExportStatus;
   error: string | null;
 };

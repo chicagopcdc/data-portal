@@ -54,3 +54,32 @@
   width: 100%;
   align-self: center;
 }
+
+/* Each current filter set, with its remove action beside it */
+.data-request-filter-sets .data-request-filter-sets__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.data-request-filter-sets .data-request-filter-sets__item > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.data-request-filter-sets .data-request-filter-sets__remove {
+  flex: none;
+}
+
+.data-request-filter-sets__confirm {
+  max-width: 480px;
+  padding: 1rem;
+  text-align: left;
+}
+
+.data-request-filter-sets__confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}

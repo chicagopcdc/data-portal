@@ -44,6 +44,18 @@
   overflow: hidden;
 }
 
+.popup__close-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  font-size: inherit;
+}
+
 .popup__close-button:hover {
   cursor: pointer;
 }

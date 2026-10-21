@@ -28,6 +28,9 @@ function ExplorerSurvivalAnalysis() {
   const [efsFlag, setEfsFlag] = useState(false);
   const [endTime, setEndTime] = useState(DEFAULT_END_YEAR);
 
+  // capture non-200 errors locally so ControlForm can show its overlay
+  const [requestError, setRequestError] = useState(null);
+
   /** @type {UserInputSubmitHandler} */
   const handleSubmit = (input) => {
     const shouldRefetch = efsFlag !== input.efsFlag;
@@ -37,13 +40,19 @@ function ExplorerSurvivalAnalysis() {
     setStartTime(input.startTime);
     setEndTime(input.endTime);
 
+    setRequestError(null); // clear any previous error
     dispatch(
       updateSurvivalResult({
         efsFlag: input.efsFlag,
         shouldRefetch,
         usedFilterSets: input.usedFilterSets,
       }),
-    );
+    )
+      .unwrap()
+      .catch((e) => {
+        // pass a clean string down to ControlForm
+        setRequestError(e?.message ?? String(e));
+      });
   };
 
   function errorMessage(error) {
@@ -85,6 +94,7 @@ function ExplorerSurvivalAnalysis() {
           >
             <ControlForm
               countByFilterSet={result.parsed.count}
+              requestError={result.error}
               onSubmit={handleSubmit}
             />
           </div>

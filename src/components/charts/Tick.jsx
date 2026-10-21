@@ -15,7 +15,7 @@ function Tick({ payload = {}, x = 0, y = 0 }) {
     <g>
       <text textAnchor='end' x={x} y={y} dy={0}>
         <tspan className='special-number' fill='var(--pcdc-color__primary)'>
-          {countNumber}
+          {Number(countNumber).toLocaleString()}
         </tspan>
       </text>
       <Text

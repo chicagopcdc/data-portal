@@ -16,8 +16,15 @@
 
 .explorer-table-one__guide-link {
   display: flex;
+  align-items: center;
+  gap: 0.25rem;
   justify-content: flex-end;
   width: 100%;
+}
+.explorer-table-one__note-marker {
+  cursor: help;
+  font-weight: bold;
+  line-height: 1;
 }
 .explorer-table-one__column-right {
   flex-grow: 1;

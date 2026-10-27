@@ -2,12 +2,22 @@ import { useState, useEffect } from 'react';
 import './ContinuousCovariate.css';
 import Button from '../../gen3-ui-component/components/Button';
 import { min } from 'd3-array';
+import { useAppSelector } from '../../redux/hooks';
+import UnitCalculator from '../../gen3-ui-component/components/filters/RangeFilter/UnitCalculator/UnitCalculator';
 export default function ContinuousCovariate({
   position,
   covariate,
   updateCovariates,
 }) {
   const [minValue, maxValue] = covariate.values;
+
+  // same unit calculator as the explorer filters (e.g. to turn years into days)
+  const unitCalcConfig = useAppSelector(
+    (state) => state.explorer.config.filterConfig.unitCalcConfig,
+  );
+  const [showCalculator, setShowCalculator] = useState(false);
+  const isAgeField =
+    unitCalcConfig?.calculatorMapping?.age?.includes(covariate.label) ?? false;
 
   // Track bucket boundaries - start with just min and max
   const [boundaries, setBoundaries] = useState([]);
@@ -44,6 +54,21 @@ export default function ContinuousCovariate({
     // Insert new boundary before the last one (which is maxValue)
     setBoundaries((prev) => [...prev, newBoundary]);
     setInclusiveLower((prev) => [...prev, true]);
+  };
+
+  // a split value has to fall strictly inside the range to create a real bucket
+  const isValidSplitValue = (value) =>
+    value > minValue && value < maxValue && !boundaries.includes(value);
+
+  const addBoundaryAt = (value) => {
+    if (!isValidSplitValue(value)) return;
+    // keep boundaries sorted, and the inclusive flags aligned with them
+    const entries = boundaries
+      .map((boundary, i) => ({ boundary, inclusive: inclusiveLower[i] }))
+      .concat({ boundary: value, inclusive: true })
+      .sort((a, b) => a.boundary - b.boundary);
+    setBoundaries(entries.map((e) => e.boundary));
+    setInclusiveLower(entries.map((e) => e.inclusive));
   };
 
   const removeBoundary = (index) => {
@@ -92,6 +117,33 @@ export default function ContinuousCovariate({
         <span className='covar_card_continuous_label'>Range Buckets</span>
         <Button label='Add Bucket' buttonType='default' onClick={addBoundary} />
       </div>
+
+      {isAgeField && (
+        <div className='unit-calculator-container'>
+          <p>
+            Don’t know the {unitCalcConfig.ageUnits.quantity} in{' '}
+            {unitCalcConfig.ageUnits.desiredUnit}?
+          </p>
+          <Button
+            onClick={() => setShowCalculator(true)}
+            label={`Compute ${unitCalcConfig.ageUnits.quantity} (in ${unitCalcConfig.ageUnits.desiredUnit})`}
+            buttonType='default'
+          />
+          {showCalculator && (
+            <UnitCalculator
+              setShowCalculator={setShowCalculator}
+              parameters={unitCalcConfig.ageUnits}
+              actions={[
+                {
+                  label: 'Add as split value',
+                  onClick: addBoundaryAt,
+                  isDisabled: (value) => !isValidSplitValue(value),
+                },
+              ]}
+            />
+          )}
+        </div>
+      )}
 
       <div className='covar_card_range_section'>
         {boundaries.length > 0 && (

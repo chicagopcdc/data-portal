@@ -1,4 +1,4 @@
-FROM quay.io/pcdc/node-lts-alpine:18-alpine
+FROM quay.io/pcdc/node-lts-alpine:20-alpine
 ARG APP=pcdc
 ARG BASENAME
 RUN apk update \
@@ -10,7 +10,7 @@ RUN apk update \
 RUN mkdir -p /data-portal
 COPY . /data-portal
 WORKDIR /data-portal
-RUN npm config set unsafe-perm=true && npm ci --only=production \
+RUN npm install --omit=dev --legacy-peer-deps \
     && cp nginx.conf /etc/nginx/http.d/default.conf \
     && mkdir /mnt/ssl \
     && openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /mnt/ssl/nginx.key -out /mnt/ssl/nginx.crt -subj '/countryName=US/stateOrProvinceName=Illinois/localityName=Chicago/organizationName=CDIS/organizationalUnitName=PlanX/commonName=localhost/emailAddress=ops@cdis.org'

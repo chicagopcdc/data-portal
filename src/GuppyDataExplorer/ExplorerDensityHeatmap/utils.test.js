@@ -5,6 +5,7 @@ import {
   collectDensityHeatmapFields,
   collectHistogramCount,
   dropObjectPrefixFieldPaths,
+  excludeDensityHeatmapFields,
   extractFieldsFromFilter,
   formatDensityPercentage,
   getDensityHeatmapColor,
@@ -30,6 +31,16 @@ describe('Explorer density heatmap helpers', () => {
     });
 
     expect(result).toEqual(['file_type', 'created_datetime']);
+  });
+
+  it('removes blacklisted fields by exact match only', () => {
+    const fields = ['labs.type', 'labs.lab_result', 'type', 'sex'];
+
+    expect(excludeDensityHeatmapFields(fields, ['type', 'labs.type'])).toEqual([
+      'labs.lab_result',
+      'sex',
+    ]);
+    expect(excludeDensityHeatmapFields(fields)).toEqual(fields);
   });
 
   it('resolves nested field values from object and array paths', () => {

@@ -89,6 +89,8 @@ export type TableOneConfig = {
   enabled: boolean;
   buildOptions: boolean;
   options?: TableOneOptions;
+  /** footnote shown on hover of the asterisk next to the table one guide button */
+  multipleObservationsNote?: string;
 };
 
 export type PatientIdsConfig = {

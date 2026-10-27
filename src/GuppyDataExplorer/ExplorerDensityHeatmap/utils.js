@@ -22,6 +22,17 @@ export function collectDensityHeatmapFields({
   return orderedFields;
 }
 
+/**
+ * Removes blacklisted field paths (exact match) from the heatmap field list.
+ * @param {string[]} fields
+ * @param {string[]} [excludeFields]
+ */
+export function excludeDensityHeatmapFields(fields = [], excludeFields = []) {
+  if (excludeFields.length === 0) return fields;
+  const excluded = new Set(excludeFields);
+  return fields.filter((field) => !excluded.has(field));
+}
+
 /** @param {string} fieldPath */
 export function getDensityFieldCategoryKey(fieldPath) {
   const [head] = String(fieldPath).split('.').filter(Boolean);

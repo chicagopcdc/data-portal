@@ -6,6 +6,7 @@ import PercentageStackedBarChart from '../../gen3-ui-component/components/charts
 import Spinner from '../../components/Spinner';
 import { useAppSelector } from '../../redux/hooks';
 import { components } from '../../params';
+import { contactEmail } from '../../localconf';
 import { capitalizeFirstLetter } from '../../utils';
 import { fetchWithCreds } from '../../utils.fetch';
 import DataSummaryCardGroup from '../../components/cards/DataSummaryCardGroup';
@@ -60,6 +61,26 @@ ViewContainer.propTypes = {
   showIf: PropTypes.bool.isRequired,
   children: PropTypes.node.isRequired,
   isLoading: PropTypes.bool,
+};
+
+/** @param {{ message: string }} props */
+function GuppyErrorMessage({ message }) {
+  return (
+    <div className='explorer-visualization__error' role='alert'>
+      <h3>Unable to load the exploration data</h3>
+      <p>
+        The data service rejected the request. This usually means the Exploration
+        page configuration is out of sync with the data currently loaded. Please
+        try refreshing the page. If the problem continues, please contact the
+        administrator ({contactEmail}) and include the details below.
+      </p>
+      <pre className='explorer-visualization__error-details'>{message}</pre>
+    </div>
+  );
+}
+
+GuppyErrorMessage.propTypes = {
+  message: PropTypes.string.isRequired,
 };
 
 /**
@@ -161,6 +182,7 @@ function openLink(link) {
  * @property {ExplorerFilter} filter
  * @property {boolean} isLoadingAggsData
  * @property {boolean} isLoadingRawData
+ * @property {string} [guppyError]
  * @property {(args: {  sort: GqlSort; format: string }) => Promise} downloadRawData
  * @property {(args: { fields: string[]; sort: GqlSort }) => Promise} downloadRawDataByFields
  * @property {(type: string, filter: ExplorerFilter, fields: string[]) => Promise} downloadRawDataByTypeAndFilter
@@ -181,6 +203,7 @@ function ExplorerVisualization({
   filter = {},
   isLoadingAggsData = false,
   isLoadingRawData = false,
+  guppyError,
   downloadRawData,
   downloadRawDataByFields,
   downloadRawDataByTypeAndFilter,
@@ -414,6 +437,7 @@ function ExplorerVisualization({
         </div>
       </div>
       <ExplorerFilterSetWorkspace />
+      {guppyError && <GuppyErrorMessage message={guppyError} />}
       <ViewContainer
         showIf={explorerView === 'summary view'}
         isLoading={isLoadingAggsData}
@@ -508,6 +532,7 @@ ExplorerVisualization.propTypes = {
   filter: PropTypes.object, // inherited from GuppyWrapper
   isLoadingAggsData: PropTypes.bool, // inherited from GuppyWrapper
   isLoadingRawData: PropTypes.bool, // inherited from GuppyWrapper
+  guppyError: PropTypes.string, // inherited from GuppyWrapper
   downloadRawData: PropTypes.func, // inherited from GuppyWrapper
   downloadRawDataByFields: PropTypes.func, // inherited from GuppyWrapper
   downloadRawDataByTypeAndFilter: PropTypes.func, // inherited from GuppyWrapper

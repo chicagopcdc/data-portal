@@ -167,6 +167,7 @@ function ExplorerDashboard() {
                 filter={data.filter}
                 isLoadingAggsData={data.isLoadingAggsData}
                 isLoadingRawData={data.isLoadingRawData}
+                guppyError={data.guppyError}
                 rawData={data.rawData}
                 totalCount={data.totalCount}
                 downloadRawData={data.downloadRawData}

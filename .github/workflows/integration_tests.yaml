@@ -14,6 +14,7 @@ jobs:
     uses: chicagopcdc/.github/.github/workflows/integration_tests.yaml@master
     with:
       SERVICE_TO_TEST: frontend
+      QUAY_ORG: pcdc
     secrets:
       CI_TEST_ORCID_USERID: ${{ secrets.CI_TEST_ORCID_USERID }}
       CI_TEST_ORCID_PASSWORD: ${{ secrets.CI_TEST_ORCID_PASSWORD }}

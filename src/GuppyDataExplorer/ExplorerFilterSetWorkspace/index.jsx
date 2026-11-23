@@ -1,5 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useState } from 'react';
+import isEqual from 'lodash.isequal';
+import Button from '../../gen3-ui-component/components/Button';
 import FilterDisplay from '../../components/FilterDisplay';
 import SimplePopup from '../../components/SimplePopup';
 import Tooltip from 'rc-tooltip';
@@ -15,10 +17,7 @@ import {
   createToken,
   fetchWithToken,
 } from '../../redux/explorer/filterSetsAPI';
-import {
-  resetFilterDrafts,
-  updateExplorerFilter,
-} from '../../redux/explorer/slice';
+import { updateExplorerFilter } from '../../redux/explorer/slice';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import FilterSetActionForm from './FilterSetActionForm';
 import FilterSetLabel from './FilterSetLabel';
@@ -81,7 +80,13 @@ function ExplorerFilterSetWorkspace() {
   const [actionFormType, setActionFormType] = useState(
     /** @type {ActionFormType} */ (undefined),
   );
+
+  const [pendingReplacement, setPendingReplacement] = useState(
+    /** @type {SavedExplorerFilterSet | null} */ (null),
+  );
+
   function closeActionForm() {
+    setPendingReplacement(null);
     setActionFormType(undefined);
   }
 
@@ -112,6 +117,16 @@ function ExplorerFilterSetWorkspace() {
    * @param {boolean} [isShared]
    */
   function handleLoad(loaded, isShared = false) {
+    const existing =
+      isShared || loaded.id == null
+        ? undefined
+        : Object.values(workspace.all).find(({ id }) => id === loaded.id);
+
+    if (existing && !isEqual(existing.filter, loaded.filter)) {
+      setPendingReplacement(loaded);
+      return;
+    }
+
     workspace.load(isShared ? { filter: loaded.filter } : loaded);
     closeActionForm();
   }
@@ -129,7 +144,6 @@ function ExplorerFilterSetWorkspace() {
   }
   function handleReset() {
     handleFilterChange(activeSavedFilterSet.filter);
-    dispatch(resetFilterDrafts());
   }
   function handleRemove() {
     workspace.remove();
@@ -486,26 +500,48 @@ function ExplorerFilterSetWorkspace() {
       </main>
       {actionFormType !== undefined && (
         <SimplePopup>
-          <FilterSetActionForm
-            currentFilter={
-              dereferenceFilter(activeFilterSet?.filter, workspace) ?? {}
-            }
-            filterSets={{
-              active: activeSavedFilterSet,
-              all: savedFilterSets.data,
-              empty: { name: '', description: '', filter: {} },
-            }}
-            fetchWithToken={fetchWithToken}
-            handlers={{
-              clearAll: handleClearAll,
-              close: closeActionForm,
-              delete: handleDelete,
-              load: handleLoad,
-              save: handleSave,
-              share: handleShare,
-            }}
-            type={actionFormType}
-          />
+          {pendingReplacement ? (
+            <div className='explorer-filter-set-form'>
+              <h4>
+                Replace unsaved workspace edits with the saved filter set?
+              </h4>
+              <div>
+                <Button
+                  buttonType='default'
+                  label='Cancel'
+                  onClick={closeActionForm}
+                />
+                <Button
+                  label='Replace with saved'
+                  onClick={() => {
+                    workspace.load(pendingReplacement);
+                    closeActionForm();
+                  }}
+                />
+              </div>
+            </div>
+          ) : (
+            <FilterSetActionForm
+              currentFilter={
+                dereferenceFilter(activeFilterSet?.filter, workspace) ?? {}
+              }
+              filterSets={{
+                active: activeSavedFilterSet,
+                all: savedFilterSets.data,
+                empty: { name: '', description: '', filter: {} },
+              }}
+              fetchWithToken={fetchWithToken}
+              handlers={{
+                clearAll: handleClearAll,
+                close: closeActionForm,
+                delete: handleDelete,
+                load: handleLoad,
+                save: handleSave,
+                share: handleShare,
+              }}
+              type={actionFormType}
+            />
+          )}
         </SimplePopup>
       )}
     </div>

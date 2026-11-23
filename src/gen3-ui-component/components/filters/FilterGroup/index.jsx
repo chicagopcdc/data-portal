@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
+import isEqual from 'lodash.isequal';
 import cloneDeep from 'lodash.clonedeep';
 import Select from 'react-select';
 import { capitalizeFirstLetter, overrideSelectTheme } from '../../../../utils';
@@ -132,6 +133,13 @@ function FilterGroup({
 
   const [draftFilterModes, setDraftFilterModes] = useState({});
 
+  const lastEmittedFilter = useRef(undefined);
+
+  function emitFilterChange(nextFilter) {
+    lastEmittedFilter.current = nextFilter;
+    onFilterChange(nextFilter);
+  }
+
   function getOptionFilter(source, fieldName) {
     let fields = source.value;
     if (anchorLabel) {
@@ -166,7 +174,7 @@ function FilterGroup({
   }
 
   function getDisplayedFilterMode(fieldName) {
-    const option = getOptionFilter(filter, fieldName);
+    const option = getOptionFilter(filterResults, fieldName);
     if (option?.selectedValues?.length) {
       return option.filterMode ?? 'CONTAINS_ANY';
     }
@@ -250,6 +258,13 @@ function FilterGroup({
       return;
     }
 
+    const isLocalEcho = isEqual(filter, lastEmittedFilter.current);
+    lastEmittedFilter.current = undefined;
+
+    if (draftResetKey === undefined && !isLocalEcho) {
+      setDraftFilterModes({});
+    }
+
     const newFilterStatus = getFilterStatus({
       anchorConfig: filterConfig.anchor,
       filterResults: filter,
@@ -259,7 +274,7 @@ function FilterGroup({
 
     setFilterStatus(newFilterStatus);
     setFilterResults(newFilterResults);
-  }, [filter]);
+  }, [filter, draftResetKey]);
 
   useEffect(() => {
     setDraftFilterModes({});
@@ -295,7 +310,7 @@ function FilterGroup({
     setDraftMode(sectionIndex, undefined);
     setFilterResults(updated.filterResults);
     setFilterStatus(updated.filterStatus);
-    onFilterChange(updated.filterResults);
+    emitFilterChange(updated.filterResults);
   }
 
   /**
@@ -328,7 +343,7 @@ function FilterGroup({
       filterValues.__type === FILTER_TYPE.OPTION &&
       filterValues.selectedValues.length > 0
     ) {
-      onFilterChange(updated.filterResults);
+      emitFilterChange(updated.filterResults);
     }
   }
 
@@ -359,7 +374,7 @@ function FilterGroup({
 
     setFilterStatus(updated.filterStatus);
     setFilterResults(updated.filterResults);
-    onFilterChange(updated.filterResults);
+    emitFilterChange(updated.filterResults);
   }
 
   /**
@@ -378,7 +393,7 @@ function FilterGroup({
       filterMode: 'CONTAINS_ANY',
     };
     setFilterResults(newFilterResults);
-    onFilterChange(newFilterResults);
+    emitFilterChange(newFilterResults);
   }
 
   function retrieveFilterPatientIds() {
@@ -405,7 +420,7 @@ function FilterGroup({
       delete newFilterResults.value['subject_submitter_id'];
     }
     setFilterResults(newFilterResults);
-    onFilterChange(newFilterResults);
+    emitFilterChange(newFilterResults);
   }
 
   /**
@@ -429,7 +444,7 @@ function FilterGroup({
     });
     const nextFilter = removeEmptyFilter(updated.filterResults);
     setFilterResults(nextFilter);
-    onFilterChange(nextFilter);
+    emitFilterChange(nextFilter);
   }
 
   /**
@@ -463,7 +478,7 @@ function FilterGroup({
     });
     setFilterStatus(updated.filterStatus);
     setFilterResults(updated.filterResults);
-    onFilterChange(updated.filterResults);
+    emitFilterChange(updated.filterResults);
   }
 
   function toggleSections() {

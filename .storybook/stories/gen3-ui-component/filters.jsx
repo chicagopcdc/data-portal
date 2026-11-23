@@ -201,6 +201,23 @@ const filterConfig = {
   ],
 };
 
+/** @param {import('react').ComponentProps<typeof FilterSection>} props */
+function FilterSectionStory({ onClear, ...props }) {
+  const [filterMode, setFilterMode] = useState('CONTAINS_ANY');
+
+  return (
+    <FilterSection
+      {...props}
+      filterMode={filterMode}
+      onFilterModeChange={setFilterMode}
+      onClear={() => {
+        setFilterMode('CONTAINS_ANY');
+        onClear?.();
+      }}
+    />
+  );
+}
+
 storiesOf('Filters', module)
   .add('SingleSelectFilter', () => (
     <div>
@@ -260,7 +277,6 @@ storiesOf('Filters', module)
         onAfterDrag={action('range change')}
         min={0}
         max={100}
-        
       />
       <RangeFilter
         label='Range slider from 0.00000000001 to 99.9999999999, with default fixed precision(2), and rangeStep=0.1'
@@ -303,7 +319,7 @@ storiesOf('Filters', module)
     );
   })
   .add('FilterSection', () => (
-    <FilterSection
+    <FilterSectionStory
       title={'Ethnicity'}
       options={ethnicityOptions}
       onSelect={action('checked')}
@@ -311,7 +327,7 @@ storiesOf('Filters', module)
     />
   ))
   .add('FilterSection for array-type field', () => (
-    <FilterSection
+    <FilterSectionStory
       title={'Consent Codes'}
       options={consentCodeOptions}
       onSelect={action('checked')}
@@ -328,11 +344,11 @@ storiesOf('Filters', module)
       setSelectedOptions((options) =>
         i === -1
           ? [...options, { text: value, isSearchFilter: true }]
-          : [...options.slice(0, i), ...options.slice(i + 1)]
+          : [...options.slice(0, i), ...options.slice(i + 1)],
       );
     }
     return (
-      <FilterSection
+      <FilterSectionStory
         title={'File GUIDs'}
         onSelect={handleSelect}
         options={selectedOptions}
@@ -348,7 +364,7 @@ storiesOf('Filters', module)
             };
           }
           const filteredOptions = guidOptions.filter(
-            (option) => option.text.indexOf(searchString) !== -1
+            (option) => option.text.indexOf(searchString) !== -1,
           );
           return {
             options: filteredOptions

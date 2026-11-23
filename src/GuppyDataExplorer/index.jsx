@@ -30,7 +30,7 @@ function ExplorerDashboard() {
 
   /** @param {RootState["explorer"]["explorerFilter"]} filter */
   function handleFilterChange(filter) {
-    dispatch(updateExplorerFilter(filter));
+    dispatch(updateExplorerFilter(filter, { preserveDraftModes: true }));
   }
 
   const {

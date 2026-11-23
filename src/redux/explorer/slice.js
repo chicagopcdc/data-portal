@@ -219,38 +219,47 @@ const slice = createSlice({
         state.filterResetVersion += 1;
       },
     },
-    /** @param {PayloadAction<ExplorerState['explorerFilter']>} action */
-    updateExplorerFilter(state, action) {
-      const newFilter = {
-        /** @type {ExplorerFilter['__combineMode']} */
-        __combineMode: 'AND',
-        __type: FILTER_TYPE.STANDARD,
-        ...action.payload,
-      };
-      const fields = Object.keys(newFilter.value ?? {});
-      if (fields.length > 0) {
-        const allSearchFieldSet = new Set();
-        for (const { searchFields } of state.config.filterConfig.tabs)
-          for (const field of searchFields ?? []) allSearchFieldSet.add(field);
+    updateExplorerFilter: {
+      prepare(filter, { preserveDraftModes = false } = {}) {
+        return { payload: filter, meta: { preserveDraftModes } };
+      },
+      reducer(state, action) {
+        const newFilter = {
+          /** @type {ExplorerFilter['__combineMode']} */
+          __combineMode: 'AND',
+          __type: FILTER_TYPE.STANDARD,
+          ...action.payload,
+        };
+        const fields = Object.keys(newFilter.value ?? {});
+        if (fields.length > 0) {
+          const allSearchFieldSet = new Set();
+          for (const { searchFields } of state.config.filterConfig.tabs)
+            for (const field of searchFields ?? [])
+              allSearchFieldSet.add(field);
 
-        if (allSearchFieldSet.size > 0) {
-          /** @type {ExplorerFilter['value']} */
-          const filterWithoutSearchFields = {};
-          for (const field of fields)
-            if (!allSearchFieldSet.has(field))
-              filterWithoutSearchFields[field] = newFilter.value[field];
+          if (allSearchFieldSet.size > 0) {
+            /** @type {ExplorerFilter['value']} */
+            const filterWithoutSearchFields = {};
+            for (const field of fields)
+              if (!allSearchFieldSet.has(field))
+                filterWithoutSearchFields[field] = newFilter.value[field];
 
-          if (Object.keys(filterWithoutSearchFields).length > 0)
-            newFilter.value = filterWithoutSearchFields;
+            if (Object.keys(filterWithoutSearchFields).length > 0)
+              newFilter.value = filterWithoutSearchFields;
+          }
         }
-      }
 
-      state.explorerFilter = newFilter;
+        state.explorerFilter = newFilter;
 
-      // sync with workspaces
-      const { activeId } = state.workspaces[state.explorerId];
-      state.workspaces[state.explorerId].all[activeId].filter = newFilter;
+        // sync with workspaces
+        const { activeId } = state.workspaces[state.explorerId];
+        state.workspaces[state.explorerId].all[activeId].filter = newFilter;
+        if (!action.meta?.preserveDraftModes) {
+          state.filterResetVersion += 1;
+        }
+      },
     },
+
     useExplorerById: {
       /** @param {ExplorerState['explorerId']} explorerId */
       prepare: (explorerId) => {

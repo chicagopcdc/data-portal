@@ -15,7 +15,10 @@ import {
   createToken,
   fetchWithToken,
 } from '../../redux/explorer/filterSetsAPI';
-import { updateExplorerFilter } from '../../redux/explorer/slice';
+import {
+  resetFilterDrafts,
+  updateExplorerFilter,
+} from '../../redux/explorer/slice';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import FilterSetActionForm from './FilterSetActionForm';
 import FilterSetLabel from './FilterSetLabel';
@@ -109,21 +112,7 @@ function ExplorerFilterSetWorkspace() {
    * @param {boolean} [isShared]
    */
   function handleLoad(loaded, isShared = false) {
-    if (isShared) {
-      workspace.load({ filter: loaded.filter });
-    } else {
-      let newActiveId;
-
-      for (const [id, filterSet] of Object.entries(workspace.all))
-        if (filterSet.id === loaded.id) {
-          newActiveId = id;
-          break;
-        }
-
-      if (newActiveId) workspace.use(newActiveId);
-      else workspace.load(loaded);
-    }
-
+    workspace.load(isShared ? { filter: loaded.filter } : loaded);
     closeActionForm();
   }
   /** @param {SavedExplorerFilterSet} saved */
@@ -140,6 +129,7 @@ function ExplorerFilterSetWorkspace() {
   }
   function handleReset() {
     handleFilterChange(activeSavedFilterSet.filter);
+    dispatch(resetFilterDrafts());
   }
   function handleRemove() {
     workspace.remove();

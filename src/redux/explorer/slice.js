@@ -53,6 +53,7 @@ const slice = createSlice({
     explorerFilter: initialExplorerFilter,
     explorerId: initialExplorerId,
     explorerIds,
+    filterResetVersion: 0,
     savedFilterSets: {
       data: [],
       isError: false,
@@ -87,6 +88,9 @@ const slice = createSlice({
     workspaces: initialWorkspaces,
   }),
   reducers: {
+    resetFilterDrafts(state) {
+      state.filterResetVersion += 1;
+    },
     clearWorkspaceAllFilterSets: {
       prepare: () => ({ payload: crypto.randomUUID() }),
       /** @param {PayloadAction<string>} action */
@@ -99,6 +103,7 @@ const slice = createSlice({
 
         // sync with exploreFilter
         state.explorerFilter = filterSet.filter;
+        state.filterResetVersion += 1;
       },
     },
     clearWorkspaceFilterSet(state) {
@@ -109,6 +114,7 @@ const slice = createSlice({
 
       // sync with exploreFilter
       state.explorerFilter = filterSet.filter;
+      state.filterResetVersion += 1;
     },
     createWorkspaceFilterSet: {
       prepare: () => ({ payload: crypto.randomUUID() }),
@@ -122,6 +128,7 @@ const slice = createSlice({
 
         // sync with exploreFilter
         state.explorerFilter = filterSet.filter;
+        state.filterResetVersion += 1;
       },
     },
     duplicateWorkspaceFilterSet: {
@@ -153,19 +160,22 @@ const slice = createSlice({
        * }>} action
        */
       reducer: (state, action) => {
-        const { activeId } = state.workspaces[state.explorerId];
-        const activeFilterSet =
-          state.workspaces[state.explorerId].all[activeId];
-        const shouldOverwrite = checkIfFilterEmpty(activeFilterSet.filter);
-        const id = shouldOverwrite ? activeId : action.payload.newActiveId;
-        const { filterSet } = action.payload;
-
-        state.workspaces[state.explorerId].activeId = id;
-        state.workspaces[state.explorerId].all[id] = filterSet;
-
-        // sync with exploreFilter
         const workspace = state.workspaces[state.explorerId];
+        const { activeId, all } = workspace;
+        const { filterSet, newActiveId } = action.payload;
+        const savedId = filterSet.id;
+
+        const existingId =
+          savedId == null
+            ? undefined
+            : Object.keys(all).find((key) => all[key].id === savedId);
+        const shouldOverwrite = checkIfFilterEmpty(all[activeId].filter);
+        const id = existingId ?? (shouldOverwrite ? activeId : newActiveId);
+
+        workspace.activeId = id;
+        all[id] = filterSet;
         state.explorerFilter = dereferenceFilter(filterSet.filter, workspace);
+        state.filterResetVersion += 1;
       },
     },
     removeWorkspaceFilterSet: {
@@ -206,6 +216,7 @@ const slice = createSlice({
         // sync with exploreFilter
         const workspace = state.workspaces[state.explorerId];
         state.explorerFilter = dereferenceFilter(filterSet.filter, workspace);
+        state.filterResetVersion += 1;
       },
     },
     /** @param {PayloadAction<ExplorerState['explorerFilter']>} action */
@@ -274,6 +285,7 @@ const slice = createSlice({
         // sync with explorerFilter
         const { filter } = workspace.all[workspace.activeId];
         state.explorerFilter = dereferenceFilter(filter, workspace);
+        state.filterResetVersion += 1;
       },
     },
     /** @param {PayloadAction<string>} action */
@@ -286,6 +298,7 @@ const slice = createSlice({
       const workspace = state.workspaces[explorerId];
       const { filter } = workspace.all[newActiveId];
       state.explorerFilter = dereferenceFilter(filter, workspace);
+      state.filterResetVersion += 1;
     },
     resetTableOneResult(state) {
       state.tableOneResult = {
@@ -355,7 +368,9 @@ const slice = createSlice({
         state.densityHeatmapResult.rowsByField[row.field] = row;
       });
       state.densityHeatmapResult.categoryStatus[categoryKey] = 'loaded';
-      if (!state.densityHeatmapResult.loadedCategoryKeys.includes(categoryKey)) {
+      if (
+        !state.densityHeatmapResult.loadedCategoryKeys.includes(categoryKey)
+      ) {
         state.densityHeatmapResult.loadedCategoryKeys.push(categoryKey);
         state.densityHeatmapResult.loadedCount =
           state.densityHeatmapResult.loadedCategoryKeys.length;
@@ -378,7 +393,8 @@ const slice = createSlice({
      * @param {PayloadAction<{ cacheKey: string }>} action
      */
     densityHeatmapJobFinished(state, action) {
-      if (state.densityHeatmapResult.cacheKey !== action.payload.cacheKey) return;
+      if (state.densityHeatmapResult.cacheKey !== action.payload.cacheKey)
+        return;
       state.densityHeatmapResult.isPending = false;
     },
     resetDensityHeatmapResult(state) {
@@ -435,6 +451,7 @@ const slice = createSlice({
 
         // sync with exploreFilter
         state.explorerFilter = filterSet.filter;
+        state.filterResetVersion += 1;
       })
       .addCase(updateFilterSet.fulfilled, (state, action) => {
         const filterSet = action.payload;
@@ -551,6 +568,7 @@ export const {
   loadWorkspaceFilterSet,
   removeWorkspaceFilterSet,
   resetDensityHeatmapResult,
+  resetFilterDrafts,
   resetTableOneResult,
   updateExplorerFilter,
   useExplorerById,

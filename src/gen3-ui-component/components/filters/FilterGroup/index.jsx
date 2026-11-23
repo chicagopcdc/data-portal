@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import cloneDeep from 'lodash.clonedeep';
 import Select from 'react-select';
-import { overrideSelectTheme, capitalizeFirstLetter } from '../../../../utils';
+import { capitalizeFirstLetter, overrideSelectTheme } from '../../../../utils';
 import AnchorFilter from '../AnchorFilter';
 import FilterSection from '../FilterSection';
 import PatientIdFilter from '../PatientIdFilter';
@@ -12,13 +12,12 @@ import {
   getExpandedStatus,
   getFilterStatus,
   getSelectedAnchors,
+  removeEmptyFilter,
   tabHasActiveFilters,
   updateCombineMode,
+  updateFilterMode,
   updateRangeValue,
   updateSelectedValue,
-  removeEmptyFilter,
-  updateFilterMode,
-  getFilterModeStatus,
 } from './utils';
 import './FilterGroup.css';
 
@@ -55,6 +54,7 @@ function findFilterElement(label) {
  * @typedef {Object} FilterGroupProps
  * @property {string} [anchorValue]
  * @property {string} [className]
+ * @property {string} [draftResetKey]
  * @property {string} [disabledTooltipMessage]
  * @property {EmptyFilter | StandardFilterState} [filter]
  * @property {FilterConfig} filterConfig
@@ -73,6 +73,7 @@ const defaultExplorerFilter = {};
 function FilterGroup({
   anchorValue = '',
   className = '',
+  draftResetKey,
   disabledTooltipMessage,
   filterConfig,
   patientIdsConfig,
@@ -129,9 +130,52 @@ function FilterGroup({
 
   const [filterResults, setFilterResults] = useState(filter);
 
-  const [filterModeStatus, setFilterModeStatus] = useState(
-    getFilterModeStatus(filterTabs, filterResults),
-  );
+  const [draftFilterModes, setDraftFilterModes] = useState({});
+
+  function getOptionFilter(source, fieldName) {
+    let fields = source.value;
+    if (anchorLabel) {
+      const anchor = fields?.[anchorLabel];
+      fields =
+        anchor?.__type === FILTER_TYPE.ANCHORED ? anchor.value : undefined;
+    }
+
+    const field = fields?.[fieldName];
+    return field?.__type === FILTER_TYPE.OPTION ? field : undefined;
+  }
+
+  function getDraftKey(fieldName) {
+    return JSON.stringify([anchorLabel, fieldName]);
+  }
+
+  function setDraftMode(sectionIndex, mode) {
+    const fieldName = filterTabs[tabIndex].fields[sectionIndex];
+    const key = getDraftKey(fieldName);
+
+    setDraftFilterModes((previous) => {
+      const next = { ...previous };
+
+      if (mode === undefined) {
+        delete next[key];
+      } else {
+        next[key] = mode;
+      }
+
+      return next;
+    });
+  }
+
+  function getDisplayedFilterMode(fieldName) {
+    const option = getOptionFilter(filter, fieldName);
+    if (option?.selectedValues?.length) {
+      return option.filterMode ?? 'CONTAINS_ANY';
+    }
+    return (
+      draftFilterModes[getDraftKey(fieldName)] ??
+      option?.filterMode ??
+      'CONTAINS_ANY'
+    );
+  }
 
   /** Takes in a filter's filter name and returns its display name
    * @returns {string} newFilterName - the display name of the filter, with capitals
@@ -217,6 +261,10 @@ function FilterGroup({
     setFilterResults(newFilterResults);
   }, [filter]);
 
+  useEffect(() => {
+    setDraftFilterModes({});
+  }, [draftResetKey]);
+
   const filterTabStatus = showAnchorFilter
     ? filterStatus[tabIndex][anchorLabel]
     : filterStatus[tabIndex];
@@ -243,6 +291,8 @@ function FilterGroup({
       anchorLabel,
       sectionIndex,
     });
+
+    setDraftMode(sectionIndex, undefined);
     setFilterResults(updated.filterResults);
     setFilterStatus(updated.filterStatus);
     onFilterChange(updated.filterResults);
@@ -298,6 +348,15 @@ function FilterGroup({
       selectedValue,
       filterMode,
     });
+
+    const fieldName = filterTabs[tabIndex].fields[sectionIndex];
+    const option = getOptionFilter(updated.filterResults, fieldName);
+
+    setDraftMode(
+      sectionIndex,
+      option?.selectedValues?.length ? undefined : filterMode,
+    );
+
     setFilterStatus(updated.filterStatus);
     setFilterResults(updated.filterResults);
     onFilterChange(updated.filterResults);
@@ -354,6 +413,12 @@ function FilterGroup({
    * @param {string} filterMode
    */
   function handleFilterModeChange(sectionIndex, filterMode) {
+    const fieldName = filterTabs[tabIndex].fields[sectionIndex];
+    if (!getOptionFilter(filterResults, fieldName)?.selectedValues?.length) {
+      setDraftMode(sectionIndex, filterMode);
+      return;
+    }
+
     const updated = updateFilterMode({
       filterResults,
       filterTabs,
@@ -362,12 +427,9 @@ function FilterGroup({
       sectionIndex,
       filterMode,
     });
-    setFilterModeStatus(
-      getFilterModeStatus(filterTabs, updated.filterResults, filterModeStatus),
-    );
-    const emptyFilterRemoved = removeEmptyFilter(updated.filterResults);
-    setFilterResults(emptyFilterRemoved);
-    onFilterChange(emptyFilterRemoved);
+    const nextFilter = removeEmptyFilter(updated.filterResults);
+    setFilterResults(nextFilter);
+    onFilterChange(nextFilter);
   }
 
   /**
@@ -553,7 +615,7 @@ function FilterGroup({
               dataTourTitle={section.title}
               sectionTitle={section.title}
               disabledTooltipMessage={disabledTooltipMessage}
-              filterMode={filterModeStatus[tabIndex][index]}
+              filterMode={getDisplayedFilterMode(filterName)}
               expanded={expandedStatus[tabIndex][index]}
               filterStatus={filterTabStatus[index]}
               hideZero={hideZero}
@@ -592,6 +654,7 @@ function FilterGroup({
 
 FilterGroup.propTypes = {
   anchorValue: PropTypes.string,
+  draftResetKey: PropTypes.string,
   className: PropTypes.string,
   disabledTooltipMessage: PropTypes.string,
   filter: PropTypes.object,

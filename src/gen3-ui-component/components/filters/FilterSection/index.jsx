@@ -132,7 +132,6 @@ function FilterSection({
     combineMode: 'OR',
     filterStatus: {},
     isExpanded: expanded,
-    filterMode,
     isSearchInputEmpty: true,
     isShowingCombineMode: false,
     isShowingMoreOptions: false,
@@ -179,7 +178,6 @@ function FilterSection({
       ...prevState,
       filterStatus: {},
       resetClickCounter: prevState.resetClickCounter + 1,
-      filterMode: 'CONTAINS_ANY',
     }));
     onClear();
   }
@@ -207,7 +205,7 @@ function FilterSection({
         filterStatus: newFilterStatus,
       };
     });
-    onSelect(label, state.filterMode);
+    onSelect(label, filterMode);
   }
 
   /**
@@ -232,10 +230,6 @@ function FilterSection({
 
   function handleFilterModeChange({ value }) {
     onFilterModeChange(value);
-    setState((prevState) => ({
-      ...prevState,
-      filterMode: value,
-    }));
   }
 
   useEffect(() => {
@@ -470,7 +464,7 @@ function FilterSection({
           Filter Mode
           <Select
             value={
-              filterModeOptions.find((o) => o.value === state.filterMode) ||
+              filterModeOptions.find((o) => o.value === filterMode) ||
               filterModeOptions[0]
             }
             options={filterModeOptions}
@@ -572,13 +566,13 @@ function FilterSection({
             <Chip
               text={
                 <>
-                  {state.filterMode === 'CONTAINS_ANY'
+                  {filterMode === 'CONTAINS_ANY'
                     ? 'Includes any of '
-                    : state.filterMode === 'CONTAINS_ALL'
+                    : filterMode === 'CONTAINS_ALL'
                       ? 'Includes all of '
-                      : state.filterMode === 'EXCLUDES_ANY'
+                      : filterMode === 'EXCLUDES_ANY'
                         ? 'Excludes any of '
-                        : state.filterMode === 'EXCLUDES_ALL'
+                        : filterMode === 'EXCLUDES_ALL'
                           ? 'Excludes all of '
                           : ''}
                   <span className='g3-filter-section__selected-count-chip-text-emphasis'>

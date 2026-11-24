@@ -1,5 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useState } from 'react';
+import isEqual from 'lodash.isequal';
+import Button from '../../gen3-ui-component/components/Button';
 import FilterDisplay from '../../components/FilterDisplay';
 import SimplePopup from '../../components/SimplePopup';
 import Tooltip from 'rc-tooltip';
@@ -78,7 +80,15 @@ function ExplorerFilterSetWorkspace() {
   const [actionFormType, setActionFormType] = useState(
     /** @type {ActionFormType} */ (undefined),
   );
+
+  const [pendingReplacement, setPendingReplacement] = useState(
+    /** @type {{ loaded: SavedExplorerFilterSet, existingKey: string } | null} */ (
+      null
+    ),
+  );
+
   function closeActionForm() {
+    setPendingReplacement(null);
     setActionFormType(undefined);
   }
 
@@ -109,21 +119,30 @@ function ExplorerFilterSetWorkspace() {
    * @param {boolean} [isShared]
    */
   function handleLoad(loaded, isShared = false) {
-    if (isShared) {
-      workspace.load({ filter: loaded.filter });
-    } else {
-      let newActiveId;
+    const existingEntry =
+      isShared || loaded.id == null
+        ? undefined
+        : Object.entries(workspace.all).find(([, { id }]) => id === loaded.id);
 
-      for (const [id, filterSet] of Object.entries(workspace.all))
-        if (filterSet.id === loaded.id) {
-          newActiveId = id;
-          break;
-        }
-
-      if (newActiveId) workspace.use(newActiveId);
-      else workspace.load(loaded);
+    // workspace filters are normalized by updateExplorerFilter, so apply the
+    // same defaults to both sides before comparing
+    const withDefaults = (f) => ({
+      __combineMode: 'AND',
+      __type: FILTER_TYPE.STANDARD,
+      ...f,
+    });
+    if (
+      existingEntry &&
+      !isEqual(
+        withDefaults(existingEntry[1].filter),
+        withDefaults(loaded.filter),
+      )
+    ) {
+      setPendingReplacement({ loaded, existingKey: existingEntry[0] });
+      return;
     }
 
+    workspace.load(isShared ? { filter: loaded.filter } : loaded);
     closeActionForm();
   }
   /** @param {SavedExplorerFilterSet} saved */
@@ -496,26 +515,52 @@ function ExplorerFilterSetWorkspace() {
       </main>
       {actionFormType !== undefined && (
         <SimplePopup>
-          <FilterSetActionForm
-            currentFilter={
-              dereferenceFilter(activeFilterSet?.filter, workspace) ?? {}
-            }
-            filterSets={{
-              active: activeSavedFilterSet,
-              all: savedFilterSets.data,
-              empty: { name: '', description: '', filter: {} },
-            }}
-            fetchWithToken={fetchWithToken}
-            handlers={{
-              clearAll: handleClearAll,
-              close: closeActionForm,
-              delete: handleDelete,
-              load: handleLoad,
-              save: handleSave,
-              share: handleShare,
-            }}
-            type={actionFormType}
-          />
+          {pendingReplacement ? (
+            <div className='explorer-filter-set-form'>
+              <h4>
+                Replace unsaved workspace edits with the saved filter set?
+              </h4>
+              <div>
+                <Button
+                  buttonType='default'
+                  label='Cancel'
+                  onClick={() => {
+                    // keep the user's edits: jump to the already-open tab
+                    workspace.use(pendingReplacement.existingKey);
+                    closeActionForm();
+                  }}
+                />
+                <Button
+                  label='Replace with saved'
+                  onClick={() => {
+                    workspace.load(pendingReplacement.loaded);
+                    closeActionForm();
+                  }}
+                />
+              </div>
+            </div>
+          ) : (
+            <FilterSetActionForm
+              currentFilter={
+                dereferenceFilter(activeFilterSet?.filter, workspace) ?? {}
+              }
+              filterSets={{
+                active: activeSavedFilterSet,
+                all: savedFilterSets.data,
+                empty: { name: '', description: '', filter: {} },
+              }}
+              fetchWithToken={fetchWithToken}
+              handlers={{
+                clearAll: handleClearAll,
+                close: closeActionForm,
+                delete: handleDelete,
+                load: handleLoad,
+                save: handleSave,
+                share: handleShare,
+              }}
+              type={actionFormType}
+            />
+          )}
         </SimplePopup>
       )}
     </div>

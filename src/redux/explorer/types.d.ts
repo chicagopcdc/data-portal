@@ -70,6 +70,7 @@ export type ExplorerState = {
   config: ExplorerConfig;
   explorerFilter: ExplorerFilter;
   explorerId: number;
+  filterResetVersion: number;
   explorerIds: ExplorerState['explorerId'][];
   savedFilterSets: {
     data: SavedExplorerFilterSet[];

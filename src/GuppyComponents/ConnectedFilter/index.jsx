@@ -21,6 +21,7 @@ import {
  * @property {object} [adminAppliedPreFilters]
  * @property {string} [anchorValue]
  * @property {string} [className]
+ * @property {string} [draftResetKey]
  * @property {StandardFilterState} filter
  * @property {FilterConfig} filterConfig
  * @property {GuppyConfig} guppyConfig
@@ -39,6 +40,7 @@ function ConnectedFilter({
   adminAppliedPreFilters = {},
   anchorValue,
   className = '',
+  draftResetKey,
   filter = {},
   filterConfig,
   guppyConfig,
@@ -91,6 +93,7 @@ function ConnectedFilter({
     <FilterGroup
       anchorValue={anchorValue}
       className={className}
+      draftResetKey={draftResetKey}
       disabledTooltipMessage={
         'This resource is currently disabled because you are exploring restricted data. You are limited to exploring cohorts of a size greater than or equal to the access limit.'
       }
@@ -110,6 +113,7 @@ ConnectedFilter.propTypes = {
   adminAppliedPreFilters: PropTypes.object,
   anchorValue: PropTypes.string,
   className: PropTypes.string,
+  draftResetKey: PropTypes.string,
   filter: PropTypes.object.isRequired,
   filterConfig: PropTypes.shape({
     anchor: PropTypes.shape({

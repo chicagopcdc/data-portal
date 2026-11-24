@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import ConnectedFilter from '../../GuppyComponents/ConnectedFilter';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import GuideInfoButton from '../GuideInfoButton';
+import { resetFilterDrafts } from '../../redux/explorer/slice';
 import './ExplorerFilter.css';
 
 /** @typedef {import('../../redux/types').RootState} RootState */
@@ -52,6 +53,7 @@ DisabledExplorerFilter.propTypes = {
 
 /** @param {ExplorerFilterProps} props */
 function ExplorerFilter({ className = '', ...filterProps }) {
+  const dispatch = useAppDispatch();
   const {
     config: {
       adminAppliedPreFilters,
@@ -59,10 +61,18 @@ function ExplorerFilter({ className = '', ...filterProps }) {
       guppyConfig,
       patientIdsConfig,
     },
+    explorerId,
+    filterResetVersion,
+    workspaces,
   } = useAppSelector((state) => state.explorer);
 
   const connectedFilterProps = {
     ...filterProps,
+    draftResetKey: JSON.stringify([
+      explorerId,
+      workspaces[explorerId].activeId,
+      filterResetVersion,
+    ]),
     adminAppliedPreFilters,
     filterConfig,
     guppyConfig,
@@ -80,7 +90,10 @@ function ExplorerFilter({ className = '', ...filterProps }) {
           <button
             type='button'
             className='explorer-filter__unselect-button'
-            onClick={() => filterProps.onFilterChange(undefined)}
+            onClick={() => {
+              filterProps.onFilterChange(undefined);
+              dispatch(resetFilterDrafts());
+            }}
           >
             Unselect all
           </button>

@@ -82,7 +82,9 @@ function ExplorerFilterSetWorkspace() {
   );
 
   const [pendingReplacement, setPendingReplacement] = useState(
-    /** @type {SavedExplorerFilterSet | null} */ (null),
+    /** @type {{ loaded: SavedExplorerFilterSet, existingKey: string } | null} */ (
+      null
+    ),
   );
 
   function closeActionForm() {
@@ -117,13 +119,26 @@ function ExplorerFilterSetWorkspace() {
    * @param {boolean} [isShared]
    */
   function handleLoad(loaded, isShared = false) {
-    const existing =
+    const existingEntry =
       isShared || loaded.id == null
         ? undefined
-        : Object.values(workspace.all).find(({ id }) => id === loaded.id);
+        : Object.entries(workspace.all).find(([, { id }]) => id === loaded.id);
 
-    if (existing && !isEqual(existing.filter, loaded.filter)) {
-      setPendingReplacement(loaded);
+    // workspace filters are normalized by updateExplorerFilter, so apply the
+    // same defaults to both sides before comparing
+    const withDefaults = (f) => ({
+      __combineMode: 'AND',
+      __type: FILTER_TYPE.STANDARD,
+      ...f,
+    });
+    if (
+      existingEntry &&
+      !isEqual(
+        withDefaults(existingEntry[1].filter),
+        withDefaults(loaded.filter),
+      )
+    ) {
+      setPendingReplacement({ loaded, existingKey: existingEntry[0] });
       return;
     }
 
@@ -509,12 +524,16 @@ function ExplorerFilterSetWorkspace() {
                 <Button
                   buttonType='default'
                   label='Cancel'
-                  onClick={closeActionForm}
+                  onClick={() => {
+                    // keep the user's edits: jump to the already-open tab
+                    workspace.use(pendingReplacement.existingKey);
+                    closeActionForm();
+                  }}
                 />
                 <Button
                   label='Replace with saved'
                   onClick={() => {
-                    workspace.load(pendingReplacement);
+                    workspace.load(pendingReplacement.loaded);
                     closeActionForm();
                   }}
                 />

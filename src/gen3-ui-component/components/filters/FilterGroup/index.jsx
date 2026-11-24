@@ -258,7 +258,10 @@ function FilterGroup({
       return;
     }
 
-    const isLocalEcho = isEqual(filter, lastEmittedFilter.current);
+    const isLocalEcho = isEqual(
+      filter?.value,
+      lastEmittedFilter.current?.value,
+    );
     lastEmittedFilter.current = undefined;
 
     if (draftResetKey === undefined && !isLocalEcho) {

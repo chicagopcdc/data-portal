@@ -30,7 +30,7 @@ function ExplorerDashboard() {
 
   /** @param {RootState["explorer"]["explorerFilter"]} filter */
   function handleFilterChange(filter) {
-    dispatch(updateExplorerFilter(filter));
+    dispatch(updateExplorerFilter(filter, { preserveDraftModes: true }));
   }
 
   const {
@@ -167,6 +167,7 @@ function ExplorerDashboard() {
                 filter={data.filter}
                 isLoadingAggsData={data.isLoadingAggsData}
                 isLoadingRawData={data.isLoadingRawData}
+                guppyError={data.guppyError}
                 rawData={data.rawData}
                 totalCount={data.totalCount}
                 downloadRawData={data.downloadRawData}

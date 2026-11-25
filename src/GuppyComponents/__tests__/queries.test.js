@@ -1,7 +1,9 @@
 import { FILTER_TYPE } from '../Utils/const';
 import {
   getGQLFilter,
-  getQueryInfoForAggregationOptionsData
+  getQueryInfoForAggregationOptionsData,
+  queryGuppyForRawData,
+  queryGuppyForSubAggregationData
 } from '../Utils/queries';
 
 /** @typedef {import('../types').CombineMode} CombineMode */
@@ -923,5 +925,39 @@ describe('Get query info objects for aggregation options data', () => {
       }
     };
     expect(queryInfo).toEqual(expected);
+  });
+});
+
+describe('Aborted Guppy requests', () => {
+  const abortError = new DOMException('The user aborted a request.', 'AbortError');
+
+  beforeEach(() => {
+    fetch.resetMocks();
+    fetch.mockRejectOnce(abortError);
+  });
+
+  test('queryGuppyForRawData rethrows AbortError unchanged', async () => {
+    await expect(
+      queryGuppyForRawData({ type: 'subject', fields: ['sex'] })
+    ).rejects.toMatchObject({ name: 'AbortError' });
+  });
+
+  test('queryGuppyForSubAggregationData rethrows AbortError unchanged', async () => {
+    await expect(
+      queryGuppyForSubAggregationData({
+        type: 'subject',
+        mainField: 'sex',
+        termsFields: [],
+        missingFields: []
+      })
+    ).rejects.toMatchObject({ name: 'AbortError' });
+  });
+
+  test('queryGuppyForRawData still wraps other errors', async () => {
+    fetch.resetMocks();
+    fetch.mockRejectOnce(new Error('network down'));
+    await expect(
+      queryGuppyForRawData({ type: 'subject', fields: ['sex'] })
+    ).rejects.toThrow('Error during queryGuppyForRawData');
   });
 });

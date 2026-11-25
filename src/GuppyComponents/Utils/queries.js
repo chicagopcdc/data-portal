@@ -528,6 +528,8 @@ export function queryGuppyForSubAggregationData({
   })
   .then((response) => response.json())
   .catch((err) => {
+    // let callers tell a deliberately aborted request from a real failure
+    if (err?.name === 'AbortError') throw err;
     throw new Error(`Error during queryGuppyForSubAggregationData ${err}`);
   });
 }
@@ -628,6 +630,8 @@ export function queryGuppyForRawData({
   })
   .then((response) => response.json())
   .catch((err) => {
+    // let callers tell a deliberately aborted request from a real failure
+    if (err?.name === 'AbortError') throw err;
     throw new Error(`Error during queryGuppyForRawData ${err}`);
   });
 }

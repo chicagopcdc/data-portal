@@ -52,10 +52,18 @@ import {
  * @property {SimpleAggsData} [initialTabsOptions]
  * @property {boolean} isLoadingAggsData
  * @property {boolean} isLoadingRawData
+ * @property {string} [guppyError] message describing why the last Guppy query failed
  * @property {Object[]} rawData
  * @property {SimpleAggsData} tabsOptions
  * @property {number} totalCount
  */
+
+/** @param {any} error */
+function getGuppyErrorMessage(error) {
+  if (error instanceof SyntaxError)
+    return 'The data service returned an unexpected response.';
+  return error?.message || 'Unknown error';
+}
 
 /** @param {GuppyWrapperProps} props */
 function GuppyWrapper({
@@ -79,6 +87,7 @@ function GuppyWrapper({
     initialTabsOptions: undefined,
     isLoadingAggsData: false,
     isLoadingRawData: false,
+    guppyError: undefined,
     rawData: [],
     tabsOptions: {},
     totalCount: 0,
@@ -96,6 +105,25 @@ function GuppyWrapper({
       controller.current.abort();
     };
   }, []);
+
+
+  /**
+   * Stop the loading state and surface the reason when a Guppy query fails,
+   * instead of leaving the explorer loading forever.
+   * Aborted requests are expected (a newer request replaced them) and ignored.
+   * @param {'isLoadingAggsData' | 'isLoadingRawData'} loadingKey
+   * @param {any} error
+   */
+  function handleGuppyError(loadingKey, error) {
+    if (error?.name === 'AbortError') return;
+    console.error(error);
+    if (isMounted.current)
+      setState((prevState) => ({
+        ...prevState,
+        [loadingKey]: false,
+        guppyError: getGuppyErrorMessage(error),
+      }));
+  }
 
   /** @type {{ [anchorValue: string]: SimpleAggsData }} */
   const initialAnchoredTabsOptionsCache = {};
@@ -241,7 +269,11 @@ function GuppyWrapper({
   /** @param {FilterState} filter */
   function fetchAggsDataFromGuppy(filter) {
     if (isMounted.current)
-      setState((prevState) => ({ ...prevState, isLoadingAggsData: true }));
+      setState((prevState) => ({
+        ...prevState,
+        isLoadingAggsData: true,
+        guppyError: undefined,
+      }));
 
     Promise.all([
       fetchAggsChartDataFromGuppy(filter),
@@ -275,7 +307,7 @@ function GuppyWrapper({
             setAnchoredTabsOptionsCache({ [state.anchorValue]: tabsOptions });
         }
       },
-    );
+    ).catch((error) => handleGuppyError('isLoadingAggsData', error));
   }
 
   /**
@@ -371,7 +403,9 @@ function GuppyWrapper({
     controller.current.abort();
     controller.current = new AbortController();
     fetchAggsDataFromGuppy(filterState);
-    fetchRawDataFromGuppy({ fields, updateDataWhenReceive: true });
+    fetchRawDataFromGuppy({ fields, updateDataWhenReceive: true }).catch(
+      (error) => handleGuppyError('isLoadingRawData', error),
+    );
   }
 
   const rawDataFields =

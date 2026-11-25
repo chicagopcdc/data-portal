@@ -32,6 +32,26 @@
   position: relative;
 }
 
+.explorer-visualization__error {
+  background-color: #fdecea;
+  border: 1px solid #f5c2c0;
+  border-radius: 4px;
+  color: #611a15;
+  margin: 1rem 0;
+  padding: 1rem;
+}
+
+.explorer-visualization__error h3 {
+  margin-top: 0;
+}
+
+.explorer-visualization__error-details {
+  margin: 0;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .explorer-visualization__view--hidden {
   display: none;
 }

@@ -216,6 +216,7 @@ export type GuppyData = {
   initialTabsOptions?: SimpleAggsData;
   isLoadingAggsData: boolean;
   isLoadingRawData: boolean;
+  guppyError?: string;
   rawData: any[];
   tabsOptions: SimpleAggsData;
   totalCount: number;
